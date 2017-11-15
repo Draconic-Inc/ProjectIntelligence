@@ -1,0 +1,16 @@
+[
+{
+  "modid": "projectintelligence",
+  "name": "Project Intelligence",
+  "description": "DOCUMENT ALL THE THINGS!!!!!!",
+  "version": "${version}",
+  "mcversion": "${mc_version}",
+  "url": "http://www.brandon3055.com/",
+  "updateUrl": "",
+  "authorList": ["brandon3055"],
+  "credits": "",
+  "logoFile": "banner.png",
+  "screenshots": [],
+  "dependencies": []
+}
+]
