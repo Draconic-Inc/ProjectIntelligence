@@ -1,6 +1,7 @@
 package com.brandon3055.projectintelligence.docdata;
 
 import com.brandon3055.projectintelligence.PIHelpers;
+import com.brandon3055.projectintelligence.client.gui.TabManager;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -13,7 +14,9 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.util.*;
+import java.util.LinkedList;
+import java.util.Map;
+import java.util.Random;
 
 /**
  * Created by brandon3055 on 11/08/2017.
@@ -146,9 +149,14 @@ public class DocumentationPage {
             mdLineCache = new LinkedList<>();
 
             File mdFile = getMarkdownFile();
-            if (!mdFile.exists()) {
+            if (!mdFile.exists() || markdownFile.isEmpty()) {
                 mdLineCache.add("Error Loading Page!");
-                mdLineCache.add("Could not find page md file: " + mdFile);
+                if (markdownFile.isEmpty()) {
+                    mdLineCache.add("There is no document file listed for this page. This most likely means the documentation for this page has not been written yet.");
+                }
+                else {
+                    mdLineCache.add("Could not find page md file: " + mdFile);
+                }
             }
             else {
                 try {
@@ -158,7 +166,8 @@ public class DocumentationPage {
                 }
                 catch (IOException e) {
                     mdLineCache.add("Error Loading Page!");
-                    mdLineCache.add("An error occurred while reading the md file!");
+                    mdLineCache.add("An error occurred while reading the md file! ");
+                    mdLineCache.add("File: " + mdFile);
                     for (StackTraceElement el : e.getStackTrace()) {
                         mdLineCache.add(el.toString());
                     }
@@ -233,6 +242,8 @@ public class DocumentationPage {
             e.printStackTrace();
             throw new MDException("An error occurred while saving markdown to disk. " + e.getMessage() + " See console for full stack trace");
         }
+
+        TabManager.getActiveTab().reloadTab();
     }
 
 //    public void setDisplayName(String displayName) {

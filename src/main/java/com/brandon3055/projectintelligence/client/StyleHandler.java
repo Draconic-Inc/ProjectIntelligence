@@ -173,8 +173,8 @@ public class StyleHandler {
 
         body = mdWindow.addSubProp(new StyleProperty(BODY));
         body.addSubProp(new BooleanProperty(VANILLA_TEXTURE, false));
-        body.addSubProp(new BooleanProperty(SHADED_BORDERS, false).setTip(TextFormatting.DARK_GRAY + I18n.format("pi.style.shade_borders.info"))) //
-                .addSubProp(new BooleanProperty(THICK_BORDERS, false));
+//        body.addSubProp(new BooleanProperty(SHADED_BORDERS, false).setTip(TextFormatting.DARK_GRAY + I18n.format("pi.style.shade_borders.info"))) //
+//                .addSubProp(new BooleanProperty(THICK_BORDERS, false));
         body.addSubProp(new ColourProperty(COLOUR, 0xFFa0a0a0, true));
         body.addSubProp(new ColourProperty(BORDER, 0x00000000, true));
         body.addSubProp(new ColourProperty(TEXT_COLOUR, 0x000000, false));

@@ -1,11 +1,11 @@
 package com.brandon3055.projectintelligence.client.gui;
 
+import com.brandon3055.projectintelligence.PIHelpers;
 import com.brandon3055.projectintelligence.client.gui.guielements.GuiPartMDWindow;
 import com.brandon3055.projectintelligence.client.gui.guielements.GuiPartPageList;
 import com.brandon3055.projectintelligence.docdata.DocumentationManager;
 import com.brandon3055.projectintelligence.docdata.DocumentationPage;
 import com.brandon3055.projectintelligence.docdata.RootPage;
-import com.brandon3055.projectintelligence.utils.LogHelper;
 
 import javax.annotation.Nullable;
 import java.util.LinkedList;
@@ -37,11 +37,6 @@ public class TabManager {
      */
     private static TabData activeTab = null;
 
-
-    //############################################################################
-    //# Page handling
-    //region //############################################################################
-
     public static LinkedList<TabData> getOpenTabs() {
         openTabs.removeIf(tabData -> !DocumentationManager.doesPageExist(tabData.pageURI));
 
@@ -60,8 +55,6 @@ public class TabManager {
     }
 
     public static void openPage(@Nullable String pageURI, boolean newTab) {
-        LogHelper.dev(getOpenTabs());
-
         if (pageURI == null) {
             pageURI = RootPage.ROOT_URI;
         }
@@ -124,20 +117,52 @@ public class TabManager {
         return list;
     }
 
-    //endregion
+    public static void switchTab(TabData tab) {
+        if (!getOpenTabs().contains(tab)) {
+            PIHelpers.displayError("Attempted to open an un-tracked/invalid tab. This should not be possible! Try re opening the gui.");
+            return;
+        }
+        activeTab = tab;
+//        reloadGuiForTabChange();
+        GuiPartPageList pageList = GuiProjectIntelligence.getListPart();
+        if (pageList != null) {
+            pageList.reloadElement();
+        }
+    }
+
+    public static void closeTab(TabData tab) {
+        if (getOpenTabs().size() == 1 || !openTabs.contains(tab)) {
+            return;
+        }
+
+        if (activeTab == tab) {
+            int index = openTabs.indexOf(tab);
+
+            if (index > 0) {
+                index--;
+            }
+            else {
+                index++;
+            }
+            switchTab(openTabs.get(index));
+        }
+
+        openTabs.remove(tab);
+        reloadGuiForTabChange();
+    }
 
     public static void reloadGuiForTabChange() {
         GuiPartMDWindow mdWindow = GuiProjectIntelligence.getMDPart();
         GuiPartPageList pageList = GuiProjectIntelligence.getListPart();
         if (mdWindow != null && pageList != null) {
-            mdWindow.updateDisplay();
             pageList.reloadElement();
+            mdWindow.reloadElement();
         }
     }
 
     public static class TabData {
         public String pageURI;
-        public double scrollPosition = 0; //TODO make this work
+        public double scrollPosition = 0;
         private LinkedList<String> pageHistory = new LinkedList<>();
         private LinkedList<String> forwardHistory = new LinkedList<>();
 
@@ -174,6 +199,7 @@ public class TabManager {
             }
         }
 
+
         /**
          * After pressing the back button to go to a previous page this can be ued to go forward again if a new page was not opened after going back.
          * Similar to the forward button in a web browser.
@@ -196,6 +222,17 @@ public class TabManager {
 
         public DocumentationPage getDocPage() {
             return DocumentationManager.getPage(pageURI);
+        }
+
+        public void reloadTab() {
+            GuiPartMDWindow mdWindow = GuiProjectIntelligence.getMDPart();
+            if (mdWindow != null) {
+                mdWindow.reloadElement();
+            }
+        }
+
+        public void updateScroll(double scrollPosition) {
+            this.scrollPosition = scrollPosition;
         }
     }
 }

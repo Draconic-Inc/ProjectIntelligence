@@ -1,10 +1,20 @@
 package com.brandon3055.projectintelligence;
 
+import com.brandon3055.brandonscore.client.ProcessHandlerClient;
 import com.brandon3055.brandonscore.lib.StackReference;
 import com.brandon3055.brandonscore.utils.LogHelperBC;
+import com.brandon3055.projectintelligence.client.gui.ContentInfo;
+import com.brandon3055.projectintelligence.client.gui.ContentInfo.ContentType;
+import com.brandon3055.projectintelligence.client.gui.GuiContentSelect;
+import com.brandon3055.projectintelligence.client.gui.GuiContentSelect.SelectMode;
+import com.brandon3055.projectintelligence.client.gui.GuiProjectIntelligence;
+import com.brandon3055.projectintelligence.client.gui.guielements.GuiPartMDWindow;
+import com.brandon3055.projectintelligence.client.gui.guielements.GuiPartMenu;
+import com.brandon3055.projectintelligence.client.gui.guielements.GuiPartPageList;
 import com.brandon3055.projectintelligence.client.gui.swing.PIEditor;
 import com.brandon3055.projectintelligence.docdata.DocumentationManager;
 import com.google.common.collect.ImmutableList;
+import net.minecraft.client.Minecraft;
 import net.minecraft.entity.EntityList;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraftforge.fml.common.Loader;
@@ -14,11 +24,13 @@ import net.minecraftforge.fml.common.versioning.VersionParser;
 import net.minecraftforge.fml.common.versioning.VersionRange;
 import org.lwjgl.opengl.Display;
 
+import javax.annotation.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.function.Consumer;
 
 /**
  * Created by brandon3055 on 4/08/2017.
@@ -81,6 +93,33 @@ public class PIHelpers {
         return ImmutableList.copyOf(DocumentationManager.getDocumentedMods());
     }
 
+    public static void reloadGui() {
+        if (GuiProjectIntelligence.activeInstance != null) {
+            GuiProjectIntelligence.activeInstance.reloadGui();
+        }
+    }
+
+    public static void reloadGuiParts(boolean pageList, boolean menu, boolean mdWindow) {
+        GuiPartPageList pagePart = GuiProjectIntelligence.getListPart();
+        GuiPartMenu menuPart = GuiProjectIntelligence.getMenuPart();
+        GuiPartMDWindow mdPart = GuiProjectIntelligence.getMDPart();
+
+        if (pageList && pagePart != null) pagePart.reloadElement();
+        if (menu && menuPart != null) menuPart.reloadElement();
+        if (mdWindow && mdPart != null) mdPart.reloadElement();
+    }
+
+    public static void reloadPageList() {
+        reloadGuiParts(true, false, false);
+    }
+
+    public static void reloagMenu() {
+        reloadGuiParts(false, true, false);
+    }
+
+    public static void reloagMDWindoe() {
+        reloadGuiParts(false, false, true);
+    }
 
     //region Editor Helpers
     public static void displayEditor() {
@@ -96,7 +135,7 @@ public class PIHelpers {
 
 
 //        if (editor == null) {
-            editor = new PIEditor();
+        editor = new PIEditor();
 //        }
 
         editor.setVisible(true);
@@ -116,6 +155,12 @@ public class PIHelpers {
 
         int centerX = (int) centerPoint.getX();
         int centerY = (int) centerPoint.getY();
+        window.setLocation(centerX - (window.getWidth() / 2), Math.max(0, centerY - (window.getHeight() / 2)));
+    }
+
+    public static void centerWindowOn(Component window, Component centerOn) {
+        int centerX = (int) centerOn.getX() + (centerOn.getWidth() / 2);
+        int centerY = (int) centerOn.getY() + (centerOn.getHeight() / 2);
         window.setLocation(centerX - (window.getWidth() / 2), Math.max(0, centerY - (window.getHeight() / 2)));
     }
 
@@ -139,6 +184,17 @@ public class PIHelpers {
         player.inventory.mainInventory.stream().filter(stack -> !stack.isEmpty()).forEach(stack -> playerInventory.add(new StackReference(stack).toString()));
         player.inventory.armorInventory.stream().filter(stack -> !stack.isEmpty()).forEach(stack -> playerInventory.add(new StackReference(stack).toString()));
         player.inventory.offHandInventory.stream().filter(stack -> !stack.isEmpty()).forEach(stack -> playerInventory.add(new StackReference(stack).toString()));
+    }
+
+    public static void openContentChooser(@Nullable ContentInfo contentInfo, SelectMode mode, Consumer<ContentInfo> action, ContentType... types) {
+        ProcessHandlerClient.syncTask(() -> {
+            if (Minecraft.getMinecraft().currentScreen instanceof GuiContentSelect) {
+                return;
+            }
+            GuiContentSelect gui = new GuiContentSelect(Minecraft.getMinecraft().currentScreen, mode, contentInfo, types);
+            gui.setSelectCallBack(action);
+            Minecraft.getMinecraft().displayGuiScreen(gui);
+        });
     }
 
     //endregion

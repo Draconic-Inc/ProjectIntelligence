@@ -8,6 +8,7 @@ import com.brandon3055.brandonscore.client.gui.modulargui.lib.GuiAlign;
 import com.brandon3055.brandonscore.lib.DLRSCache;
 import com.brandon3055.brandonscore.lib.StackReference;
 import com.brandon3055.projectintelligence.client.PITextures;
+import com.brandon3055.projectintelligence.client.gui.ContentInfo;
 import com.brandon3055.projectintelligence.client.gui.GuiProjectIntelligence;
 import com.brandon3055.projectintelligence.client.gui.PIConfig;
 import com.brandon3055.projectintelligence.client.gui.TabManager;
@@ -19,7 +20,9 @@ import com.google.gson.JsonObject;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.resources.I18n;
-import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.entity.Entity;
+import net.minecraft.entity.EntityList;
+import net.minecraft.inventory.EntityEquipmentSlot;
 import net.minecraft.util.JsonUtils;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.text.TextFormatting;
@@ -55,7 +58,7 @@ public class PageButton extends GuiButton {
         boolean noIcon = icons.isEmpty();
         int textXPos = 0;//activeIcon == null ? xPos() : xPos() + 20;
         int textXSize = noIcon ? xSize() : xSize() - 20;
-        label = new GuiLabel(page.getDisplayName()){
+        label = new GuiLabel(page.getDisplayName()) {
             @Override
             public boolean hasShadow() {
                 return GuiPartPageList.btnTextShadow;
@@ -76,7 +79,7 @@ public class PageButton extends GuiButton {
         langButton.setBorderColours(0, 0xFF004080).setFillColour(0);
         langButton.zOffset += 10;
         String[] error = {I18n.format("pi.error.page_not_localized.info"), I18n.format("pi.error.page_not_localized_click_here.info")};
-        langButton.setHoverTextArray(e -> LanguageManager.isPageLangOverridden(page.getPageURI()) ? new String[] {I18n.format("pi.button.language_override_enabled.info"), TextFormatting.GOLD + LanguageManager.LANG_NAME_MAP.get(LanguageManager.getPageLanguage(page.getPageURI()))} : error);
+        langButton.setHoverTextArray(e -> LanguageManager.isPageLangOverridden(page.getPageURI()) ? new String[]{I18n.format("pi.button.language_override_enabled.info"), TextFormatting.GOLD + LanguageManager.LANG_NAME_MAP.get(LanguageManager.getPageLanguage(page.getPageURI()))} : error);
         addChild(langButton);
         langButton.setListener((event, eventSource) -> openLanguageSelector());
 
@@ -101,41 +104,61 @@ public class PageButton extends GuiButton {
                 invalidIcons = true;
                 continue;
             }
+
+            ContentInfo ci = ContentInfo.fromIconObj(iconObj);
             String type = JsonUtils.getString(iconObj, "type");
-            String iconString = JsonUtils.getString(iconObj, "icon_string");
-            boolean drawSlot = JsonUtils.getBoolean(iconObj, "draw_slot", true);
 
             final MGuiElementBase icon;
 
-            if (type.equals("stack")) {
-                StackReference stack = StackReference.fromString(iconString);
-                if (stack != null && !stack.createStack().isEmpty()) {
-                    icon = new GuiStackIcon(stack);
-                }
-                else { icon = null; }
-            }
-            else if (type.equals("entity")) {
-                GuiEntityRenderer renderer;
-                if (iconString.startsWith("player:")) {
-                    EntityPlayer player = GuiEntityRenderer.createRenderPlayer(mc.world, iconString.replaceFirst("player:", ""));
-                    renderer = new GuiEntityRenderer().setEntity(player).setInsets(1, 1, 1, 1);
-                }
-                else {
-                    renderer = new GuiEntityRenderer().setEntity(new ResourceLocation(iconString)).setInsets(1, 1, 1, 1);
-                }
+            switch (type) {
+                case "stack":
+                    StackReference stack = ci.stack;
+                    if (stack != null && !stack.createStack().isEmpty()) {
+                        icon = new GuiStackIcon(stack);
+                    }
+                    else {
+                        icon = null;
+                    }
+                    break;
+                case "entity":
+                    Entity entity = null;
 
-                renderer.setTrackMouse(JsonUtils.getBoolean(iconObj, "track_mouse", true));
+                    if (ci.entity.startsWith("player:")) {
+                        entity = GuiEntityRenderer.createRenderPlayer(mc.world, ci.entity.replaceFirst("player:", ""));
+                    }
+                    else {
+                        entity = EntityList.createEntityByIDFromName(new ResourceLocation(ci.entity), mc.world);
+                    }
 
-                if (!renderer.isInvalidEntity()) {
-                    icon = renderer;
-                }
-                else { icon = null; }
-            }
-            else if (type.equals("image")) {
-                icon = new GuiTexture(18, 18, DLRSCache.getResource(iconString)).setTexSizeOverride(18, 18).setTexSheetSize(18);
-            }
-            else {
-                icon = null;
+                    if (entity != null) {
+                        for (int i = 0; i < 6; i++) {
+                            entity.setItemStackToSlot(EntityEquipmentSlot.values()[i], ci.entityInventory[i > 1 ? 7 - i : i]);
+                        }
+                    }
+
+                    GuiEntityRenderer renderer = new GuiEntityRenderer().setEntity(entity).setInsets(1, 1, 1, 1);
+                    renderer.setTrackMouse(ci.trackMouse);
+                    renderer.setRotationSpeedMultiplier((float) ci.rotationSpeed);
+                    if (ci.rotationSpeed == 0) {
+                        renderer.setLockedRotation(ci.rotation);
+                    }
+                    if (!ci.hover_text.isEmpty()) {
+                        renderer.setHoverText(ci.hover_text.split("\n"));
+                    }
+
+                    if (!renderer.isInvalidEntity()) {
+                        icon = renderer;
+                    }
+                    else {
+                        icon = null;
+                    }
+                    break;
+                case "image":
+                    icon = new GuiTexture(18, 18, DLRSCache.getResource(ci.imageURL)).setTexSizeOverride(18, 18).setTexSheetSize(18);
+                    break;
+                default:
+                    icon = null;
+                    break;
             }
 
             if (icon == null) {
@@ -143,7 +166,7 @@ public class PageButton extends GuiButton {
             }
             else {
                 icon.setSize(18, 18);
-                if (drawSlot && !(icon instanceof GuiTexture)) {
+                if (ci.drawSlot && !(icon instanceof GuiTexture)) {
                     icon.addChild(new GuiSlotRender().setYPos(icon.yPos()).setXPosMod((guiSlotRender, integer) -> icon.xPos()).setSize(18, 18));
                 }
                 icons.add(icon);
@@ -172,9 +195,13 @@ public class PageButton extends GuiButton {
     @Override
     public void reloadElement() {
         boolean overridden = LanguageManager.isPageLangOverridden(page.getPageURI());
-        langButtonTexture.setTexturePos(overridden ? 82 : 66, 0);
-        langButton.setEnabled(!PIConfig.editMode() && (overridden || !LanguageManager.isPageLocalized(page.getPageURI(), LanguageManager.getPageLanguage(page.getPageURI()))));
-
+        if (isElementInitialized() && langButtonTexture != null && langButton != null) {
+            langButtonTexture.setTexturePos(overridden ? 82 : 66, 0);
+            langButton.setEnabled(!PIConfig.editMode() && (overridden || !LanguageManager.isPageLocalized(page.getPageURI(), LanguageManager.getPageLanguage(page.getPageURI()))));
+        }
+        else {
+            LogHelper.bigDev("WHY IS THIS NULL!?!?!?!?!");//todo
+        }
 //        TODO create language selection gui. Use a generified gui where i give it the list of avalible languages and a default that can be whatever.
 //        That way i can use it for both the page override and setting the user prefernce.
 
@@ -185,7 +212,6 @@ public class PageButton extends GuiButton {
 
     @Override
     public void onPressed(int mouseX, int mouseY, int mouseButton) {
-        LogHelper.dev(mouseButton);
         TabManager.openPage(page.getPageURI(), mouseButton == 2);
 //        DocumentationManager.setSelectedPage(page);
 //        gui.reloadGui();
@@ -198,7 +224,7 @@ public class PageButton extends GuiButton {
 
     @Override
     public void renderElement(Minecraft mc, int mouseX, int mouseY, float partialTicks) {
-        boolean highlighted = isMouseOver(mouseX, mouseY) || /*DocumentationManager.getSelectedPage()*/ TabManager.getActiveTab().equals(page.getPageURI());
+        boolean highlighted = isMouseOver(mouseX, mouseY) || TabManager.getActiveTab().pageURI.equals(page.getPageURI());
 
         if (GuiPartPageList.btnShadedBorders) {
             int back = highlighted ? GuiPartPageList.btnColourHover.argb() : GuiPartPageList.btnColour.argb();

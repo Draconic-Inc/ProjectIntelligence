@@ -24,7 +24,6 @@ import java.util.List;
 
 import static com.brandon3055.brandonscore.client.gui.modulargui.baseelements.GuiScrollElement.ListMode.VERT_LOCK_POS;
 import static com.brandon3055.brandonscore.client.gui.modulargui.baseelements.GuiSlideControl.SliderRotation.VERTICAL;
-import static com.brandon3055.brandonscore.client.gui.modulargui.lib.GuiAlign.CENTER;
 import static com.brandon3055.brandonscore.client.gui.modulargui.lib.GuiAlign.LEFT;
 import static com.brandon3055.brandonscore.client.gui.modulargui.lib.GuiAlign.TextRotation.NORMAL;
 import static com.brandon3055.brandonscore.client.gui.modulargui.lib.GuiAlign.TextRotation.ROT_CC;
@@ -38,7 +37,7 @@ public class GuiPartPageList extends MGuiElementBase<GuiPartPageList> {
     /** Nav Bar Y Size */
     private final int NAV_BAR_SIZE = 12;
     /** Title Bar Y Size */
-    private final int TITLE_BAR_SIZE = 12;
+    private final int TITLE_BAR_SIZE = 0;
     /** Directory Bar X Size */
     private final int DIR_BAR_SIZE = 12;
     /** Footer Y Size */
@@ -66,14 +65,14 @@ public class GuiPartPageList extends MGuiElementBase<GuiPartPageList> {
         tex.setPostDrawCallback(IDrawCallback::resetColour);
         tex.setTexXGetter(() -> extended ? 0 : 9);
         toggleView.addChild(tex);
-        toggleView.addAndFireReloadCallback(guiButton -> guiButton.setYPos(yPos() + 3));
+        toggleView.addAndFireReloadCallback(guiButton -> guiButton.setYPos(yPos() + 1));
         toggleView.setListener((event, eventSource) -> extended = !extended);
-        tex.setXPosMod((guiButton1, integer) -> maxXPos() - 10);
-        toggleView.setXPosMod((guiButton1, integer) -> maxXPos() - 10);
+        tex.setXPosMod((guiButton1, integer) -> maxXPos() - 10).translate(0, 2);
+        toggleView.setXPosMod((guiButton1, integer) -> maxXPos() - 11);
         addChild(toggleView);
 
         scrollBar = new GuiSlideControl(VERTICAL);
-        scrollBar.setXPosMod((guiSlideControl, integer) -> maxXPos() - (scrollBar.xSize() + (scrollBar.xSize() == 4 ? 2 : 1)));
+        scrollBar.setXPosMod((guiSlideControl, integer) -> maxXPos() - (scrollBar.xSize() + (scrollBar.xSize() == 4 ? 2 : 2)));
         scrollBar.setYPosMod((guiSlideControl, integer) -> yPos() + NAV_BAR_SIZE + TITLE_BAR_SIZE);
         scrollBar.setSize(10, ySize() - (NAV_BAR_SIZE + TITLE_BAR_SIZE + FOOTER_SIZE));
 
@@ -91,6 +90,7 @@ public class GuiPartPageList extends MGuiElementBase<GuiPartPageList> {
         });
         scrollBar.getBackgroundElement().setXPosMod((o, integer) -> scrollBar.xPos()).setYPosMod((o, integer) -> scrollBar.yPos());
         scrollBar.getSliderElement().setXPosMod((o, integer) -> scrollBar.getInsetRect().x);
+        scrollBar.setEnabledCallback(() -> extended);
 
         scrollElement = new GuiScrollElement();
         scrollElement.setVerticalScrollBar(scrollBar);
@@ -109,6 +109,8 @@ public class GuiPartPageList extends MGuiElementBase<GuiPartPageList> {
         setXSize(extended ? extendedXSize : HIDDEN_X_SIZE);
 
 //        DocumentationManager.checkAndReloadDocFiles();//TODO Temp
+        scrollBar.setSize(10, ySize() - (NAV_BAR_SIZE + TITLE_BAR_SIZE + FOOTER_SIZE));
+        scrollBar.getBackgroundElement().setSize(10, ySize() - (NAV_BAR_SIZE + TITLE_BAR_SIZE + FOOTER_SIZE));
 
         scrollElement.setPos(xPos() + DIR_BAR_SIZE, yPos() + TITLE_BAR_SIZE + NAV_BAR_SIZE + 1);
         scrollElement.setSize(xSize() - 12, ySize() - TITLE_BAR_SIZE - NAV_BAR_SIZE - FOOTER_SIZE - 2);
@@ -137,8 +139,8 @@ public class GuiPartPageList extends MGuiElementBase<GuiPartPageList> {
     private void addPageButtons(LinkedList<DocumentationPage> buttons) {
         for (DocumentationPage page : buttons) {
             PageButton button = new PageButton(page, mainWindow);
-            button.setXSize(scrollElement.xSize() - 8);
-            button.setXPosMod((guiButton, integer) -> scrollElement.maxXPos() - guiButton.xSize() - 7);
+            button.setXSize(scrollElement.xSize() - (scrollBar.xSize() + 4));
+            button.setXPosMod((guiButton, integer) -> scrollElement.maxXPos() - guiButton.xSize() - (scrollBar.xSize() + 3));
             scrollElement.addElement(button);
         }
     }
@@ -150,6 +152,9 @@ public class GuiPartPageList extends MGuiElementBase<GuiPartPageList> {
 
         if (xSize() != targetSize) {
             addToXSize(MathHelper.clip(targetSize - xSize(), -moveSpeed, moveSpeed));
+            if (xSize() == targetSize) {
+                mainWindow.contentWindow.reloadElement();
+            }
         }
 
         if (StyleHandler.getBoolean("page_list.scroll_bar." + StyleType.COMPACT_BAR.getName())) {
@@ -159,7 +164,7 @@ public class GuiPartPageList extends MGuiElementBase<GuiPartPageList> {
                 scrollBar.getSliderElement().setXSize(4);
                 scrollBar.setInsets(1, 0, 1, 0);
                 scrollElement.reloadElement();
-
+                reloadPageButtons();
             }
         }
         else if (scrollBar.xSize() != 10) {
@@ -168,6 +173,7 @@ public class GuiPartPageList extends MGuiElementBase<GuiPartPageList> {
             scrollBar.getSliderElement().setXSize(8);
             scrollBar.setInsets(1, 1, 1, 1);
             scrollElement.reloadElement();
+            reloadPageButtons();
         }
 
         updatePageButtonStyle();
@@ -262,6 +268,8 @@ public class GuiPartPageList extends MGuiElementBase<GuiPartPageList> {
             boolean shadedBorders = StyleHandler.getBoolean("page_list.body." + StyleType.SHADED_BORDERS.getName());
             boolean vanillaT = StyleHandler.getBoolean("page_list.body." + StyleType.VANILLA_TEXTURE.getName());
             int border = StyleHandler.getInt("page_list.body." + StyleType.BORDER.getName());
+            shadedBorders = false;
+//            vanillaT = true;
 
             if (shadedBorders || !vanillaT) {
                 int colour = StyleHandler.getInt("page_list.body." + StyleType.COLOUR.getName());
@@ -273,8 +281,8 @@ public class GuiPartPageList extends MGuiElementBase<GuiPartPageList> {
                     drawColouredRect(xPos() + DIR_BAR_SIZE - raWidth, yPos() + TITLE_BAR_SIZE, raWidth, ySize() - TITLE_BAR_SIZE, dark);                  //Left Divider
                     drawColouredRect(xPos() + DIR_BAR_SIZE, yPos() + TITLE_BAR_SIZE, raWidth, ySize() - TITLE_BAR_SIZE, light);                     //Left Divider
 
-                    drawColouredRect(xPos(), yPos() + 12, xSize(), raWidth, light);                               //Mods Divider
-                    drawColouredRect(xPos() + DIR_BAR_SIZE, yPos() + 24 - raWidth, xSize() - 12, raWidth, dark);                  //Mods Divider
+//                    drawColouredRect(xPos(), yPos() + 12, xSize(), raWidth, light);                               //Mods Divider
+//                    drawColouredRect(xPos() + DIR_BAR_SIZE, yPos() + 24 - raWidth, xSize() - 12, raWidth, dark);                  //Mods Divider
 
                     drawColouredRect(xPos() + xSize() - raWidth * 2, yPos(), raWidth, ySize(), light);                  //Right Accent
                     drawColouredRect(xPos() + xSize() - raWidth, yPos(), raWidth, ySize(), dark);                       //Right Accent
@@ -283,8 +291,8 @@ public class GuiPartPageList extends MGuiElementBase<GuiPartPageList> {
                 else {
                     drawBorderedRect(xPos(), yPos() + NAV_BAR_SIZE, DIR_BAR_SIZE, ySize() - NAV_BAR_SIZE, 1, colour, border);
 
-                    drawColouredRect(xPos() + DIR_BAR_SIZE, yPos() + NAV_BAR_SIZE, xSize() - DIR_BAR_SIZE, NAV_BAR_SIZE, border);
-                    drawColouredRect(xPos() + DIR_BAR_SIZE, yPos() + NAV_BAR_SIZE + 1, xSize() - DIR_BAR_SIZE - 1, NAV_BAR_SIZE - 1, colour);
+//                    drawColouredRect(xPos() + DIR_BAR_SIZE, yPos() + NAV_BAR_SIZE, xSize() - DIR_BAR_SIZE, NAV_BAR_SIZE, border);
+//                    drawColouredRect(xPos() + DIR_BAR_SIZE, yPos() + NAV_BAR_SIZE + 1, xSize() - DIR_BAR_SIZE - 1, NAV_BAR_SIZE - 1, colour);
 
                     drawColouredRect(xPos() + DIR_BAR_SIZE, yPos() + NAV_BAR_SIZE + TITLE_BAR_SIZE, xSize() - DIR_BAR_SIZE, ySize() - NAV_BAR_SIZE - TITLE_BAR_SIZE, border);
                     drawColouredRect(xPos() + DIR_BAR_SIZE, yPos() + NAV_BAR_SIZE + TITLE_BAR_SIZE + 1, xSize() - DIR_BAR_SIZE - 1, ySize() - NAV_BAR_SIZE - TITLE_BAR_SIZE - 2, colour);
@@ -296,8 +304,8 @@ public class GuiPartPageList extends MGuiElementBase<GuiPartPageList> {
 
                 drawTiledTextureRectWithTrim(xPos(), yPos() + NAV_BAR_SIZE + TITLE_BAR_SIZE, xSize(), ySize() - NAV_BAR_SIZE - TITLE_BAR_SIZE, 4, 4, 4, 4, 0, 128, 256, 128);
                 drawTiledTextureRectWithTrim(xPos(), yPos() + NAV_BAR_SIZE, DIR_BAR_SIZE, ySize() - NAV_BAR_SIZE, 4, 4, 4, 4, 0, 128, 256, 128);
-                drawTiledTextureRectWithTrim(xPos() + DIR_BAR_SIZE, yPos() + NAV_BAR_SIZE, xSize() - DIR_BAR_SIZE, TITLE_BAR_SIZE, 4, 4, 4, 4, 0, 128, 256, 128);
-                drawTexturedModalRect(xPos() + DIR_BAR_SIZE, yPos() + NAV_BAR_SIZE, 256 - (xSize() - DIR_BAR_SIZE), 128, xSize() - DIR_BAR_SIZE, TITLE_BAR_SIZE);
+//                drawTiledTextureRectWithTrim(xPos() + DIR_BAR_SIZE, yPos() + NAV_BAR_SIZE, xSize() - DIR_BAR_SIZE, TITLE_BAR_SIZE, 4, 4, 4, 4, 0, 128, 256, 128);
+//                drawTexturedModalRect(xPos() + DIR_BAR_SIZE, yPos() + NAV_BAR_SIZE, 256 - (xSize() - DIR_BAR_SIZE), 128, xSize() - DIR_BAR_SIZE, TITLE_BAR_SIZE);
 
                 GlStateManager.color(1, 1, 1, 1);
             }
@@ -340,10 +348,10 @@ public class GuiPartPageList extends MGuiElementBase<GuiPartPageList> {
         }
 
         DocumentationPage selected = TabManager.getActiveTab().getDocPage();
-        String page = "//" + (selected == null ? "null-Page" : selected.getDisplayName());
-        drawCustomString(fontRenderer, page, xPos() + DIR_BAR_SIZE, yPos() + NAV_BAR_SIZE + TITLE_BAR_SIZE - fontRenderer.FONT_HEIGHT, xSize() - DIR_BAR_SIZE, 0xFFFFFF, CENTER, NORMAL, false, true, false); //Todo style and stuff
+//        String page = "//" + (selected == null ? "null-Page" : selected.getDisplayName());
+//        drawCustomString(fontRenderer, page, xPos() + DIR_BAR_SIZE, yPos() + NAV_BAR_SIZE + TITLE_BAR_SIZE - fontRenderer.FONT_HEIGHT, xSize() - DIR_BAR_SIZE, 0xFFFFFF, CENTER, NORMAL, false, true, false); //Todo style and stuff
 
-        drawCustomString(fontRenderer, I18n.format("pi.gui.navigation.title"), xPos() + 4, yPos() + TITLE_BAR_SIZE - fontRenderer.FONT_HEIGHT - 1, xSize() - 20, 0xFFFFFF, LEFT, NORMAL, false, true, false); //Todo style and stuff
+        drawCustomString(fontRenderer, I18n.format("pi.gui.navigation.title"), xPos() + 4, yPos() + NAV_BAR_SIZE - fontRenderer.FONT_HEIGHT - 1, xSize() - 20, 0xFFFFFF, LEFT, NORMAL, false, true, false); //Todo style and stuff
 
         super.renderElement(minecraft, mouseX, mouseY, partialTicks);
 //        drawBorderedRect(xPos(), yPos(), xSize(), ySize(), 1, 0, 0xFFFFFFFF);
@@ -374,8 +382,8 @@ public class GuiPartPageList extends MGuiElementBase<GuiPartPageList> {
     public static Colour btnBorderHover = new ColourARGB(0);
     public static int btnTextColour = 0;
     public static int btnTextColourHover = 0;
-    public static boolean btnIconVanillaTex = false;
+//    public static boolean btnIconVanillaTex = false;
     public static boolean btnTextShadow = false;
-    public static Colour btnIconBackground = new ColourARGB(0);
-    public static Colour btnIconBorder = new ColourARGB(0);
+//    public static Colour btnIconBackground = new ColourARGB(0);
+//    public static Colour btnIconBorder = new ColourARGB(0);
 }

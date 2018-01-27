@@ -327,7 +327,7 @@ public class DocumentationManager {
      * This method is responsible for iterating over all available doc versions for each mod and selecting the version that
      * best matches the version of the mod that is installed. It then loads the selected version
      * <p>
-     * If a mod is not installed bit its documentation is its documentation will be hidden unless edit mode is enabled.
+     * If a mod is not installed but its documentation is its documentation will be hidden unless edit mode is enabled.
      * Edit mode allows version overrides so you can edit any version of a mods documentation.
      */
     private static void sortDocVersions() {
@@ -610,11 +610,11 @@ public class DocumentationManager {
      * @param pageURI The uri of the page to retrieve or null to retrieve the root page.
      * @return the page
      */
-    public static DocumentationPage getPage(@Nullable String pageURI) {
+    public static synchronized DocumentationPage getPage(@Nullable String pageURI) {
         return pageURI == null || pageURI.equals(RootPage.ROOT_URI) ? rootPage : uriPageMap.get(pageURI);
     }
 
-    public static Map<String, ModStructurePage> getModStructureMap() {
+    public static synchronized Map<String, ModStructurePage> getModStructureMap() {
         return modStructureMap;
     }
 

@@ -303,6 +303,9 @@ public class GuiProjectIntelligence extends ModularGuiScreen implements IGuiEven
 
         private boolean validatePosition() {
             boolean changed = false;
+            if (PIConfig.screenMode == 0) {
+                setPos(0, 0);
+            }
             if (xPos() + 100 > screenWidth) {
                 setXPos(screenWidth - 100);
                 changed = true;

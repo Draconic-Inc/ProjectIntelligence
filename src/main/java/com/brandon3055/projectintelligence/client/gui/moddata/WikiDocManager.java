@@ -142,12 +142,7 @@ public class WikiDocManager {
             }
             LogHelper.dev("Checking for mod documentation in " + modFolder);
 
-            File[] files = modFolder.listFiles(new FilenameFilter() {
-                @Override
-                public boolean accept(File dir, String name) {
-                    return name != null && name.endsWith(".xml");
-                }
-            });
+            File[] files = modFolder.listFiles((dir, name) -> name != null && name.endsWith(".xml"));
 
             if (files == null || files.length == 0) {
                 LogHelper.warn("Found empty mod doc folder " + modFolder);

@@ -168,19 +168,9 @@ public class TreeBranchRoot extends MGuiListEntry {
         Collections.sort(branchContent, CONTENT_SORTER);
     }
 
-    public static Comparator<DisplayComponentBase> CONTENT_SORTER = new Comparator<DisplayComponentBase>() {
-        @Override
-        public int compare(DisplayComponentBase o1, DisplayComponentBase o2) {
-            return o1.posIndex < o2.posIndex ? -1 : o1.posIndex > o2.posIndex ? 1 : 0;
-        }
-    };
+    public static Comparator<DisplayComponentBase> CONTENT_SORTER = (o1, o2) -> o1.posIndex < o2.posIndex ? -1 : o1.posIndex > o2.posIndex ? 1 : 0;
 
-    public static Comparator<TreeBranchRoot> BRANCH_SORTER = new Comparator<TreeBranchRoot>() {
-        @Override
-        public int compare(TreeBranchRoot o1, TreeBranchRoot o2) {
-            return o1.sortingWeight < o2.sortingWeight ? -1 : o1.sortingWeight > o2.sortingWeight ? 1 : 0;
-        }
-    };
+    public static Comparator<TreeBranchRoot> BRANCH_SORTER = (o1, o2) -> o1.sortingWeight < o2.sortingWeight ? -1 : o1.sortingWeight > o2.sortingWeight ? 1 : 0;
 
     //endregion
 }

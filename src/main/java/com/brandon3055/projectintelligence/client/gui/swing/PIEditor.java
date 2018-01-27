@@ -5,39 +5,41 @@
  */
 package com.brandon3055.projectintelligence.client.gui.swing;
 
+import com.brandon3055.brandonscore.client.ProcessHandlerClient;
 import com.brandon3055.brandonscore.handlers.FileHandler;
+import com.brandon3055.brandonscore.utils.DataUtils;
+import com.brandon3055.brandonscore.utils.Utils;
 import com.brandon3055.projectintelligence.ModHelper;
 import com.brandon3055.projectintelligence.PIHelpers;
-import com.brandon3055.projectintelligence.client.gui.GuiProjectIntelligence;
-import com.brandon3055.projectintelligence.client.gui.PIConfig;
-import com.brandon3055.projectintelligence.docdata.DocumentationManager;
-import com.brandon3055.projectintelligence.docdata.DocumentationPage;
-import com.brandon3055.projectintelligence.docdata.LanguageManager;
-import com.brandon3055.projectintelligence.docdata.ModStructurePage;
+import com.brandon3055.projectintelligence.client.gui.*;
+import com.brandon3055.projectintelligence.docdata.*;
+import com.brandon3055.projectintelligence.utils.LogHelper;
 import com.google.common.collect.Maps;
 import com.google.gson.JsonObject;
-import net.minecraft.util.JsonUtils;
+import net.minecraft.util.text.TextFormatting;
 
 import javax.annotation.Nullable;
 import javax.swing.*;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
-import javax.swing.event.TreeSelectionEvent;
-import javax.swing.event.TreeSelectionListener;
+import javax.swing.event.*;
 import javax.swing.tree.*;
+import javax.swing.undo.CannotUndoException;
+import javax.swing.undo.UndoManager;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.KeyAdapter;
-import java.awt.event.KeyEvent;
+import java.awt.event.*;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.*;
+import java.util.List;
+import java.util.function.Consumer;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
+
+import static com.brandon3055.projectintelligence.client.gui.ContentInfo.ContentType.*;
+import static com.brandon3055.projectintelligence.client.gui.GuiContentSelect.SelectMode.ICON;
+import static com.brandon3055.projectintelligence.client.gui.GuiContentSelect.SelectMode.MD_CONTENT;
 
 /**
  * @author brand
@@ -47,16 +49,37 @@ public class PIEditor extends javax.swing.JFrame {
     private static Pattern versionValidator = Pattern.compile("^[\\d\\.]+$");
     private String selectedPageURI = "";
     private DefaultTreeModel treeModel;
-    private DefaultListModel<Icon> iconListModel = new DefaultListModel<>();
+    private DefaultListModel<ContentInfo> iconListModel = new DefaultListModel<>();
     private DefaultListModel<String> relationListModel = new DefaultListModel<>();
     private DefaultListModel<String> aliasListModel = new DefaultListModel<>();
     private boolean reloading = false;
+    private UndoManager undo = new UndoManager();
 
     /**
      * Creates new form PIEditor
      */
     public PIEditor() {
         initComponents();
+        generateLineNumbers();
+//        addContextMenuItems();
+        pack();
+
+        markdownWindow.getDocument().addUndoableEditListener(e -> undo.addEdit(e.getEdit()));
+        markdownWindow.addKeyListener(new KeyAdapter() {
+            @Override
+            public void keyPressed(KeyEvent e) {
+                int keyCode = e.getKeyCode();
+                if (keyCode == 90) {
+                    if (e.isControlDown() && e.isShiftDown()) {
+                        redo();
+                    }
+                    else if (e.isControlDown()) {
+                        undo();
+                    }
+                }
+            }
+        });
+
         iconList.setModel(iconListModel);
         relationList.setModel(relationListModel);
         aliasList.setModel(aliasListModel);
@@ -66,24 +89,48 @@ public class PIEditor extends javax.swing.JFrame {
         reload();
     }
 
-    //region Generated Code
-    @SuppressWarnings("unchecked")
+    private void undo() {
+        try {
+            if (undo.canUndo()) {
+                undo.undo();
+            }
+        }
+        catch (CannotUndoException ignored) {}
+    }
+
+    private void redo() {
+        try {
+            if (undo.canRedo()) {
+                undo.redo();
+            }
+        }
+        catch (CannotUndoException ignored) {}
+    }
+
+    private void generateLineNumbers() {
+        markdownWindow.setMargin(new Insets(0, 4, 0, 0));
+        mdScrollPane.setRowHeaderView(new TextLineNumber(markdownWindow));
+        mdScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
+    }
+
     private void initComponents() {
 
         treePopup = new JPopupMenu();
         jMenuItem1 = new JMenuItem();
+        mdContextMenu = new JPopupMenu();
         jPanel3 = new JPanel();
         jToolBar1 = new JToolBar();
         jLabel1 = new JLabel();
         jButton1 = new JButton();
+        jButton13 = new JButton();
         jButton2 = new JButton();
         jButton3 = new JButton();
         jButton4 = new JButton();
-        jButton5 = new JButton();
-        jButton6 = new JButton();
+        jButton11 = new JButton();
+        jButton12 = new JButton();
         newModButton = new JButton();
         jSplitPane1 = new JSplitPane();
-        jScrollPane2 = new JScrollPane();
+        mdScrollPane = new JScrollPane();
         markdownWindow = new JTextArea();
         jScrollPane6 = new JScrollPane();
         pageTree = new JTree();
@@ -148,7 +195,6 @@ public class PIEditor extends javax.swing.JFrame {
         JButton revHelp1 = new JButton();
         jButton7 = new JButton();
         jButton8 = new JButton();
-        JButton idHelp1 = new JButton();
         jMenuBar1 = new JMenuBar();
         jMenu1 = new JMenu();
         jMenu2 = new JMenu();
@@ -158,6 +204,17 @@ public class PIEditor extends javax.swing.JFrame {
 
         jMenuItem1.setText("jMenuItem1");
         treePopup.add(jMenuItem1);
+
+        mdContextMenu.addPopupMenuListener(new PopupMenuListener() {
+            public void popupMenuCanceled(PopupMenuEvent evt) {
+            }
+            public void popupMenuWillBecomeInvisible(PopupMenuEvent evt) {
+                mdMenuClose(evt);
+            }
+            public void popupMenuWillBecomeVisible(PopupMenuEvent evt) {
+                mdMenuOpen(evt);
+            }
+        });
 
         setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("Project Intelligence Editor");
@@ -179,6 +236,18 @@ public class PIEditor extends javax.swing.JFrame {
             }
         });
         jToolBar1.add(jButton1);
+
+        jButton13.setText("Recipe");
+        jButton13.setActionCommand("recipe");
+        jButton13.setFocusable(false);
+        jButton13.setHorizontalTextPosition(SwingConstants.CENTER);
+        jButton13.setVerticalTextPosition(SwingConstants.BOTTOM);
+        jButton13.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent evt) {
+                insertAction(evt);
+            }
+        });
+        jToolBar1.add(jButton13);
 
         jButton2.setText("Image");
         jButton2.setActionCommand("image");
@@ -216,29 +285,29 @@ public class PIEditor extends javax.swing.JFrame {
         });
         jToolBar1.add(jButton4);
 
-        jButton5.setText("Paragraph Formatting");
-        jButton5.setActionCommand("paragraph");
-        jButton5.setFocusable(false);
-        jButton5.setHorizontalTextPosition(SwingConstants.CENTER);
-        jButton5.setVerticalTextPosition(SwingConstants.BOTTOM);
-        jButton5.addActionListener(new ActionListener() {
+        jButton11.setText("Rule");
+        jButton11.setActionCommand("rule");
+        jButton11.setFocusable(false);
+        jButton11.setHorizontalTextPosition(SwingConstants.CENTER);
+        jButton11.setVerticalTextPosition(SwingConstants.BOTTOM);
+        jButton11.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent evt) {
                 insertAction(evt);
             }
         });
-        jToolBar1.add(jButton5);
+        jToolBar1.add(jButton11);
 
-        jButton6.setText("Line Formatting");
-        jButton6.setActionCommand("line");
-        jButton6.setFocusable(false);
-        jButton6.setHorizontalTextPosition(SwingConstants.CENTER);
-        jButton6.setVerticalTextPosition(SwingConstants.BOTTOM);
-        jButton6.addActionListener(new ActionListener() {
+        jButton12.setText("Table");
+        jButton12.setActionCommand("table");
+        jButton12.setFocusable(false);
+        jButton12.setHorizontalTextPosition(SwingConstants.CENTER);
+        jButton12.setVerticalTextPosition(SwingConstants.BOTTOM);
+        jButton12.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent evt) {
                 insertAction(evt);
             }
         });
-        jToolBar1.add(jButton6);
+        jToolBar1.add(jButton12);
 
         newModButton.setText("New Mod");
         newModButton.setToolTipText("Add documentation for a new mod.");
@@ -250,16 +319,23 @@ public class PIEditor extends javax.swing.JFrame {
 
         jSplitPane1.setDividerLocation(200);
 
+        mdScrollPane.addMouseWheelListener(new MouseWheelListener() {
+            public void mouseWheelMoved(MouseWheelEvent evt) {
+                mdScroll(evt);
+            }
+        });
+
         markdownWindow.setColumns(20);
         markdownWindow.setRows(5);
+        markdownWindow.setComponentPopupMenu(mdContextMenu);
         markdownWindow.addKeyListener(new KeyAdapter() {
             public void keyReleased(KeyEvent evt) {
                 mdTextChange(evt);
             }
         });
-        jScrollPane2.setViewportView(markdownWindow);
+        mdScrollPane.setViewportView(markdownWindow);
 
-        jSplitPane1.setRightComponent(jScrollPane2);
+        jSplitPane1.setRightComponent(mdScrollPane);
 
         DefaultMutableTreeNode treeNode1 = new DefaultMutableTreeNode("JTree");
         DefaultMutableTreeNode treeNode2 = new DefaultMutableTreeNode("colors");
@@ -313,8 +389,30 @@ public class PIEditor extends javax.swing.JFrame {
 
         GroupLayout jPanel3Layout = new GroupLayout(jPanel3);
         jPanel3.setLayout(jPanel3Layout);
-        jPanel3Layout.setHorizontalGroup(jPanel3Layout.createParallelGroup(GroupLayout.Alignment.LEADING).addGroup(jPanel3Layout.createSequentialGroup().addContainerGap().addGroup(jPanel3Layout.createParallelGroup(GroupLayout.Alignment.LEADING).addGroup(jPanel3Layout.createSequentialGroup().addComponent(newModButton, GroupLayout.PREFERRED_SIZE, 97, GroupLayout.PREFERRED_SIZE).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addComponent(newPageButton, GroupLayout.PREFERRED_SIZE, 93, GroupLayout.PREFERRED_SIZE).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE).addComponent(jToolBar1, GroupLayout.PREFERRED_SIZE, 514, GroupLayout.PREFERRED_SIZE)).addComponent(jSplitPane1)).addContainerGap()));
-        jPanel3Layout.setVerticalGroup(jPanel3Layout.createParallelGroup(GroupLayout.Alignment.LEADING).addGroup(jPanel3Layout.createSequentialGroup().addGroup(jPanel3Layout.createParallelGroup(GroupLayout.Alignment.LEADING).addGroup(jPanel3Layout.createParallelGroup(GroupLayout.Alignment.BASELINE).addComponent(newModButton).addComponent(newPageButton)).addComponent(jToolBar1, GroupLayout.PREFERRED_SIZE, 25, GroupLayout.PREFERRED_SIZE)).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addComponent(jSplitPane1, GroupLayout.DEFAULT_SIZE, 417, Short.MAX_VALUE).addContainerGap()));
+        jPanel3Layout.setHorizontalGroup(jPanel3Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                .addGroup(jPanel3Layout.createSequentialGroup()
+                        .addContainerGap()
+                        .addGroup(jPanel3Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                                .addComponent(jSplitPane1)
+                                .addGroup(jPanel3Layout.createSequentialGroup()
+                                        .addComponent(newModButton, GroupLayout.PREFERRED_SIZE, 97, GroupLayout.PREFERRED_SIZE)
+                                        .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                                        .addComponent(newPageButton, GroupLayout.PREFERRED_SIZE, 93, GroupLayout.PREFERRED_SIZE)
+                                        .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                        .addComponent(jToolBar1, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)))
+                        .addContainerGap())
+        );
+        jPanel3Layout.setVerticalGroup(jPanel3Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                .addGroup(jPanel3Layout.createSequentialGroup()
+                        .addGroup(jPanel3Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                                .addGroup(jPanel3Layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
+                                        .addComponent(newModButton)
+                                        .addComponent(newPageButton))
+                                .addComponent(jToolBar1, GroupLayout.PREFERRED_SIZE, 25, GroupLayout.PREFERRED_SIZE))
+                        .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(jSplitPane1, GroupLayout.DEFAULT_SIZE, 417, Short.MAX_VALUE)
+                        .addContainerGap())
+        );
 
         modPanel.setToolTipText("");
 
@@ -382,6 +480,7 @@ public class PIEditor extends javax.swing.JFrame {
             }
         });
 
+        copyDocFromSelected.setSelected(true);
         copyDocFromSelected.setText("Copy documentation from selected target version");
 
         jSeparator3.setOrientation(SwingConstants.VERTICAL);
@@ -443,8 +542,101 @@ public class PIEditor extends javax.swing.JFrame {
 
         GroupLayout modPanelLayout = new GroupLayout(modPanel);
         modPanel.setLayout(modPanelLayout);
-        modPanelLayout.setHorizontalGroup(modPanelLayout.createParallelGroup(GroupLayout.Alignment.LEADING).addGroup(modPanelLayout.createSequentialGroup().addGroup(modPanelLayout.createParallelGroup(GroupLayout.Alignment.LEADING).addGroup(modPanelLayout.createSequentialGroup().addContainerGap().addGroup(modPanelLayout.createParallelGroup(GroupLayout.Alignment.LEADING).addComponent(nameLabel1).addComponent(nameLabel2)).addGap(44, 44, 44).addComponent(modNameField, GroupLayout.PREFERRED_SIZE, 221, GroupLayout.PREFERRED_SIZE).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addComponent(nameHelp1)).addGroup(modPanelLayout.createSequentialGroup().addGap(113, 113, 113).addComponent(modIdField, GroupLayout.PREFERRED_SIZE, 221, GroupLayout.PREFERRED_SIZE).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addComponent(nameHelp2)).addGroup(modPanelLayout.createSequentialGroup().addContainerGap().addGroup(modPanelLayout.createParallelGroup(GroupLayout.Alignment.LEADING, false).addComponent(jButton9, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE).addComponent(copyDocFromSelected).addGroup(modPanelLayout.createSequentialGroup().addComponent(nameLabel3).addGap(18, 18, 18).addComponent(modVersionSelect, GroupLayout.PREFERRED_SIZE, 173, GroupLayout.PREFERRED_SIZE)).addComponent(jSeparator1)).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addComponent(nameHelp3))).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addComponent(jSeparator3, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addGroup(modPanelLayout.createParallelGroup(GroupLayout.Alignment.TRAILING).addGroup(modPanelLayout.createSequentialGroup().addComponent(addRelation1).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addComponent(editRelation1).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addComponent(removeRelation1)).addGroup(GroupLayout.Alignment.LEADING, modPanelLayout.createSequentialGroup().addComponent(relationsLabel1).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addComponent(relationsHelp1)).addComponent(jScrollPane5, GroupLayout.Alignment.LEADING, GroupLayout.DEFAULT_SIZE, 319, Short.MAX_VALUE)).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED, 296, Short.MAX_VALUE).addComponent(jButton10).addContainerGap()));
-        modPanelLayout.setVerticalGroup(modPanelLayout.createParallelGroup(GroupLayout.Alignment.LEADING).addGroup(modPanelLayout.createSequentialGroup().addContainerGap().addGroup(modPanelLayout.createParallelGroup(GroupLayout.Alignment.LEADING).addGroup(GroupLayout.Alignment.TRAILING, modPanelLayout.createSequentialGroup().addGap(0, 0, Short.MAX_VALUE).addComponent(jButton10)).addComponent(jSeparator3).addGroup(modPanelLayout.createSequentialGroup().addGroup(modPanelLayout.createParallelGroup(GroupLayout.Alignment.LEADING).addGroup(modPanelLayout.createSequentialGroup().addGroup(modPanelLayout.createParallelGroup(GroupLayout.Alignment.BASELINE).addComponent(relationsLabel1).addComponent(relationsHelp1, GroupLayout.PREFERRED_SIZE, 24, GroupLayout.PREFERRED_SIZE)).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addComponent(jScrollPane5, GroupLayout.PREFERRED_SIZE, 114, GroupLayout.PREFERRED_SIZE).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addGroup(modPanelLayout.createParallelGroup(GroupLayout.Alignment.BASELINE).addComponent(removeRelation1, GroupLayout.PREFERRED_SIZE, 24, GroupLayout.PREFERRED_SIZE).addComponent(editRelation1, GroupLayout.PREFERRED_SIZE, 24, GroupLayout.PREFERRED_SIZE).addComponent(addRelation1, GroupLayout.PREFERRED_SIZE, 24, GroupLayout.PREFERRED_SIZE))).addGroup(modPanelLayout.createSequentialGroup().addGroup(modPanelLayout.createParallelGroup(GroupLayout.Alignment.BASELINE).addComponent(nameLabel1).addComponent(modNameField, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE).addComponent(nameHelp1, GroupLayout.PREFERRED_SIZE, 24, GroupLayout.PREFERRED_SIZE)).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addGroup(modPanelLayout.createParallelGroup(GroupLayout.Alignment.BASELINE).addComponent(nameLabel2).addComponent(modIdField, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE).addComponent(nameHelp2, GroupLayout.PREFERRED_SIZE, 24, GroupLayout.PREFERRED_SIZE)).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addGroup(modPanelLayout.createParallelGroup(GroupLayout.Alignment.LEADING).addGroup(modPanelLayout.createSequentialGroup().addGroup(modPanelLayout.createParallelGroup(GroupLayout.Alignment.BASELINE).addComponent(nameLabel3).addComponent(modVersionSelect, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)).addGap(1, 1, 1).addComponent(jSeparator1, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE).addGap(4, 4, 4).addComponent(jButton9).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addComponent(copyDocFromSelected)).addComponent(nameHelp3, GroupLayout.PREFERRED_SIZE, 100, GroupLayout.PREFERRED_SIZE)))).addGap(0, 0, Short.MAX_VALUE))).addContainerGap()));
+        modPanelLayout.setHorizontalGroup(modPanelLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                .addGroup(modPanelLayout.createSequentialGroup()
+                        .addGroup(modPanelLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                                .addGroup(modPanelLayout.createSequentialGroup()
+                                        .addContainerGap()
+                                        .addGroup(modPanelLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                                                .addComponent(nameLabel1)
+                                                .addComponent(nameLabel2))
+                                        .addGap(44, 44, 44)
+                                        .addComponent(modNameField, GroupLayout.PREFERRED_SIZE, 221, GroupLayout.PREFERRED_SIZE)
+                                        .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                                        .addComponent(nameHelp1))
+                                .addGroup(modPanelLayout.createSequentialGroup()
+                                        .addGap(113, 113, 113)
+                                        .addComponent(modIdField, GroupLayout.PREFERRED_SIZE, 221, GroupLayout.PREFERRED_SIZE)
+                                        .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                                        .addComponent(nameHelp2))
+                                .addGroup(modPanelLayout.createSequentialGroup()
+                                        .addContainerGap()
+                                        .addGroup(modPanelLayout.createParallelGroup(GroupLayout.Alignment.LEADING, false)
+                                                .addComponent(jButton9, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                                .addComponent(copyDocFromSelected)
+                                                .addGroup(modPanelLayout.createSequentialGroup()
+                                                        .addComponent(nameLabel3)
+                                                        .addGap(18, 18, 18)
+                                                        .addComponent(modVersionSelect, GroupLayout.PREFERRED_SIZE, 173, GroupLayout.PREFERRED_SIZE))
+                                                .addComponent(jSeparator1))
+                                        .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                                        .addComponent(nameHelp3)))
+                        .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(jSeparator3, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(modPanelLayout.createParallelGroup(GroupLayout.Alignment.TRAILING)
+                                .addGroup(modPanelLayout.createSequentialGroup()
+                                        .addComponent(addRelation1)
+                                        .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                                        .addComponent(editRelation1)
+                                        .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                                        .addComponent(removeRelation1))
+                                .addGroup(GroupLayout.Alignment.LEADING, modPanelLayout.createSequentialGroup()
+                                        .addComponent(relationsLabel1)
+                                        .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                                        .addComponent(relationsHelp1))
+                                .addComponent(jScrollPane5, GroupLayout.Alignment.LEADING, GroupLayout.DEFAULT_SIZE, 319, Short.MAX_VALUE))
+                        .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED, 296, Short.MAX_VALUE)
+                        .addComponent(jButton10)
+                        .addContainerGap())
+        );
+        modPanelLayout.setVerticalGroup(modPanelLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                .addGroup(modPanelLayout.createSequentialGroup()
+                        .addContainerGap()
+                        .addGroup(modPanelLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                                .addGroup(GroupLayout.Alignment.TRAILING, modPanelLayout.createSequentialGroup()
+                                        .addGap(0, 0, Short.MAX_VALUE)
+                                        .addComponent(jButton10))
+                                .addComponent(jSeparator3)
+                                .addGroup(modPanelLayout.createSequentialGroup()
+                                        .addGroup(modPanelLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                                                .addGroup(modPanelLayout.createSequentialGroup()
+                                                        .addGroup(modPanelLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
+                                                                .addComponent(relationsLabel1)
+                                                                .addComponent(relationsHelp1, GroupLayout.PREFERRED_SIZE, 24, GroupLayout.PREFERRED_SIZE))
+                                                        .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                                                        .addComponent(jScrollPane5, GroupLayout.PREFERRED_SIZE, 114, GroupLayout.PREFERRED_SIZE)
+                                                        .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                                                        .addGroup(modPanelLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
+                                                                .addComponent(removeRelation1, GroupLayout.PREFERRED_SIZE, 24, GroupLayout.PREFERRED_SIZE)
+                                                                .addComponent(editRelation1, GroupLayout.PREFERRED_SIZE, 24, GroupLayout.PREFERRED_SIZE)
+                                                                .addComponent(addRelation1, GroupLayout.PREFERRED_SIZE, 24, GroupLayout.PREFERRED_SIZE)))
+                                                .addGroup(modPanelLayout.createSequentialGroup()
+                                                        .addGroup(modPanelLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
+                                                                .addComponent(nameLabel1)
+                                                                .addComponent(modNameField, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+                                                                .addComponent(nameHelp1, GroupLayout.PREFERRED_SIZE, 24, GroupLayout.PREFERRED_SIZE))
+                                                        .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                                                        .addGroup(modPanelLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
+                                                                .addComponent(nameLabel2)
+                                                                .addComponent(modIdField, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+                                                                .addComponent(nameHelp2, GroupLayout.PREFERRED_SIZE, 24, GroupLayout.PREFERRED_SIZE))
+                                                        .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                                                        .addGroup(modPanelLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                                                                .addGroup(modPanelLayout.createSequentialGroup()
+                                                                        .addGroup(modPanelLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
+                                                                                .addComponent(nameLabel3)
+                                                                                .addComponent(modVersionSelect, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE))
+                                                                        .addGap(1, 1, 1)
+                                                                        .addComponent(jSeparator1, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+                                                                        .addGap(4, 4, 4)
+                                                                        .addComponent(jButton9)
+                                                                        .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                                                                        .addComponent(copyDocFromSelected))
+                                                                .addComponent(nameHelp3, GroupLayout.PREFERRED_SIZE, 100, GroupLayout.PREFERRED_SIZE))))
+                                        .addGap(0, 0, Short.MAX_VALUE)))
+                        .addContainerGap())
+        );
 
         tabbedPain.addTab("Mod", modPanel);
 
@@ -460,6 +652,7 @@ public class PIEditor extends javax.swing.JFrame {
 
         idLabel.setText("Page ID:");
 
+        idField.setEditable(false);
         idField.setToolTipText("This the the unique (within the context of the parant page) id for this page. This should be based on the page content e.g Draconium Ore would use the id draconiumOre");
         idField.addKeyListener(new KeyAdapter() {
             public void keyReleased(KeyEvent evt) {
@@ -685,21 +878,142 @@ public class PIEditor extends javax.swing.JFrame {
             }
         });
 
-        idHelp1.setText("Save");
-        idHelp1.setToolTipText("Save changes to the page id. Save buttion is required for this field because this chnage requires changes to the file system which can not be dynamically applied as you type like other fields can.");
-        idHelp1.setActionCommand("");
-        idHelp1.setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
-        idHelp1.setMargin(new Insets(0, 4, 0, 4));
-        idHelp1.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent evt) {
-                updatePageId(evt);
-            }
-        });
-
         GroupLayout pagePanelLayout = new GroupLayout(pagePanel);
         pagePanel.setLayout(pagePanelLayout);
-        pagePanelLayout.setHorizontalGroup(pagePanelLayout.createParallelGroup(GroupLayout.Alignment.LEADING).addGroup(pagePanelLayout.createSequentialGroup().addContainerGap().addGroup(pagePanelLayout.createParallelGroup(GroupLayout.Alignment.LEADING).addComponent(idLabel).addComponent(weightLabel).addComponent(revisionLabel).addComponent(targetEnRev).addComponent(nameLabel)).addGap(8, 8, 8).addGroup(pagePanelLayout.createParallelGroup(GroupLayout.Alignment.LEADING, false).addGroup(pagePanelLayout.createSequentialGroup().addGroup(pagePanelLayout.createParallelGroup(GroupLayout.Alignment.TRAILING, false).addComponent(nameField).addComponent(weightField).addComponent(revisionField).addGroup(pagePanelLayout.createSequentialGroup().addComponent(idField, GroupLayout.PREFERRED_SIZE, 157, GroupLayout.PREFERRED_SIZE).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addComponent(idHelp1, GroupLayout.PREFERRED_SIZE, 58, GroupLayout.PREFERRED_SIZE))).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addGroup(pagePanelLayout.createParallelGroup(GroupLayout.Alignment.LEADING).addComponent(revHelp).addComponent(nameHelp).addComponent(idHelp).addComponent(weightHelp))).addGroup(pagePanelLayout.createSequentialGroup().addComponent(enRevField).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addComponent(updateEnRev).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addComponent(revHelp1))).addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED).addComponent(jSeparator2, GroupLayout.PREFERRED_SIZE, 2, GroupLayout.PREFERRED_SIZE).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addGroup(pagePanelLayout.createParallelGroup(GroupLayout.Alignment.LEADING).addComponent(jScrollPane3, GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE).addGroup(pagePanelLayout.createSequentialGroup().addComponent(cycleIcons).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED, 80, Short.MAX_VALUE).addComponent(addIcon).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addComponent(editIcon).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addComponent(removeIcon)).addGroup(pagePanelLayout.createSequentialGroup().addComponent(iconsLabel).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addComponent(iconsHelp))).addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED).addGroup(pagePanelLayout.createParallelGroup(GroupLayout.Alignment.TRAILING).addGroup(pagePanelLayout.createSequentialGroup().addComponent(addRelation).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addComponent(editRelation).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addComponent(removeRelation)).addGroup(GroupLayout.Alignment.LEADING, pagePanelLayout.createSequentialGroup().addComponent(relationsLabel).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addComponent(relationsHelp)).addComponent(jScrollPane4, GroupLayout.Alignment.LEADING, GroupLayout.DEFAULT_SIZE, 319, Short.MAX_VALUE)).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addComponent(jSeparator4, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addGroup(pagePanelLayout.createParallelGroup(GroupLayout.Alignment.LEADING, false).addComponent(jButton8, GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE).addComponent(toggleHidden).addComponent(jButton7, GroupLayout.DEFAULT_SIZE, 140, Short.MAX_VALUE)).addContainerGap()));
-        pagePanelLayout.setVerticalGroup(pagePanelLayout.createParallelGroup(GroupLayout.Alignment.LEADING).addGroup(GroupLayout.Alignment.TRAILING, pagePanelLayout.createSequentialGroup().addGroup(pagePanelLayout.createParallelGroup(GroupLayout.Alignment.TRAILING).addGroup(pagePanelLayout.createSequentialGroup().addGap(4, 4, 4).addGroup(pagePanelLayout.createParallelGroup(GroupLayout.Alignment.BASELINE).addComponent(nameLabel).addComponent(nameField, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE).addComponent(nameHelp, GroupLayout.PREFERRED_SIZE, 24, GroupLayout.PREFERRED_SIZE).addComponent(iconsHelp, GroupLayout.PREFERRED_SIZE, 24, GroupLayout.PREFERRED_SIZE).addComponent(iconsLabel).addComponent(relationsLabel).addComponent(relationsHelp, GroupLayout.PREFERRED_SIZE, 24, GroupLayout.PREFERRED_SIZE)).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addGroup(pagePanelLayout.createParallelGroup(GroupLayout.Alignment.LEADING).addGroup(pagePanelLayout.createSequentialGroup().addComponent(jScrollPane3, GroupLayout.PREFERRED_SIZE, 114, GroupLayout.PREFERRED_SIZE).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addGroup(pagePanelLayout.createParallelGroup(GroupLayout.Alignment.BASELINE).addComponent(cycleIcons).addComponent(removeIcon, GroupLayout.PREFERRED_SIZE, 24, GroupLayout.PREFERRED_SIZE).addComponent(editIcon, GroupLayout.PREFERRED_SIZE, 24, GroupLayout.PREFERRED_SIZE).addComponent(addIcon, GroupLayout.PREFERRED_SIZE, 24, GroupLayout.PREFERRED_SIZE))).addGroup(pagePanelLayout.createSequentialGroup().addGroup(pagePanelLayout.createParallelGroup(GroupLayout.Alignment.BASELINE).addComponent(idLabel).addComponent(idField, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE).addComponent(idHelp, GroupLayout.PREFERRED_SIZE, 24, GroupLayout.PREFERRED_SIZE).addComponent(idHelp1, GroupLayout.PREFERRED_SIZE, 24, GroupLayout.PREFERRED_SIZE)).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addGroup(pagePanelLayout.createParallelGroup(GroupLayout.Alignment.BASELINE).addComponent(weightLabel).addComponent(weightHelp, GroupLayout.PREFERRED_SIZE, 24, GroupLayout.PREFERRED_SIZE).addComponent(weightField, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)).addGap(28, 28, 28).addGroup(pagePanelLayout.createParallelGroup(GroupLayout.Alignment.BASELINE).addComponent(revisionLabel).addComponent(revHelp, GroupLayout.PREFERRED_SIZE, 24, GroupLayout.PREFERRED_SIZE).addComponent(revisionField, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addGroup(pagePanelLayout.createParallelGroup(GroupLayout.Alignment.BASELINE).addComponent(updateEnRev, GroupLayout.PREFERRED_SIZE, 24, GroupLayout.PREFERRED_SIZE).addComponent(enRevField, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE).addComponent(targetEnRev).addComponent(revHelp1, GroupLayout.PREFERRED_SIZE, 24, GroupLayout.PREFERRED_SIZE))).addGroup(pagePanelLayout.createSequentialGroup().addComponent(jScrollPane4, GroupLayout.PREFERRED_SIZE, 114, GroupLayout.PREFERRED_SIZE).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addGroup(pagePanelLayout.createParallelGroup(GroupLayout.Alignment.BASELINE).addComponent(removeRelation, GroupLayout.PREFERRED_SIZE, 24, GroupLayout.PREFERRED_SIZE).addComponent(editRelation, GroupLayout.PREFERRED_SIZE, 24, GroupLayout.PREFERRED_SIZE).addComponent(addRelation, GroupLayout.PREFERRED_SIZE, 24, GroupLayout.PREFERRED_SIZE)))).addGap(0, 2, Short.MAX_VALUE)).addGroup(pagePanelLayout.createSequentialGroup().addContainerGap().addGroup(pagePanelLayout.createParallelGroup(GroupLayout.Alignment.LEADING).addComponent(jSeparator2).addComponent(jSeparator4).addGroup(pagePanelLayout.createSequentialGroup().addComponent(toggleHidden).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE).addComponent(jButton8, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addComponent(jButton7, GroupLayout.PREFERRED_SIZE, 24, GroupLayout.PREFERRED_SIZE))))).addContainerGap()));
+        pagePanelLayout.setHorizontalGroup(pagePanelLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                .addGroup(pagePanelLayout.createSequentialGroup()
+                        .addContainerGap()
+                        .addGroup(pagePanelLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                                .addComponent(idLabel)
+                                .addComponent(weightLabel)
+                                .addComponent(revisionLabel)
+                                .addComponent(targetEnRev)
+                                .addComponent(nameLabel))
+                        .addGap(8, 8, 8)
+                        .addGroup(pagePanelLayout.createParallelGroup(GroupLayout.Alignment.LEADING, false)
+                                .addGroup(pagePanelLayout.createSequentialGroup()
+                                        .addGroup(pagePanelLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                                                .addComponent(idField, GroupLayout.Alignment.TRAILING, GroupLayout.PREFERRED_SIZE, 221, GroupLayout.PREFERRED_SIZE)
+                                                .addGroup(pagePanelLayout.createParallelGroup(GroupLayout.Alignment.TRAILING, false)
+                                                        .addComponent(nameField)
+                                                        .addComponent(weightField, GroupLayout.DEFAULT_SIZE, 221, Short.MAX_VALUE)
+                                                        .addComponent(revisionField)))
+                                        .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                                        .addGroup(pagePanelLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                                                .addComponent(revHelp)
+                                                .addComponent(nameHelp)
+                                                .addComponent(idHelp)
+                                                .addComponent(weightHelp)))
+                                .addGroup(pagePanelLayout.createSequentialGroup()
+                                        .addComponent(enRevField)
+                                        .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                                        .addComponent(updateEnRev)
+                                        .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                                        .addComponent(revHelp1)))
+                        .addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(jSeparator2, GroupLayout.PREFERRED_SIZE, 2, GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(pagePanelLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                                .addComponent(jScrollPane3, GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
+                                .addGroup(pagePanelLayout.createSequentialGroup()
+                                        .addComponent(cycleIcons)
+                                        .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED, 80, Short.MAX_VALUE)
+                                        .addComponent(addIcon)
+                                        .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                                        .addComponent(editIcon)
+                                        .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                                        .addComponent(removeIcon))
+                                .addGroup(pagePanelLayout.createSequentialGroup()
+                                        .addComponent(iconsLabel)
+                                        .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                                        .addComponent(iconsHelp)))
+                        .addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addGroup(pagePanelLayout.createParallelGroup(GroupLayout.Alignment.TRAILING)
+                                .addGroup(pagePanelLayout.createSequentialGroup()
+                                        .addComponent(addRelation)
+                                        .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                                        .addComponent(editRelation)
+                                        .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                                        .addComponent(removeRelation))
+                                .addGroup(GroupLayout.Alignment.LEADING, pagePanelLayout.createSequentialGroup()
+                                        .addComponent(relationsLabel)
+                                        .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                                        .addComponent(relationsHelp))
+                                .addComponent(jScrollPane4, GroupLayout.Alignment.LEADING, GroupLayout.DEFAULT_SIZE, 319, Short.MAX_VALUE))
+                        .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(jSeparator4, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(pagePanelLayout.createParallelGroup(GroupLayout.Alignment.LEADING, false)
+                                .addComponent(jButton8, GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
+                                .addComponent(toggleHidden)
+                                .addComponent(jButton7, GroupLayout.DEFAULT_SIZE, 140, Short.MAX_VALUE))
+                        .addContainerGap())
+        );
+        pagePanelLayout.setVerticalGroup(pagePanelLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                .addGroup(GroupLayout.Alignment.TRAILING, pagePanelLayout.createSequentialGroup()
+                        .addGroup(pagePanelLayout.createParallelGroup(GroupLayout.Alignment.TRAILING)
+                                .addGroup(pagePanelLayout.createSequentialGroup()
+                                        .addGap(4, 4, 4)
+                                        .addGroup(pagePanelLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
+                                                .addComponent(nameLabel)
+                                                .addComponent(nameField, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+                                                .addComponent(nameHelp, GroupLayout.PREFERRED_SIZE, 24, GroupLayout.PREFERRED_SIZE)
+                                                .addComponent(iconsHelp, GroupLayout.PREFERRED_SIZE, 24, GroupLayout.PREFERRED_SIZE)
+                                                .addComponent(iconsLabel)
+                                                .addComponent(relationsLabel)
+                                                .addComponent(relationsHelp, GroupLayout.PREFERRED_SIZE, 24, GroupLayout.PREFERRED_SIZE))
+                                        .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                                        .addGroup(pagePanelLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                                                .addGroup(pagePanelLayout.createSequentialGroup()
+                                                        .addComponent(jScrollPane3, GroupLayout.PREFERRED_SIZE, 114, GroupLayout.PREFERRED_SIZE)
+                                                        .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                                                        .addGroup(pagePanelLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
+                                                                .addComponent(cycleIcons)
+                                                                .addComponent(removeIcon, GroupLayout.PREFERRED_SIZE, 24, GroupLayout.PREFERRED_SIZE)
+                                                                .addComponent(editIcon, GroupLayout.PREFERRED_SIZE, 24, GroupLayout.PREFERRED_SIZE)
+                                                                .addComponent(addIcon, GroupLayout.PREFERRED_SIZE, 24, GroupLayout.PREFERRED_SIZE)))
+                                                .addGroup(pagePanelLayout.createSequentialGroup()
+                                                        .addGroup(pagePanelLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
+                                                                .addComponent(idLabel)
+                                                                .addComponent(idField, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+                                                                .addComponent(idHelp, GroupLayout.PREFERRED_SIZE, 24, GroupLayout.PREFERRED_SIZE))
+                                                        .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                                                        .addGroup(pagePanelLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
+                                                                .addComponent(weightLabel)
+                                                                .addComponent(weightHelp, GroupLayout.PREFERRED_SIZE, 24, GroupLayout.PREFERRED_SIZE)
+                                                                .addComponent(weightField, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE))
+                                                        .addGap(28, 28, 28)
+                                                        .addGroup(pagePanelLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
+                                                                .addComponent(revisionLabel)
+                                                                .addComponent(revHelp, GroupLayout.PREFERRED_SIZE, 24, GroupLayout.PREFERRED_SIZE)
+                                                                .addComponent(revisionField, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE))
+                                                        .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                                                        .addGroup(pagePanelLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
+                                                                .addComponent(updateEnRev, GroupLayout.PREFERRED_SIZE, 24, GroupLayout.PREFERRED_SIZE)
+                                                                .addComponent(enRevField, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+                                                                .addComponent(targetEnRev)
+                                                                .addComponent(revHelp1, GroupLayout.PREFERRED_SIZE, 24, GroupLayout.PREFERRED_SIZE)))
+                                                .addGroup(pagePanelLayout.createSequentialGroup()
+                                                        .addComponent(jScrollPane4, GroupLayout.PREFERRED_SIZE, 114, GroupLayout.PREFERRED_SIZE)
+                                                        .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                                                        .addGroup(pagePanelLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
+                                                                .addComponent(removeRelation, GroupLayout.PREFERRED_SIZE, 24, GroupLayout.PREFERRED_SIZE)
+                                                                .addComponent(editRelation, GroupLayout.PREFERRED_SIZE, 24, GroupLayout.PREFERRED_SIZE)
+                                                                .addComponent(addRelation, GroupLayout.PREFERRED_SIZE, 24, GroupLayout.PREFERRED_SIZE))))
+                                        .addGap(0, 2, Short.MAX_VALUE))
+                                .addGroup(pagePanelLayout.createSequentialGroup()
+                                        .addContainerGap()
+                                        .addGroup(pagePanelLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                                                .addComponent(jSeparator2)
+                                                .addComponent(jSeparator4)
+                                                .addGroup(pagePanelLayout.createSequentialGroup()
+                                                        .addComponent(toggleHidden)
+                                                        .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                                        .addComponent(jButton8, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+                                                        .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                                                        .addComponent(jButton7, GroupLayout.PREFERRED_SIZE, 24, GroupLayout.PREFERRED_SIZE)))))
+                        .addContainerGap())
+        );
 
         tabbedPain.addTab("Page Properties", pagePanel);
 
@@ -707,6 +1021,15 @@ public class PIEditor extends javax.swing.JFrame {
         jMenuBar1.add(jMenu1);
 
         jMenu2.setText("Edit");
+        jMenu2.addMenuListener(new MenuListener() {
+            public void menuCanceled(MenuEvent evt) {
+            }
+            public void menuDeselected(MenuEvent evt) {
+            }
+            public void menuSelected(MenuEvent evt) {
+                editMenuSelect(evt);
+            }
+        });
         jMenuBar1.add(jMenu2);
 
         jMenu3.setText("Options");
@@ -734,12 +1057,27 @@ public class PIEditor extends javax.swing.JFrame {
 
         GroupLayout layout = new GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
-        layout.setHorizontalGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING).addGroup(layout.createSequentialGroup().addContainerGap().addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING).addGroup(layout.createSequentialGroup().addGap(6, 6, 6).addComponent(tabbedPain)).addComponent(jPanel3, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)).addContainerGap()));
-        layout.setVerticalGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING).addGroup(layout.createSequentialGroup().addContainerGap().addComponent(jPanel3, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addComponent(tabbedPain, GroupLayout.PREFERRED_SIZE, 212, GroupLayout.PREFERRED_SIZE).addGap(8, 8, 8)));
+        layout.setHorizontalGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                .addGroup(layout.createSequentialGroup()
+                        .addContainerGap()
+                        .addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                                .addGroup(layout.createSequentialGroup()
+                                        .addGap(6, 6, 6)
+                                        .addComponent(tabbedPain))
+                                .addComponent(jPanel3, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                        .addContainerGap())
+        );
+        layout.setVerticalGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                .addGroup(layout.createSequentialGroup()
+                        .addContainerGap()
+                        .addComponent(jPanel3, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(tabbedPain, GroupLayout.PREFERRED_SIZE, 212, GroupLayout.PREFERRED_SIZE)
+                        .addGap(8, 8, 8))
+        );
 
-        pack();
+        setBounds(0, 0, 1230, 755);
     }
-    //endregion
 
     public void reload() {
         reloading = true;
@@ -751,14 +1089,7 @@ public class PIEditor extends javax.swing.JFrame {
 
     private void updateTree() {
         //Create a list of all currently expanded pages.
-//        java.util.List<String> expanded = new ArrayList<>();
-//        for (int i = 0; i < pageTree.getRowCount(); i++) {
-//            Object comp = pageTree.getPathForRow(i).getLastPathComponent();
-//            if (pageTree.isExpanded(pageTree.getPathForRow(i))) {
-//                expanded.add(comp.toString());
-//                LogHelper.dev("Add: " + comp);
-//            }
-//        }
+
         java.util.List<String> expanded = streamTree(pageTree)//
                 .filter(pageTree::isExpanded)//
                 .map(pageTree::getPathForRow)//
@@ -773,12 +1104,6 @@ public class PIEditor extends javax.swing.JFrame {
         DefaultMutableTreeNode modsNode = new DefaultMutableTreeNode("Root Page");
         pageTree.setModel(treeModel = new DefaultTreeModel(modsNode));
         treeModel.setAsksAllowsChildren(true);
-//        for (String modid : DocumentationManager.getModStructureMap().keySet()) {
-//            Map<String, ModDescriptorPage> modLangMap = DocumentationManager.getModStructureMap().get(modid);
-//            if (modLangMap.containsKey(lang)) {
-//                modsNode.add(loadModPages(modLangMap.get(lang)));
-//            }
-//        }
 
         Map<String, ModStructurePage> structureMap = DocumentationManager.getModStructureMap();
         for (String modid : structureMap.keySet()) {
@@ -789,23 +1114,6 @@ public class PIEditor extends javax.swing.JFrame {
 
         //Reset the tree state to what it was before the reload
         streamTree(pageTree).forEach(pageTree::expandRow);
-//        streamTree(pageTree, pageTree::expandRow);
-//        int row = 0;
-//        do {
-//            pageTree.expandRow(row);
-//        } while (row++ < pageTree.getRowCount());
-
-//        for (int i = pageTree.getRowCount() - 1; i > 0; i--) {
-//            Object component = pageTree.getPathForRow(i).getLastPathComponent();
-//            if (selectedPageURI != null && component instanceof DefaultMutableTreeNode && ((DefaultMutableTreeNode) component).getUserObject() == selectedPageURI) {
-//                keepSelection = true;
-//                pageTree.setSelectionRow(i);
-//            }
-//            String node = component.toString();
-//            if (!expanded.contains(node) && !node.equals("Root Page")) {
-//                pageTree.collapseRow(i);
-//            }
-//        }
 
         if (selectedPage != null) {
             streamTree(pageTree, true).forEachOrdered(row -> {
@@ -1114,6 +1422,8 @@ public class PIEditor extends javax.swing.JFrame {
         JOptionPane.showMessageDialog(this, "This feature is not yet implemented!", "NYI", JOptionPane.ERROR_MESSAGE);
     }
 
+    //endregion
+
     //region Icons
 
     private void cycleIcons(ActionEvent evt) {
@@ -1132,24 +1442,22 @@ public class PIEditor extends javax.swing.JFrame {
             return;
         }
 
-        String message = "This dialog allows you to add an icon to this page.\n" +
-                "Avalible icon types are Item Stacks, Entities, Player's and images.\n" +
-                "Images must be hosted online. Only http addresses are currently supported.\n";
+        Consumer<ContentInfo> addIconAction = new Consumer<ContentInfo>() {
+            @Override
+            public void accept(ContentInfo contentInfo) {
+                DocumentationPage iconPage = DocumentationManager.getPage(page.getPageURI());
+                toFront();
+                if (contentInfo != null && !(iconPage instanceof RootPage)) {
+                    iconPage.getIcons().add(contentInfo.getAsIconObj());
+                    iconPage.saveToDisk();
+                    PIHelpers.reloadPageList();
+                    setSelectedPage(DocumentationManager.getPage(selectedPageURI));
+                }
+            }
+        };
 
-        Map<String, java.util.List<String>> map = new HashMap<>();
-        map.put("image", new ArrayList<>());
-        SelectIcon selector = createSelectDialog(map, message, "stack", "");
-        selector.setVisible(true);
-        if (selector.canceled || selector.getIconString().isEmpty()) {
-            return;
-        }
-
-        Icon icon = new Icon(Icon.IconType.get(selector.getIconType()), selector.getIconString());
-        page.getIcons().add(icon.save());
-        String selected = selectedPageURI;
-        page.saveToDisk();
-        DocumentationManager.checkAndReloadDocFiles();
-        setSelectedPage(DocumentationManager.getPage(selected));
+        PIHelpers.openContentChooser(null, ICON, addIconAction, ITEM_STACK, ENTITY, IMAGE);
+        toBack();  //TODO override always on top and only do this if the py window is on top of the mc window.
     }
 
     private void editIcon(ActionEvent evt) {
@@ -1158,34 +1466,32 @@ public class PIEditor extends javax.swing.JFrame {
             return;
         }
 
-        Icon selected = iconList.getSelectedValue();
+        ContentInfo selected = iconList.getSelectedValue();
+
         if (selected == null) {
             JOptionPane.showMessageDialog(this, "Please select an icon to edit!", "Error", JOptionPane.ERROR_MESSAGE);
             return;
         }
 
-        String message = "This dialog allows you to edit an icon on this page.\n" +
-                "Avalible icon types are Item Stacks, Entities, Player's and images.\n" +
-                "Images must be hosted online. Only http addresses are currently supported.\n";
+        JsonObject selectedObj = selected.getAsIconObj();
 
+        Consumer<ContentInfo> addIconAction = new Consumer<ContentInfo>() {
+            @Override
+            public void accept(ContentInfo contentInfo) {
+                DocumentationPage iconPage = DocumentationManager.getPage(page.getPageURI());
+                toFront();
+                if (contentInfo != null && !(iconPage instanceof RootPage)) {
+                    iconPage.getIcons().remove(selectedObj);
+                    iconPage.getIcons().add(contentInfo.getAsIconObj());
+                    iconPage.saveToDisk();
+                    PIHelpers.reloadPageList();
+                    setSelectedPage(DocumentationManager.getPage(selectedPageURI));
+                }
+            }
+        };
 
-        Map<String, java.util.List<String>> map = new HashMap<>();
-        map.put("image", new ArrayList<>());
-        SelectIcon selector = createSelectDialog(map, message, selected.type.name().toLowerCase(), selected.iconString);
-        selector.setVisible(true);
-        if (selector.canceled || selector.getIconString().isEmpty()) {
-            return;
-        }
-
-        page.getIcons().remove(selected.save());
-
-        String isp = selector.getIconType().equals("player") ? "player:" : "";
-        Icon icon = new Icon(Icon.IconType.get(selector.getIconType()), isp + selector.getIconString());
-        page.getIcons().add(icon.save());
-        String sp = selectedPageURI;
-        page.saveToDisk();
-        DocumentationManager.checkAndReloadDocFiles();
-        setSelectedPage(DocumentationManager.getPage(sp));
+        PIHelpers.openContentChooser(selected, ICON, addIconAction, ITEM_STACK, ENTITY, IMAGE);
+        toBack();  //TODO override always on top and only do this if the py window is on top of the mc window.
     }
 
     private void removeIcon(ActionEvent evt) {
@@ -1194,17 +1500,21 @@ public class PIEditor extends javax.swing.JFrame {
             return;
         }
 
-        Icon selected = iconList.getSelectedValue();
+        ContentInfo selected = iconList.getSelectedValue();
         if (selected == null) {
             JOptionPane.showMessageDialog(this, "Please select an icon to delete!", "Error", JOptionPane.ERROR_MESSAGE);
             return;
         }
 
-        page.getIcons().remove(selected.save());
-        String sp = selectedPageURI;
-        page.saveToDisk();
-        DocumentationManager.checkAndReloadDocFiles();
-        setSelectedPage(DocumentationManager.getPage(sp));
+        ProcessHandlerClient.syncTask(() -> {
+            LogHelper.bigDev(page.getIcons().contains(selected.getAsIconObj()) + " " + selected.getAsIconObj());
+            LogHelper.dev(page.getIcons());
+            LogHelper.dev(selected.hasEquipment());
+            page.getIcons().remove(selected.getAsIconObj());
+            page.saveToDisk();
+            PIHelpers.reloadPageList();
+            setSelectedPage(DocumentationManager.getPage(selectedPageURI));
+        });
     }
 
     //endregion
@@ -1212,32 +1522,32 @@ public class PIEditor extends javax.swing.JFrame {
     //region Relations
 
     private void addRelation(ActionEvent evt) {
-        DocumentationPage page = getSelected();
-        JOptionPane.showMessageDialog(this, "Relations are not yet implemented!", "NYI", JOptionPane.ERROR_MESSAGE);
-        if (page == null || true) {
-            return;
-        }
-
-        String message = "This dialog allows you to add a relation for this page.\n" +
-                "Relations are stacks or entities that are related to this page in some way.\n" +
-                "This is used to link eo a page by pressing the info button while hovering over an item in inventory.\n" +
-                "Required format is\n" +
-                "stack|minecraft:stone\n" +
-                "stack|minecraft:stone,<count>,<meta>,{<nbt>}\n" +
-                "entity|minecraft:zombie";
-
-        Map<String, java.util.List<String>> map = new HashMap<>();
-        SelectIcon selector = createSelectDialog(map, message, "stack", "");
-        selector.setVisible(true);
-        if (selector.canceled || selector.getIconString().isEmpty()) {
-            return;
-        }
-
-        page.getLinked().add(selector.getIconType()+":"+selector.getIconString());
-        String selected = selectedPageURI;
-        page.saveToDisk();
-        DocumentationManager.checkAndReloadDocFiles();
-        setSelectedPage(DocumentationManager.getPage(selected));
+//        DocumentationPage page = getSelected();
+//        JOptionPane.showMessageDialog(this, "Relations are not yet implemented!", "NYI", JOptionPane.ERROR_MESSAGE);
+//        if (page == null || true) {
+//            return;
+//        }
+//
+//        String message = "This dialog allows you to add a relation for this page.\n" +
+//                "Relations are stacks or entities that are related to this page in some way.\n" +
+//                "This is used to link eo a page by pressing the info button while hovering over an item in inventory.\n" +
+//                "Required format is\n" +
+//                "stack|minecraft:stone\n" +
+//                "stack|minecraft:stone,<count>,<meta>,{<nbt>}\n" +
+//                "entity|minecraft:zombie";
+//
+//        Map<String, java.util.List<String>> map = new HashMap<>();
+//        SelectIcon selector = createSelectDialog(map, message, "stack", "");
+//        selector.setVisible(true);
+//        if (selector.canceled || selector.getIconString().isEmpty()) {
+//            return;
+//        }
+//
+//        page.getLinked().add(selector.getIconType()+":"+selector.getIconString());
+//        String selected = selectedPageURI;
+//        page.saveToDisk();
+//        DocumentationManager.checkAndReloadDocFiles();
+//        setSelectedPage(DocumentationManager.getPage(selected));
     }
 
     private void editRelation(ActionEvent evt) {
@@ -1248,14 +1558,12 @@ public class PIEditor extends javax.swing.JFrame {
         // TODO add your handling code here:
     }
 
-    //endregion
-
-    private SelectIcon createSelectDialog(Map<String, java.util.List<String>> map, String message, String startType, String startContent) {
-        if (!map.containsKey("stack")) map.put("stack", PIHelpers.getPlayerInventory());
-        if (!map.containsKey("entity")) map.put("entity", PIHelpers.getEntitySelectionList());
-        map.put("player", new ArrayList<>());
-        return new SelectIcon(this, message, map, startType, startContent);
-    }
+//    private SelectIcon createSelectDialog(Map<String, java.util.List<String>> map, String message, String startType, String startContent) {
+//        if (!map.containsKey("stack")) map.put("stack", PIHelpers.getPlayerInventory());
+//        if (!map.containsKey("entity")) map.put("entity", PIHelpers.getEntitySelectionList());
+//        map.put("player", new ArrayList<>());
+//        return new SelectIcon(this, message, map, startType, startContent);
+//    }
 
     //endregion
 
@@ -1274,7 +1582,6 @@ public class PIEditor extends javax.swing.JFrame {
         selectedPageURI = page == null ? "" : page.getPageURI();
         boolean isModPage = page instanceof ModStructurePage;
         boolean pageSelected = page != null;
-
 
         newPageButton.setEnabled(pageSelected);
 
@@ -1317,6 +1624,8 @@ public class PIEditor extends javax.swing.JFrame {
             cycleIcons.setSelected(page.cycle_icons());
             toggleHidden.setSelected(page.isHidden());
 
+            tabbedPain.setSelectedIndex(page instanceof ModStructurePage ? 0 : 1);
+
             readMDFile(page);
 
             //This just makes sure the row is selected in the tree. This can be an issue when the page is not selected by clicking it in the tree.
@@ -1337,8 +1646,13 @@ public class PIEditor extends javax.swing.JFrame {
             markdownWindow.setText("");
         }
 
-        reloadLists(page instanceof ModStructurePage);
+        reloadLists();
         reloading = false;
+
+        BoundedRangeModel model = mdScrollPane.getVerticalScrollBar().getModel();
+        double scrollPos = (double) model.getValue() / (double) (model.getMaximum() - model.getMinimum());
+        ProcessHandlerClient.syncTask(() -> TabManager.openPage(page == null ? null : page.getPageURI(), false));
+//        ProcessHandlerClient.syncTask(() -> TabManager.getActiveTab().updateScroll(scrollPos));
     }
 
     private void readMDFile(DocumentationPage page) {
@@ -1356,7 +1670,7 @@ public class PIEditor extends javax.swing.JFrame {
         }
     }
 
-    private void reloadLists(boolean modPage) {
+    private void reloadLists() {
         DocumentationPage page = getSelected();
         iconListModel.clear();
         relationListModel.clear();
@@ -1366,14 +1680,14 @@ public class PIEditor extends javax.swing.JFrame {
             return;
         }
 
-        page.getIcons().forEach(jsonObject -> iconListModel.addElement(Icon.load(jsonObject)));
+        page.getIcons().forEach(jsonObject -> iconListModel.addElement(ContentInfo.fromIconObj(jsonObject)));
 
         ModStructurePage sp = DocumentationManager.getModPage(page.getModid());
         if (sp != null) {
             sp.getModAliases().forEach(alias -> aliasListModel.addElement(alias));
         }
 
-        if (!modPage) {
+        if (!(page instanceof ModStructurePage)) {
             page.getLinked().forEach(s -> relationListModel.addElement(s));
         }
     }
@@ -1389,7 +1703,7 @@ public class PIEditor extends javax.swing.JFrame {
 
     //endregion
 
-    //<editor-fold defaultstate="collapsed" desc=" MD Editing ">
+    //region MD Editing
 
     private void mdTextChange(KeyEvent evt) {
         DocumentationPage page = getSelected();
@@ -1397,32 +1711,246 @@ public class PIEditor extends javax.swing.JFrame {
             markdownWindow.setText("");
         }
         else {
-            try {
-                page.setRawMarkdown(markdownWindow.getText());
-            }
-            catch (DocumentationPage.MDException e) {
-                JOptionPane.showMessageDialog(this, "An error occurred!\n\n" + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
-            }
+            ProcessHandlerClient.syncTask(() -> {
+                try {
+                    page.setRawMarkdown(markdownWindow.getText());
+                }
+                catch (DocumentationPage.MDException e) {
+                    JOptionPane.showMessageDialog(this, "An error occurred!\n\n" + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+                }
+            });
         }
     }
 
     private void insertAction(ActionEvent evt) {
-        // TODO add your handling code here:
+        String action = evt.getActionCommand();
+
+        Consumer<ContentInfo> applyContentTag = new Consumer<ContentInfo>() {
+            @Override
+            public void accept(ContentInfo contentInfo) {
+                if (contentInfo != null) {
+                    String tag = contentInfo.toMDTag();
+                    markdownWindow.insert(tag + " ", markdownWindow.getCaretPosition());
+                    markdownWindow.moveCaretPosition(markdownWindow.getCaretPosition() + tag.length());
+                    toFront();
+                    mdTextChange(null);
+                }
+            }
+        };
+
+        switch (action) {
+            case "stack":
+                PIHelpers.openContentChooser(null, MD_CONTENT, applyContentTag, ITEM_STACK);
+                break;
+            case "recipe": {
+                PIHelpers.openContentChooser(null, GuiContentSelect.SelectMode.PICK_STACK, contentInfo -> SwingUtilities.invokeLater(() -> {
+                    if (contentInfo == null) return;
+                    MDTagDialog tagD = new MDTagDialog(this, MDTagDialog.TagType.RECIPE);
+                    tagD.setStack(contentInfo.stack.toString());
+                    tagD.setVisible(true);
+                    markdownWindow.insert(tagD.getTag(), markdownWindow.getCaretPosition());
+                }), ContentInfo.ContentType.ITEM_STACK);
+                break;
+            }
+            case "image":
+                PIHelpers.openContentChooser(null, MD_CONTENT, applyContentTag, IMAGE);
+                break;
+            case "link": {
+                MDTagDialog tagD = new MDTagDialog(this, MDTagDialog.TagType.LINK);
+                tagD.setVisible(true);
+                markdownWindow.insert(tagD.getTag(), markdownWindow.getCaretPosition());
+                break;
+            }
+            case "entity":
+                PIHelpers.openContentChooser(null, MD_CONTENT, applyContentTag, ENTITY);
+                break;
+            case "rule": {
+                MDTagDialog tagD = new MDTagDialog(this, MDTagDialog.TagType.RULE);
+                tagD.setVisible(true);
+                markdownWindow.insert(tagD.getTag(), markdownWindow.getCaretPosition());
+                break;
+            }
+            case "table": {
+                MDTagDialog tagD = new MDTagDialog(this, MDTagDialog.TagType.TABLE);
+                tagD.setVisible(true);
+                markdownWindow.insert(tagD.getTag(), markdownWindow.getCaretPosition());
+                break;
+            }
+        }
+
+        mdTextChange(null);
     }
 
-    //</editor-fold>
+    private void insertFormat(TextFormatting format) {
+        int start = markdownWindow.getSelectionStart();
+        String selection = markdownWindow.getSelectedText();
+        String fs = format.toString();
 
-    //<editor-fold defaultstate="collapsed" desc=" Help Info ">
+        if (selection != null) {
+            selection = fs + selection + fs;
+            selection = selection.replace("\n", fs + "\n" + fs);
+            markdownWindow.replaceSelection(selection);
+        }
+        else {
+            markdownWindow.insert(fs, start);
+        }
+
+        mdTextChange(null);
+    }
+
+    private void mdMenuOpen(PopupMenuEvent evt) {
+        generateMDContext().forEach(comp -> mdContextMenu.add(comp));
+    }
+
+    private void mdMenuClose(PopupMenuEvent evt) {
+        mdContextMenu.removeAll();
+    }
+
+    private java.util.List<JComponent> generateMDContext() {
+        List<JComponent> menuItems = new LinkedList<>();
+        String selected = markdownWindow.getSelectedText();
+        JMenuItem item;
+        boolean hasEdit = false;
+
+        if (selected != null && !selected.isEmpty()) {
+            item = new JMenuItem("Copy");
+            item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_C, InputEvent.CTRL_MASK));
+            item.addActionListener(e -> markdownWindow.copy());
+            menuItems.add(item);
+
+        }
+
+        String clipboard = Utils.getClipboardString();
+        if (!clipboard.isEmpty()) {
+            item = new JMenuItem("Paste");
+            item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_V, InputEvent.CTRL_MASK));
+            item.addActionListener(e -> markdownWindow.paste());
+            menuItems.add(item);
+            hasEdit = true;
+        }
+
+        if (undo.canUndo()) {
+            item = new JMenuItem("Undo");
+            item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Z, InputEvent.CTRL_MASK));
+            item.addActionListener(e -> undo());
+            menuItems.add(item);
+            hasEdit = true;
+        }
+
+        if (undo.canRedo()) {
+            item = new JMenuItem("Redo");
+            item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Z, InputEvent.CTRL_MASK | InputEvent.SHIFT_MASK));
+            item.addActionListener(e -> redo());
+            menuItems.add(item);
+            hasEdit = true;
+        }
+
+        if (hasEdit) {
+            menuItems.add(new JPopupMenu.Separator());
+        }
+
+        JMenu formatMenu = new JMenu("Apply Format");
+        menuItems.add(formatMenu);
+
+        for (TextFormatting format : TextFormatting.values()) {
+            item = new JMenuItem(format.getFriendlyName());
+            item.addActionListener(e -> insertFormat(format));
+            item.setFont(item.getFont().deriveFont(4));
+            if (format.isColor()) {
+                item.setBackground(new Color(DataUtils.formatColour(format)));
+            }
+            else {
+                switch (format) {
+                    case BOLD:
+                        item.setText("<html><b>" + format.getFriendlyName() + "</html>");
+                        break;
+                    case STRIKETHROUGH:
+                        item.setText("<html><s>" + format.getFriendlyName() + "</html>");
+                        break;
+                    case UNDERLINE:
+                        item.setText("<html><u>" + format.getFriendlyName() + "</u></html>");
+                        break;
+                    case ITALIC:
+                        item.setText("<html><i>" + format.getFriendlyName() + "</html>");
+                        break;
+                }
+            }
+
+            formatMenu.add(item);
+        }
+
+        JMenu pFormatMenu = new JMenu("Paragraph Format");
+        menuItems.add(pFormatMenu);
+
+        pFormatMenu.add(item = new JMenuItem("Align Left"));
+        item.addActionListener(e -> insertParagraphTag("§align:left"));
+        pFormatMenu.add(item = new JMenuItem("Align Center"));
+        item.addActionListener(e -> insertParagraphTag("§align:center"));
+        pFormatMenu.add(item = new JMenuItem("Align Right"));
+        item.addActionListener(e -> insertParagraphTag("§align:right"));
+        pFormatMenu.add(item = new JMenuItem("Shadow"));
+        item.addActionListener(e -> insertParagraphTag("§shadow"));
+        pFormatMenu.add(item = new JMenuItem("Colour"));
+
+        item.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                JColorChooser chooser = new JColorChooser(Color.WHITE);
+
+                JLabel previewLabel = new JLabel("Colour Preview", JLabel.CENTER) {
+                    @Override
+                    public void paint(Graphics g) {
+                        super.paint(g);
+                        g.setColor(new Color(getForeground().getRGB()));
+                        g.fillRect(0, 0, getWidth(), getHeight());
+                    }
+                };
+                previewLabel.setFont(new Font("Serif", Font.BOLD | Font.ITALIC, 48));
+                previewLabel.setSize(previewLabel.getPreferredSize());
+                previewLabel.setBorder(BorderFactory.createEmptyBorder(0, 0, 1, 0));
+                chooser.setPreviewPanel(previewLabel);
+
+                JColorChooser.createDialog(PIEditor.this, "Select Colour", true, chooser, e1 -> insertParagraphTag("§colour[0x" + Integer.toHexString(chooser.getColor().getRGB()).substring(2) + "]"), null).setVisible(true);
+            }
+        });
+
+        return menuItems;
+    }
+
+    private void insertParagraphTag(String tag) {
+        int start = markdownWindow.getSelectionStart();
+        String text = markdownWindow.getText();
+
+        if ((start <= 0 || text.charAt(start - 1) == '\n') && (start + 1 >= text.length() || text.charAt(start) == '\n')) {
+            markdownWindow.insert("\n" + tag, start);
+        }
+        else {
+            markdownWindow.insert("\n" + tag + "\n", start);
+        }
+        mdTextChange(null);
+    }
+
+    private void editMenuSelect(MenuEvent evt) {
+        jMenu2.removeAll();
+        generateMDContext().forEach(jComponent -> jMenu2.add(jComponent));
+    }
+
+    //endregion
 
     private void helpAction(ActionEvent evt) {
         System.out.println(evt.getActionCommand());
         reload();
     }
 
+    private void mdScroll(MouseWheelEvent evt) {
+//        BoundedRangeModel model = mdScrollPane.getVerticalScrollBar().getModel();
+//        double scrollPos = (double) model.getValue() / (double) (model.getMaximum() - model.getMinimum());
+//        ProcessHandlerClient.syncTask(() -> TabManager.getActiveTab().updateScroll(scrollPos));
+    }
+
     //</editor-fold>
 
     //region Misc
-
 
     public DocumentationPage getSelected() {
         return DocumentationManager.getPage(selectedPageURI);
@@ -1442,61 +1970,61 @@ public class PIEditor extends javax.swing.JFrame {
         return StreamSupport.stream(new TreeIterator(tree, backwards).spliterator(), false);
     }
 
-    public static class Icon {
-
-        public IconType type = IconType.STACK;
-        public String iconString = "";
-
-        public Icon() {}
-
-        public Icon(IconType type, String iconString) {
-            this.type = type;
-            this.iconString = iconString;
-        }
-
-        @Override
-        public String toString() {
-            return type + " | " + iconString;
-        }
-
-        public static Icon load(JsonObject obj) {
-            Icon icon = new Icon();
-            if (JsonUtils.isString(obj, "type")) {
-                icon.type = IconType.get(JsonUtils.getString(obj, "type"));
-            }
-            if (JsonUtils.isString(obj, "icon_string")) {
-                icon.iconString = JsonUtils.getString(obj, "icon_string");
-            }
-            return icon;
-        }
-
-        public JsonObject save() {
-            JsonObject obj = new JsonObject();
-            obj.addProperty("type", type.name().toLowerCase());
-            obj.addProperty("icon_string", iconString);
-            return obj;
-        }
-
-        public enum IconType {
-            STACK,
-            ENTITY,
-            PLAYER,
-            IMAGE;
-
-            public static IconType get(String name) {
-                if (name.toLowerCase().equals("entity")) {
-                    return ENTITY;
-                }
-                else if (name.toLowerCase().equals("player")) {
-                    return ENTITY;
-                }
-                else if (name.toLowerCase().equals("image")) {
-                    return IMAGE;
-                }
-                return STACK;
-            }
-        }
-    }
+//    public static class Icon {
+//
+//        public IconType type = IconType.STACK;
+//        public String iconString = "";
+//
+//        public Icon() {}
+//
+//        public Icon(IconType type, String iconString) {
+//            this.type = type;
+//            this.iconString = iconString;
+//        }
+//
+//        @Override
+//        public String toString() {
+//            return type + " | " + iconString;
+//        }
+//
+//        public static Icon load(JsonObject obj) {
+//            Icon icon = new Icon();
+//            if (JsonUtils.isString(obj, "type")) {
+//                icon.type = IconType.get(JsonUtils.getString(obj, "type"));
+//            }
+//            if (JsonUtils.isString(obj, "icon_string")) {
+//                icon.iconString = JsonUtils.getString(obj, "icon_string");
+//            }
+//            return icon;
+//        }
+//
+//        public JsonObject save() {
+//            JsonObject obj = new JsonObject();
+//            obj.addProperty("type", type.name().toLowerCase());
+//            obj.addProperty("icon_string", iconString);
+//            return obj;
+//        }
+//
+//        public enum IconType {
+//            STACK,
+//            ENTITY,
+//            PLAYER,
+//            IMAGE;
+//
+//            public static IconType get(String name) {
+//                if (name.toLowerCase().equals("entity")) {
+//                    return ENTITY;
+//                }
+//                else if (name.toLowerCase().equals("player")) {
+//                    return ENTITY;
+//                }
+//                else if (name.toLowerCase().equals("image")) {
+//                    return IMAGE;
+//                }
+//                return STACK;
+//            }
+//        }
+//    }
 
     public static class Singleton<E> {
         private E e;
@@ -1601,12 +2129,15 @@ public class PIEditor extends javax.swing.JFrame {
     private JCheckBox copyDocFromSelected;
     private JCheckBox cycleIcons;
     private JSpinner enRevField;
-    private JList<Icon> iconList;
+    private JList<ContentInfo> iconList;
     private JLabel iconsLabel;
     private JTextField idField;
     private JLabel idLabel;
     private JButton jButton1;
     private JButton jButton10;
+    private JButton jButton11;
+    private JButton jButton12;
+    private JButton jButton13;
     private JButton jButton2;
     private JButton jButton3;
     private JButton jButton4;
@@ -1622,7 +2153,6 @@ public class PIEditor extends javax.swing.JFrame {
     private JMenuBar jMenuBar1;
     private JMenuItem jMenuItem1;
     private JPanel jPanel3;
-    private JScrollPane jScrollPane2;
     private JScrollPane jScrollPane3;
     private JScrollPane jScrollPane4;
     private JScrollPane jScrollPane5;
@@ -1634,6 +2164,8 @@ public class PIEditor extends javax.swing.JFrame {
     private JSplitPane jSplitPane1;
     private JToolBar jToolBar1;
     private JTextArea markdownWindow;
+    private JPopupMenu mdContextMenu;
+    private JScrollPane mdScrollPane;
     private JTextField modIdField;
     private JTextField modNameField;
     private JPanel modPanel;
