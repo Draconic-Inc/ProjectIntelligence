@@ -35,7 +35,6 @@ public class GuiProjectIntelligence extends ModularGuiScreen {
         new LanguageManager();
     }
 
-    //############################################################################
     //# Initialization & Reload
     //region //############################################################################
 
@@ -92,7 +91,6 @@ public class GuiProjectIntelligence extends ModularGuiScreen {
 
     //endregion
 
-    //############################################################################
     //# Getter's & Setters
     //region //############################################################################
     //Note there are a lot of useful helper methods in com.brandon3055.projectintelligence.PIHelpers
@@ -144,9 +142,6 @@ public class GuiProjectIntelligence extends ModularGuiScreen {
             this.mc.setIngameFocus();
         }
         this.mc.setIngameFocus();
-
-//        mc.inGameHasFocus = true;
-//        mc.mouseHelper.grabMouseCursor();
     }
 
     public static GuiPartMenu getMenuPart() {

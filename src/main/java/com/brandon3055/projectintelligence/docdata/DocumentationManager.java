@@ -32,13 +32,8 @@ import java.util.function.Predicate;
 public class DocumentationManager {
 
     public static File piConfigDirectory;
-//    public static FileDownloadManager downloadHandler = new FileDownloadManager("PI-Download-Handler", 6);
-
     private static File docDirectoryCache = null;
     private static File packDocDirectoryCache = null;
-    private static DocDownloader downloader = null;
-//    private static String selectedPageURI = "";
-
     private static RootPage rootPage = new RootPage();
 
     /**
@@ -56,15 +51,6 @@ public class DocumentationManager {
      * This is only ever populated with active pages (meaning only the active doc version)
      */
     private static Map<ModStructurePage, File> structureFileMap = Collections.synchronizedMap(new HashMap<>());
-
-// This will be part of the master manifest class used to download per version manifests. It is not used
-//    /**
-//     * This map maps mods to available doc versions for said mod.
-//     * This is populated from the master manifest once it is downloaded.
-//     * The version best matching the installed mod version is then selected from this
-//     * list and that version of the documentation is downloaded.
-//     */
-//    private static Map<String, List<String>> modAvalibleVersionsMap = new HashMap<>();
 
     /**
      * This is a map of all installed documentation file revisions for each mod.
@@ -89,7 +75,6 @@ public class DocumentationManager {
      */
     private static Map<String, File> packDocFileMap = Collections.synchronizedMap(new HashMap<>());
 
-    //############################################################################
     //# Initialization
     //region //############################################################################
 
@@ -105,7 +90,6 @@ public class DocumentationManager {
 
     //endregion
 
-    //############################################################################
     //# Documentation File Loading
     //region //############################################################################
 
@@ -123,8 +107,6 @@ public class DocumentationManager {
         }
 
         PIUpdateManager.performFullUpdateCheck();
-//        startDocUpdater();
- //       loadDocumentationFromDisk();
     }
 
     /**
@@ -228,7 +210,7 @@ public class DocumentationManager {
      * @param versionFolder The version folder for this structure file. (~/modid/x.x.x)
      * @return true if the structure file was successful parsed.
      */
-    private static boolean parseStructureFile(File structureFile, File versionFolder, boolean isPackDoc) {
+    private static void parseStructureFile(File structureFile, File versionFolder, boolean isPackDoc) {
         try {
             JsonParser parser = new JsonParser();
             JsonReader jsonReader = new JsonReader(new FileReader(structureFile));
@@ -241,12 +223,12 @@ public class DocumentationManager {
                 //Make sure the structure file was valid (If it is not the generate method will return null)
                 if (structurePage == null) {
                     PIHelpers.displayError("Found invalid doc structure file: " + structureFile + " No modid or lang detected.");
-                    return false;
+                    return;
                 }
 
                 if (isPackDoc) {
                     packDocFileMap.put(structurePage.modid, versionFolder);
-                    return true;
+                    return;
                 }
 
                 //Check that the structure file is in the correct directory for its modid and version. This is essential because mod id and version are used to find page md files
@@ -255,30 +237,27 @@ public class DocumentationManager {
                 //Make sure the this structure file is in the correct mod root folder
                 if (!versionFolder.getParentFile().getName().equals(structurePage.getModid())) {
                     PIHelpers.displayError("Found a mod documentation structure file in the wrong rood mod folder!\n\nThe name of the mod folder must match the mod's mod id!\n\nFound file for modid: " + structurePage.modid + " In folder:" + versionFolder.getParentFile());
-                    return false;
+                    return;
                 }
 
                 //Make sure the structure version matches the version folder name. This is important because this is used to find the correct path to the md files
                 if (!versionFolder.getName().equals(structurePage.modVersion)) {
                     PIHelpers.displayError("Found a mod documentation structure file in the wrong version folder!\n\nThe name of the version folder must match the version!\n\nFound file for version: " + structurePage.modVersion + " In folder:" + versionFolder);
-                    return false;
+                    return;
                 }
 
                 //Finally assuming all checks passed the validated version folder is added to the list of all installed documentation versions
                 installedModVersionFileMap.computeIfAbsent(structurePage.getModid(), s -> new HashMap<>()).put(structurePage.modVersion, versionFolder);
             }
             else {
-                return false;
             }
         }
         catch (Exception e) {
             PIHelpers.displayError("Error reading mod descriptor file: " + e.getMessage() + "\n\nError occurred while reading file: " + structureFile);
             LogHelper.error("Error reading mod descriptor file");
             e.printStackTrace();
-            return false;
         }
 
-        return true;
     }
 
     public static void saveDocToDisk(ModStructurePage modPage) {
@@ -543,34 +522,6 @@ public class DocumentationManager {
     }
     //    Its loading things from the ModDocd need think when not tired
 
-
-    //endregion
-
-    //############################################################################
-    //# Remote file handling
-    //region //############################################################################
-
-//    /**
-//     * Starts the document update thread.
-//     * When complete the thread will reload
-//     */
-//    public static void startDocUpdater() {
-//        if (PIConfig.editMode() || (downloader != null && !downloader.finished)) {
-//            if (PIConfig.editMode()) {
-//                LogHelper.dev("Doc Update Canceled: edit mode");
-//            }
-//            else {
-//                LogHelper.dev("Doc Update Canceled: Download in progress");
-//            }
-//            return;
-//        }
-//
-//        File docDir = getDocDirectory();
-//        downloader = new DocDownloader(docDir, manifestURL, DocumentationManager::loadDocumentationFromDisk);
-////        downloader.forceUpdate();
-//        downloader.start();
-//    }
-
     //endregion
 
     //############################################################################
@@ -632,10 +583,6 @@ public class DocumentationManager {
      */
     public static ModStructurePage getModPage(String modid) {
         return modStructureMap.get(modid);
-//        Map<String, ModStructurePage> map = modStructureMap.get(modid);
-//        String bestMatch = getBestLangMatch(activeLanguage(), new LinkedList<>(map.keySet()));
-//        if (map.containsKey(bestMatch)) return map.get(bestMatch);
-//        return DataUtils.getIndex(map.values(), 0);
     }
 
     public static boolean hasPage(String pagePath) {
@@ -733,7 +680,6 @@ public class DocumentationManager {
         modStructureMap.put(docID, docPage);
         saveDocToDisk(docPage);
 
-
         LanguageManager.setPageName(docID, docID + ":", docName, LanguageManager.getUserLanguage());
         checkAndReloadDocFiles();
     }
@@ -757,60 +703,7 @@ public class DocumentationManager {
 
     //endregion
 
-    //############################################################################
-    //# Page handling
-    //region //############################################################################
-
-//    public static DocumentationPage getSelectedPage() {
-//        return uriPageMap.getOrDefault(selectedPageURI, rootPage);
-////        return selectedPageURI;
-////        throw new RuntimeException("TODO Implement default page!");
-//    }
-//
-//    public static void setSelectedPage(DocumentationPage page) {
-//        selectedPageURI = page.getPageURI();
-//        GuiPartMDWindow window = GuiProjectIntelligence.getMDPart();
-//        if (window != null) {
-//            window.openPage(selectedPageURI, false);
-//        }
-//    }
-
-//    /**
-//     * Used by the MD window to set the selected page.
-//     * This is used to prevent a recursive loop since the default setter tells the MD window to set selected which then fires this method.
-//     */
-//    public static void setSelectedNoCallback(String pageURI) {
-//        selectedPageURI = pageURI;
-//    }
-
-//    /**
-//     * @return a list of sub pages for the current selected page.
-//     */
-//    public static LinkedList<DocumentationPage> getSubPages() {
-//        LinkedList<DocumentationPage> list = new LinkedList<>();
-//        DocumentationPage page = getSelectedPage();
-//        LogHelper.dev("Selected: " + page);
-//
-//        if (page == null || (page.getSubPages().isEmpty() && page.parent == null)) {
-//            for (String modid : modStructureMap.keySet()) {
-//                list.add(getModPage(modid));
-//            }
-//        }
-//        else {
-//            if (page.getSubPages().isEmpty()) {
-//                list.addAll(page.parent.getSubPages());
-//            }
-//            else {
-//                list.addAll(page.getSubPages());
-//            }
-//        }
-//
-//        return list;
-//    }
-
     public static boolean doesPageExist(String pageURI) {
         return pageURI.equals(RootPage.ROOT_URI) || uriPageMap.containsKey(pageURI);
     }
-
-    //endregion
 }

@@ -67,7 +67,7 @@ public class StyledSelectDialog<T> extends GuiSelectDialog<T> {
             drawBorderedRect(xPos(), yPos(), xSize(), ySize(), thickBorders ? 3 : 1, fill, border);
         }
 
-        drawCenteredString(fontRenderer, heading, xPos() + xSize() / 2, yPos() + 4, StyleHandler.getInt(prop + "." + StyleType.TEXT_COLOUR.getName()), false);
+        drawCenteredString(fontRenderer, heading, xPos() + xSize() / 2F, yPos() + 4, StyleHandler.getInt(prop + "." + StyleType.TEXT_COLOUR.getName()), false);
 
         super.renderElement(minecraft, mouseX, mouseY, partialTicks);
     }

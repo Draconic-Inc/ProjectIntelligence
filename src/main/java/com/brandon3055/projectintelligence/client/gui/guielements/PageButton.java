@@ -61,7 +61,7 @@ public class PageButton extends GuiButton {
         loadIcons();
 
         boolean noIcon = icons.isEmpty();
-        int textXPos = 0;//activeIcon == null ? xPos() : xPos() + 20;
+        int textXPos = 0;
         int textXSize = noIcon ? xSize() : xSize() - 20;
         label = new GuiLabel(page.getDisplayName()) {
             @Override

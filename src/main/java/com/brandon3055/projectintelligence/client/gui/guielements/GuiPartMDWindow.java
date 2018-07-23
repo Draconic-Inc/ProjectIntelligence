@@ -240,7 +240,6 @@ public class GuiPartMDWindow extends MGuiElementBase<GuiPartMDWindow> {
         protected GuiPartMDWindow mdWindow;
         protected GuiSlideControl scrollBar;
         protected GuiScrollElement scrollElement;
-        //        protected GuiMarkdownElement markdownElement;
         protected MDElementContainer markdownContainer;
 
         public PageTab(GuiPartMDWindow mdWindow, TabData tabData) {
@@ -257,7 +256,6 @@ public class GuiPartMDWindow extends MGuiElementBase<GuiPartMDWindow> {
 
             closeButton = new GuiButton().setXPosMod((guiButton, integer) -> maxXPos() - 11).setYPos(yPos() + 2).setSize(9, 9);
             closeButton.setListener(() -> TabManager.closeTab(tabData));
-//            closeButton.consumeHoverOverlay = true;
             closeButton.setHoverText(I18n.format("pi.button.close"));
             closeButton.setFillColour(0).setBorderColours(0, 0xFF000000);
             closeButton.addChild(new GuiTexture(64, 16, 5, 5, PITextures.PI_PARTS).setRelPos(0, 2).setXPosMod((guiButton, integer) -> maxXPos() - 9));
@@ -294,22 +292,14 @@ public class GuiPartMDWindow extends MGuiElementBase<GuiPartMDWindow> {
             //so the "fade out" effect works
             scrollElement.setInsets(2, 1, 2, 11);
             scrollElement.setStandardScrollBehavior();
-//            scrollElement.setListMode(GuiScrollElement.ListMode.VERT_LOCK_POS);
             mdWindow.addChild(scrollElement);
             mdWindow.pageElementMap.put(this, scrollElement);
-
-//            markdownElement = new GuiMarkdownElement();
-//            markdownElement.setLinkListener(this::openLink);
-//            markdownElement.setImageListener(this::openLink);
-//            markdownElement.setColourProvider(() -> baseTextColour);
-//            markdownElement.setInsets(6, 6, 6, 2);
 
             markdownContainer = new MDElementContainer(this);
             markdownContainer.setInsets(6, 6, 6, 6);
             markdownContainer.addAndFireReloadCallback(guiMarkdownElement -> guiMarkdownElement.setPosAndSize(scrollElement.getInsetRect()));
             markdownContainer.setLinkClickCallback(this::openLink);
             markdownContainer.linkDisplayTarget = scrollElement;
-//            markdownElement.addAndFireReloadCallback(guiMarkdownElement -> guiMarkdownElement.setPos(scrollElement.getInsetRect().x, scrollElement.getInsetRect().y).setXSize(scrollElement.getInsetRect().width));
             scrollElement.addElement(markdownContainer);
         }
 
@@ -576,12 +566,7 @@ public class GuiPartMDWindow extends MGuiElementBase<GuiPartMDWindow> {
             //Reloading is done like this because it is an expensive task and the regular reloadElement method may be called multiple times during a reload operation.
             if (shouldReloadMD && isEnabled()) {
                 shouldReloadMD = false;
-//                markdownElement.clear();
-//                markdownElement.clearContainer();
                 DocumentationPage page = tabData.getDocPage();
-
-//                MDElementFactory factory = new MDElementFactory(markdownElement);
-//                factory.setColourSupplier(() -> baseTextColour);
 
                 if (page == null) {
                     String[] errorText = new String[]{ //
@@ -591,18 +576,10 @@ public class GuiPartMDWindow extends MGuiElementBase<GuiPartMDWindow> {
                             "I suggest you try reloading PI."};
 
                     updateMarkdown(Lists.newArrayList(errorText));
-//                    markdownElement.parseMarkdown(errorText);
-//                    new PiMarkdownReader(errorText).accept(factory);
                 }
                 else {
-//                    markdownElement.parseMarkdown(page.getMarkdownLines());
-//                    new PiMarkdownReader(page.getMarkdownLines()).accept(factory);
                     updateMarkdown(page.getMarkdownLines());
                 }
-//                markdownElement.reloadElement();
-//                scrollElement.updateScrollElement();
-//                scrollElement.reloadElement();
-//                markdownElement.updateLayout();
             }
             //endregion
 
@@ -623,9 +600,3 @@ public class GuiPartMDWindow extends MGuiElementBase<GuiPartMDWindow> {
         }
     }
 }
-
-
-//        if (PIUpdateManager.downloadManager.running) {
-//                int i = (ClientEventHandler.elapsedTicks / 10) % 3;
-//                drawCenteredString(fontRenderer, "Downloading Updates" + (i == 0 ? "." : i == 1 ? ".." : "..."), xSize() / 2, 5, 0xFFFFFF, false);
-//                }

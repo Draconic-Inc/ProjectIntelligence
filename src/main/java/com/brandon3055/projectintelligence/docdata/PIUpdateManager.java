@@ -291,10 +291,6 @@ public class PIUpdateManager {
         return Hashing.sha1().hashBytes(FileUtils.readFileToByteArray(file)).toString();
     }
 
-    public static boolean isDownloadInProgress() {
-        return false;
-    }
-
     public enum UpdateStage {
         INACTIVE,
         DL_MASTER_MANIFEST,

@@ -24,7 +24,6 @@ import java.io.IOException;
  */
 public class GuiPartMenu extends MGuiElementBase<GuiPartMenu> {
     private GuiProjectIntelligence guiMain;
-    //    private GuiPartConfigWindow piConfigWindow = null;
     public GuiStyleEditor styleEditor = null;
     public GuiPIConfig configUI = null;
     private GuiLabel title;
@@ -35,7 +34,6 @@ public class GuiPartMenu extends MGuiElementBase<GuiPartMenu> {
 
     @Override
     public void addChildElements() {
-//        DocumentationManager.setSelectedPage(null);//TODO Temp
         styleEditor = new GuiStyleEditor(this);
         configUI = new GuiPIConfig(this);
 
@@ -98,7 +96,6 @@ public class GuiPartMenu extends MGuiElementBase<GuiPartMenu> {
         editorButton.setFillColour(0);
         editorButton.setBorderColours(0xFF707070, 0xFFA0A0A0);
         editorButton.setEnabledCallback(PIConfig::editMode);
-//        editorButton.setPos((xSize() / 2) - 50, (ySize() / 2) - 7);
         editorButton.setListener((event, eventSource) -> PIHelpers.displayEditor());
         addChild(editorButton);
 

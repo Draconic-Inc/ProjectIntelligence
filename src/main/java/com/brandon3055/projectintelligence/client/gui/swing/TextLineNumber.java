@@ -1,13 +1,19 @@
 package com.brandon3055.projectintelligence.client.gui.swing;
 
-import java.awt.*;
-import java.awt.event.*;
-import java.beans.*;
-import java.util.HashMap;
 import javax.swing.*;
-import javax.swing.border.*;
-import javax.swing.event.*;
+import javax.swing.border.Border;
+import javax.swing.border.CompoundBorder;
+import javax.swing.border.EmptyBorder;
+import javax.swing.border.MatteBorder;
+import javax.swing.event.CaretEvent;
+import javax.swing.event.CaretListener;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import javax.swing.text.*;
+import java.awt.*;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
+import java.util.HashMap;
 
 public class TextLineNumber extends JPanel implements CaretListener, DocumentListener, PropertyChangeListener {
 
@@ -302,7 +308,7 @@ public class TextLineNumber extends JPanel implements CaretListener, DocumentLis
         else // We need to check all the attributes for font changes
         {
             if (fonts == null) {
-                fonts = new HashMap<String, FontMetrics>();
+                fonts = new HashMap<>();
             }
 
             Element root = component.getDocument().getDefaultRootElement();
@@ -375,29 +381,21 @@ public class TextLineNumber extends JPanel implements CaretListener, DocumentLis
         //  View of the component has not been updated at the time
         //  the DocumentEvent is fired
 
-        SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    int endPos = component.getDocument().getLength();
-                    java.awt.Rectangle rect = component.modelToView(endPos);
+        SwingUtilities.invokeLater(() -> {
+            try {
+                int endPos = component.getDocument().getLength();
+                Rectangle rect = component.modelToView(endPos);
 
-                    if (rect != null && rect.y != lastHeight) {
-                        setPreferredWidth();
-                        repaint();
-                        lastHeight = rect.y;
-                    }
-                }
-                catch (BadLocationException ex) {
-                    /* nothing to do */
+                if (rect != null && rect.y != lastHeight) {
+                    setPreferredWidth();
+                    repaint();
+                    lastHeight = rect.y;
                 }
             }
+            catch (BadLocationException ignored) {}
         });
     }
 
-    //
-//  Implement PropertyChangeListener interface
-//
     @Override
     public void propertyChange(PropertyChangeEvent evt) {
         if (evt.getNewValue() instanceof Font) {

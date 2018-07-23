@@ -17,7 +17,6 @@ public class ContentInfo {
     //Stack
     public StackReference stack = new StackReference(ItemStack.EMPTY);
     public boolean drawHover = true;//draw_hover (Mainly for stacks, Draws normal stack tooltip) //Default True
-//    String altHover = "";//alt_hover (Mainly for stacks, Draws alternate stack tooltip)
 
     //Entity
     public String entity = "minecraft:pig";
@@ -30,7 +29,6 @@ public class ContentInfo {
     public boolean trackMouse = false;//track_mouse
     public boolean drawName = false;//draw_name
     public boolean allowDrag = false;//Allow drag //todo
-//        boolean isPlayer = false;//isPlayer
 
     //Image
     public String imageURL = "http://ss.brandon3055.com/iqx38ra.jpg";
@@ -54,7 +52,7 @@ public class ContentInfo {
 
     public ContentInfo(ContentType type) {
         this.type = type;
-        ArrayUtils.fillArray(entityInventory, ItemStack.EMPTY);
+        ArrayUtils.fill(entityInventory, ItemStack.EMPTY);
     }
 
     public JsonObject getAsIconObj() {

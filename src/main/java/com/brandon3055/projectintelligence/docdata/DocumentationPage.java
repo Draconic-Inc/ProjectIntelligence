@@ -34,11 +34,8 @@ public class DocumentationPage {
     //TODO Change to objects similar to icons
     protected LinkedList<String> relations = new LinkedList<>();
 
-//    protected int revision;
-//    protected int targetEnRev;
     protected int sortingWeight;
 
-    //    protected String lang;
     protected String modid;
     protected String pageId;
     protected String pageURI;
@@ -57,7 +54,6 @@ public class DocumentationPage {
     protected String modVersion;
     protected String markdownFile = "";
     protected String rawMarkdownString;
-//    protected Map<String, String> versionMdMap = new HashMap<>();
 
     protected boolean hidden;
     protected boolean cycle_icons;
@@ -130,10 +126,6 @@ public class DocumentationPage {
         return relations;
     }
 
-//    public boolean checkModVersion() {
-//        return modVersion.isEmpty() || PIHelpers.doesModVersionMatch(modid, modVersion);
-//    }
-
     public String getDisplayName() {
         return LanguageManager.getPageName(pageURI, getLocalizationLang());
     }
@@ -148,21 +140,6 @@ public class DocumentationPage {
     public boolean isPackDoc() {
         return isPackDoc;
     }
-
-    //    public String getRawMarkdownString() {
-//        if (rawMarkdownString == null) {
-//            File mdFile = getMarkdownFile();
-//
-//            try {
-//                rawMarkdownString = new String(Files.readAllBytes(mdFile.toPath()));
-//            }
-//            catch (IOException e) {
-//                rawMarkdownString = "";
-//            }
-//        }
-//
-//        return rawMarkdownString;
-//    }
 
     public LinkedList<String> getMarkdownLines() {
         if (mdLineCache == null) {
@@ -211,14 +188,6 @@ public class DocumentationPage {
     public int getSortingWeight() {
         return sortingWeight;
     }
-
-//    public String getModVersions() {
-//        return modVersion;
-//    }
-
-//    public int getRevision() {
-//        return revision;
-//    }
 
     /**
      * This is the page file path only used for locating the pages md file. {@link #getPageURI()} should be used for everything else.
@@ -272,11 +241,6 @@ public class DocumentationPage {
         TabManager.getActiveTab().reloadTab();
     }
 
-//    public void setDisplayName(String displayName) {
-//        this.displayName = displayName;
-//        saveToDisk();
-//    }
-
     public void setPageId(String pageId) {
         this.pageId = pageId;
         saveToDisk();
@@ -287,24 +251,13 @@ public class DocumentationPage {
         saveToDisk();
     }
 
-//    public void setModVersion(String modVersion) {
-//        this.modVersion = modVersion;
-//        saveToDisk();
-//    }
-
     public void setRevision(int revision) {
-//        this.revision = revision;
         PageLangData data = LanguageManager.getLangData(pageURI, LanguageManager.getUserLanguage());
         if (data != null) {
             data.pageRev = revision;
         }
         saveToDisk();
     }
-//
-//    public void setTargetEnRev(int targetEnRev) {
-//        this.targetEnRev = targetEnRev;
-//        saveToDisk();
-//    }
 
     public void setHidden(boolean hidden) {
         this.hidden = hidden;
@@ -324,12 +277,7 @@ public class DocumentationPage {
 
     public void loadFromJson(JsonObject jObj) {
         pageId = JsonUtils.getString(jObj, "id", "<invalid-id>");
-//        modVersion = JsonUtils.getString(jObj, "mod_versions", "");
-//        displayName = JsonUtils.getString(jObj, "name", "[Unnamed]");
         markdownFile = JsonUtils.getString(jObj, "file", "");
-
-//        revision = JsonUtils.getInt(jObj, "revision", 0);
-//        targetEnRev = JsonUtils.getInt(jObj, "target_en_rev", -1);
         sortingWeight = JsonUtils.getInt(jObj, "sorting_weight", 0);
         cycle_icons = JsonUtils.getBoolean(jObj, "cycle_icons", false);
         hidden = JsonUtils.getBoolean(jObj, "hidden", false);
@@ -373,14 +321,10 @@ public class DocumentationPage {
         JsonObject jObj = new JsonObject();
 
         jObj.addProperty("id", pageId);
-//        jObj.addProperty("name", displayName);
         jObj.addProperty("file", markdownFile);
-//        jObj.addProperty("mod_versions", modVersion);
         jObj.addProperty("cycle_icons", cycle_icons);
         jObj.addProperty("hidden", hidden);
 
-//        if (revision > 0) jObj.addProperty("revision", revision);
-//        if (targetEnRev != -1) jObj.addProperty("target_en_rev", targetEnRev);
         if (sortingWeight > 0) jObj.addProperty("sorting_weight", sortingWeight);
 
         if (relations.size() > 0) {

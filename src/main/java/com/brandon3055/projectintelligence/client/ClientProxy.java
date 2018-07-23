@@ -14,7 +14,6 @@ public class ClientProxy extends CommonProxy {
     @Override
     public void preInit(FMLPreInitializationEvent event) {
         super.preInit(event);
-//        WikiDocManager.initialize();
         PIConfig.initialize();
         StyleHandler.initialize();
         DocumentationManager.initialize();

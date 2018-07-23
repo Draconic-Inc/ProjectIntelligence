@@ -13,7 +13,6 @@ public class ProjectIntelligence {
     public static final String MODID = "projectintelligence";
     public static final String MODNAME = "Project Intelligence";
     public static final String VERSION = "${mod_version}";
-    public static final String MOD_PREFIX = MODID.toLowerCase() + ":";
     public static final String PROXY_CLIENT = "com.brandon3055.projectintelligence.client.ClientProxy";
     public static final String PROXY_SERVER = "com.brandon3055.projectintelligence.CommonProxy";
     public static final String DEPENDENCIES = "required-after:brandonscore@[" + BrandonsCore.VERSION + ",);";

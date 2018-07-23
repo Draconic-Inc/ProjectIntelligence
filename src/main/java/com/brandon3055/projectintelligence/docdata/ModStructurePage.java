@@ -26,11 +26,6 @@ public class ModStructurePage extends DocumentationPage {
     protected List<String> modAliases = new LinkedList<>();
     protected Map<String, DocumentationPage> URIPageMap = new HashMap<>();
 
-//    /**
-//     * Used to define a version range to which this documentation belongs.
-//     */
-//    protected String modVersionRange = "";
-
     protected ModStructurePage(DocumentationPage parent, String modid, String modVersion, boolean isPackDoc) {
         super(parent, modid, modVersion, isPackDoc);
     }
@@ -46,59 +41,6 @@ public class ModStructurePage extends DocumentationPage {
     public String getPageId() {
         return getModid();
     }
-
-    //    /**
-//     * Finds the closest version of the md file available for the current mod version.
-//     */
-//    @Override
-//    public File getMarkdownFile() {
-//        String file;
-//        if (versionMdMap.isEmpty()) {
-//            file = "[error no files listed]";
-//        }
-//        else if (!Loader.isModLoaded(modid)) {
-//            if (versionMdMap.containsKey("any")){
-//                file = versionMdMap.get("any");
-//            }
-//            else {
-//                file = DataUtils.getIndex(versionMdMap.values(), 0);
-//            }
-//        }
-//        else {
-//            ModContainer mod = Loader.instance().getIndexedModList().get(modid);
-//            DefaultArtifactVersion version = new DefaultArtifactVersion(modid, mod.getVersion());
-//
-//            ArtifactVersion latest = null;
-//            String lvs = "";
-//            for (String vString : versionMdMap.keySet()) {
-//                if (vString.equals("any")) continue;
-//
-//                try {
-//                    VersionRange target = VersionRange.createFromVersionSpec(vString);
-//                    DefaultArtifactVersion tVersion = new DefaultArtifactVersion(modid, target.getLowerBoundString());
-//                    if (target.containsVersion(version) && (latest == null || latest.compareTo(tVersion) > 0)) {
-//                        latest = tVersion;
-//                        lvs = vString;
-//                    }
-//                }
-//                catch (InvalidVersionSpecificationException e) {
-//                    PIHelpers.displayError("Found invalid mod version string when getting mod markdown file for mod: " + modid + ", Version: " + version + ", Version File: " + versionMdMap.get(vString));
-//                }
-//            }
-//
-//            if (lvs.isEmpty() && versionMdMap.containsKey("any")) {
-//                file = versionMdMap.get("any");
-//            }
-//            else if (lvs.isEmpty()) {
-//                file = DataUtils.getIndex(versionMdMap.values(), 0);
-//            }
-//            else {
-//                file = versionMdMap.get(lvs);
-//            }
-//        }
-//
-//        return new File(DocumentationManager.getDocDirectory(), modid + "/descriptors" + "/" + file);
-//    }
 
     public List<String> getModAliases() {
         return modAliases;
@@ -126,7 +68,6 @@ public class ModStructurePage extends DocumentationPage {
         return new File(getVersionDir(),"structure");
     }
 
-    //############################################################################
     //# Read and Write to JSON
     //region //############################################################################
 
@@ -153,19 +94,6 @@ public class ModStructurePage extends DocumentationPage {
                 }
             }
         }
-
-//        if (JsonUtils.isJsonArray(jObj, "root")) {
-//            versionMdMap.clear();
-//            for (JsonElement element : JsonUtils.getJsonArray(jObj, "root")) {
-//                if (element.isJsonObject()) {
-//                    JsonObject jso = element.getAsJsonObject();
-//                    String version = JsonUtils.getString(jso, "mod_version", "any");
-//                    String file = JsonUtils.getString(jso, "file", "[errorNotFound]");
-//                    versionMdMap.put(version, file);
-//                }
-//            }
-//        }
-
 
         if (JsonUtils.isJsonArray(jObj, "relations")) {
             relations.clear();
@@ -200,10 +128,6 @@ public class ModStructurePage extends DocumentationPage {
         jObj.addProperty("mod_version", modVersion);
         jObj.addProperty("file", markdownFile);
 
-//        if (!modVersionRange.isEmpty()) {
-//            jObj.addProperty("mod_versions", modVersionRange);
-//        }
-//
         if (modAliases.size() > 0) {
             JsonArray array = new JsonArray();
             for (String id : modAliases) {
@@ -211,18 +135,6 @@ public class ModStructurePage extends DocumentationPage {
             }
             jObj.add("mod_aliases", array);
         }
-
-//        if (versionMdMap.size() > 0) {
-//            JsonArray array = new JsonArray();
-//            for (String version : versionMdMap.keySet()) {
-//                JsonObject jso = new JsonObject();
-//                jso.addProperty("mod_version", version);
-//                jso.addProperty("file", versionMdMap.get(version));
-//                array.add(jso);
-//            }
-//            jObj.add("root", array);
-//        }
-
 
         if (relations.size() > 0) {
             JsonArray array = new JsonArray();
