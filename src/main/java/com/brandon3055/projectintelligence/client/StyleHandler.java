@@ -113,7 +113,14 @@ public class StyleHandler {
                 .addSubProp(new BooleanProperty(THICK_BORDERS, false));
         footer.addSubProp(new ColourProperty(COLOUR, 0xFFa0a0a0, true));
         footer.addSubProp(new ColourProperty(BORDER, 0x00000000, true));
-        footer.addSubProp(new ColourProperty(TEXT_COLOUR, 0x000000, false));
+
+        StyleProperty search = pageList.addSubProp(new StyleProperty(SEARCH));
+        search.addSubProp(new ColourProperty(TEXT_COLOUR, 0xFFFFFF, false));
+        search.addSubProp(new ColourProperty(COLOUR, 0xFF000000, true));
+        search.addSubProp(new ColourProperty(BORDER, 0xFFFFFFFF, true));
+        StyleProperty searchSettings = search.addSubProp(new StyleProperty(SETTINGS_BUTTON));
+        searchSettings.addSubProp(new ColourProperty(COLOUR, 0xFFA0A0A0, false));
+        searchSettings.addSubProp(new ColourProperty(HOVER, 0xFFC0C0C0, false));
 
         StyleProperty pageButtons = pageList.addSubProp(new StyleProperty(PAGE_BUTTONS));
         pageButtons.addSubProp(new BooleanProperty(VANILLA_TEXTURE, false));
@@ -661,6 +668,7 @@ public class StyleHandler {
         HEADER("header"),
         BODY("body"),
         FOOTER("footer"),
+        SEARCH("search"),
         SCROLL_BAR("scroll_bar"),
         SCROLL_SLIDER("scroll_slider"),
         COMPACT_BAR("small_bar"),

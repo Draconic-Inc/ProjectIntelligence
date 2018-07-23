@@ -6,23 +6,39 @@ import codechicken.lib.math.MathHelper;
 import com.brandon3055.brandonscore.client.ResourceHelperBC;
 import com.brandon3055.brandonscore.client.gui.modulargui.MGuiElementBase;
 import com.brandon3055.brandonscore.client.gui.modulargui.baseelements.GuiButton;
+import com.brandon3055.brandonscore.client.gui.modulargui.baseelements.GuiPopUpDialogBase;
 import com.brandon3055.brandonscore.client.gui.modulargui.baseelements.GuiScrollElement;
 import com.brandon3055.brandonscore.client.gui.modulargui.baseelements.GuiSlideControl;
+import com.brandon3055.brandonscore.client.gui.modulargui.guielements.GuiLabel;
 import com.brandon3055.brandonscore.client.gui.modulargui.guielements.GuiTexture;
 import com.brandon3055.brandonscore.client.gui.modulargui.lib.GuiAlign;
-import com.brandon3055.brandonscore.client.gui.modulargui.markdown.GuiMarkdownElement;
+import com.brandon3055.brandonscore.client.gui.modulargui.markdown.MDElementContainer;
+import com.brandon3055.brandonscore.client.gui.modulargui.markdown.MDElementFactory;
+import com.brandon3055.brandonscore.client.gui.modulargui.markdown.reader.PiMarkdownReader;
+import com.brandon3055.brandonscore.utils.Utils;
+import com.brandon3055.projectintelligence.PIHelpers;
 import com.brandon3055.projectintelligence.client.PITextures;
 import com.brandon3055.projectintelligence.client.StyleHandler;
 import com.brandon3055.projectintelligence.client.gui.GuiProjectIntelligence;
 import com.brandon3055.projectintelligence.client.gui.TabManager;
 import com.brandon3055.projectintelligence.client.gui.TabManager.TabData;
+import com.brandon3055.projectintelligence.docdata.DocumentationManager;
 import com.brandon3055.projectintelligence.docdata.DocumentationPage;
+import com.brandon3055.projectintelligence.docdata.ModStructurePage;
+import com.brandon3055.projectintelligence.docdata.RootPage;
+import com.brandon3055.projectintelligence.utils.LogHelper;
+import com.google.common.collect.Lists;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.resources.I18n;
+import net.minecraft.util.text.TextFormatting;
 
 import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import static com.brandon3055.brandonscore.client.gui.modulargui.baseelements.GuiSlideControl.SliderRotation.VERTICAL;
@@ -39,6 +55,11 @@ public class GuiPartMDWindow extends MGuiElementBase<GuiPartMDWindow> {
     public GuiPartMDWindow(GuiProjectIntelligence mainWindow) {
         this.mainWindow = mainWindow;
         this.disableOnRemove = true;
+    }
+
+    @Override
+    public void addChildElements() {
+        super.addChildElements();
     }
 
     @Override
@@ -194,30 +215,10 @@ public class GuiPartMDWindow extends MGuiElementBase<GuiPartMDWindow> {
     }
 
     private void updateStyle() {
-//        boolean shadedBorders = StyleHandler.getBoolean("md_window.header." + StyleHandler.StyleType.SHADED_BORDERS.getName());
-//        boolean vanillaT = StyleHandler.getBoolean("md_window.header." + StyleHandler.StyleType.VANILLA_TEXTURE.getName());
-//        int colour = StyleHandler.getInt("md_window.header." + StyleHandler.StyleType.COLOUR.getName());
-//        int border = StyleHandler.getInt("md_window.header." + StyleHandler.StyleType.BORDER.getName());
-
-//        bodyShadedBorders = StyleHandler.getBoolean("md_window.body." + StyleHandler.StyleType.SHADED_BORDERS.getName());
         bodyVanillaT = StyleHandler.getBoolean("md_window.body." + StyleHandler.StyleType.VANILLA_TEXTURE.getName());
         bodyColour = StyleHandler.getColour("md_window.body." + StyleHandler.StyleType.COLOUR.getName());
         bodyBorder = StyleHandler.getInt("md_window.body." + StyleHandler.StyleType.BORDER.getName());
         baseTextColour = StyleHandler.getInt("md_window.body." + StyleHandler.StyleType.TEXT_COLOUR.getName());
-
-//        btnVanillaTex = StyleHandler.getBoolean("page_list.page_buttons." + StyleHandler.StyleType.VANILLA_TEXTURE.getName());
-//        btnShadedBorders = StyleHandler.getBoolean("page_list.page_buttons." + StyleHandler.StyleType.SHADED_BORDERS.getName());
-//        btnThickBorders = StyleHandler.getBoolean("page_list.page_buttons.shaded_borders." + StyleHandler.StyleType.THICK_BORDERS.getName());
-//        btnColour = StyleHandler.getColour("page_list.page_buttons." + StyleHandler.StyleType.COLOUR.getName());
-//        btnColourHover = StyleHandler.getColour("page_list.page_buttons." + StyleHandler.StyleType.HOVER.getName());
-//        btnBorder = StyleHandler.getColour("page_list.page_buttons." + StyleHandler.StyleType.BORDER.getName());
-//        btnBorderHover = StyleHandler.getColour("page_list.page_buttons." + StyleHandler.StyleType.BORDER_HOVER.getName());
-//        btnTextColour = StyleHandler.getInt("page_list.page_buttons." + StyleHandler.StyleType.TEXT_COLOUR.getName());
-//        btnTextColourHover = StyleHandler.getInt("page_list.page_buttons." + StyleHandler.StyleType.TEXT_HOVER.getName());
-//        btnTextShadow = StyleHandler.getBoolean("page_list.page_buttons." + StyleHandler.StyleType.TEXT_SHADOW.getName());
-//        btnIconVanillaTex = StyleHandler.getBoolean("page_list.page_buttons.page_icon." + StyleType.VANILLA_TEXTURE.getName());
-//        btnIconBackground = StyleHandler.getColour("page_list.page_buttons.page_icon." + StyleType.BACKGROUND.getName());
-//        btnIconBorder = StyleHandler.getColour("page_list.page_buttons.page_icon." + StyleType.BORDER.getName());
     }
 
     public static boolean bodyShadedBorders = false;
@@ -225,17 +226,6 @@ public class GuiPartMDWindow extends MGuiElementBase<GuiPartMDWindow> {
     public static Colour bodyColour = new ColourARGB(0);
     public static int bodyBorder = 0;
     public static int baseTextColour = 0;
-//    public static boolean btnThickBorders = false;
-//    public static Colour btnColour = new ColourARGB(0);
-//    public static Colour btnColourHover = new ColourARGB(0);
-//    public static Colour btnBorder = new ColourARGB(0);
-//    public static Colour btnBorderHover = new ColourARGB(0);
-//    public static int btnTextColour = 0;
-//    public static int btnTextColourHover = 0;
-//    public static boolean btnIconVanillaTex = false;
-//    public static boolean btnTextShadow = false;
-//    public static Colour btnIconBackground = new ColourARGB(0);
-//    public static Colour btnIconBorder = new ColourARGB(0);
 
     public static class PageTab extends MGuiElementBase<PageTab> {
 
@@ -250,7 +240,8 @@ public class GuiPartMDWindow extends MGuiElementBase<GuiPartMDWindow> {
         protected GuiPartMDWindow mdWindow;
         protected GuiSlideControl scrollBar;
         protected GuiScrollElement scrollElement;
-        protected GuiMarkdownElement markdownElement;
+        //        protected GuiMarkdownElement markdownElement;
+        protected MDElementContainer markdownContainer;
 
         public PageTab(GuiPartMDWindow mdWindow, TabData tabData) {
             this.mdWindow = mdWindow;
@@ -264,10 +255,12 @@ public class GuiPartMDWindow extends MGuiElementBase<GuiPartMDWindow> {
         public void addChildElements() {
             super.addChildElements();
 
-            closeButton = new GuiButton().setXPosMod((guiButton, integer) -> maxXPos() - 11).setYPos(yPos() + 1).setSize(10, 10);
-            closeButton.setListener((event, eventSource) -> TabManager.closeTab(tabData));
+            closeButton = new GuiButton().setXPosMod((guiButton, integer) -> maxXPos() - 11).setYPos(yPos() + 2).setSize(9, 9);
+            closeButton.setListener(() -> TabManager.closeTab(tabData));
+//            closeButton.consumeHoverOverlay = true;
             closeButton.setHoverText(I18n.format("pi.button.close"));
-            closeButton.addChild(new GuiTexture(64, 16, 5, 5, PITextures.PI_PARTS).setRelPos(0, 3).setXPosMod((guiButton, integer) -> maxXPos() - 9));
+            closeButton.setFillColour(0).setBorderColours(0, 0xFF000000);
+            closeButton.addChild(new GuiTexture(64, 16, 5, 5, PITextures.PI_PARTS).setRelPos(0, 2).setXPosMod((guiButton, integer) -> maxXPos() - 9));
             addChild(closeButton);
 
             scrollBar = new GuiSlideControl(VERTICAL);
@@ -297,23 +290,108 @@ public class GuiPartMDWindow extends MGuiElementBase<GuiPartMDWindow> {
             scrollElement.setXPosMod((e, i) -> mdWindow.xPos()).setYPosMod((e, i) -> mdWindow.yPos() + 12);
             scrollElement.setXSizeMod((e, i) -> mdWindow.xSize()).setYSizeMod((e, i) -> mdWindow.ySize() - 12);
             scrollElement.setEnabledCallback(() -> TabManager.getActiveTab() == tabData);
-            scrollElement.setInsets(2, 0, 2, 10);
+            //This padding makes room for the scroll bar and insets the top and bottom of the md container
+            //so the "fade out" effect works
+            scrollElement.setInsets(2, 1, 2, 11);
             scrollElement.setStandardScrollBehavior();
+//            scrollElement.setListMode(GuiScrollElement.ListMode.VERT_LOCK_POS);
             mdWindow.addChild(scrollElement);
             mdWindow.pageElementMap.put(this, scrollElement);
 
-            markdownElement = new GuiMarkdownElement();
-            markdownElement.setColourProvider(() -> baseTextColour);
-            markdownElement.setInsets(6, 6, 6, 2);
-            markdownElement.addAndFireReloadCallback(guiMarkdownElement -> guiMarkdownElement.setPosAndSize(scrollElement.getInsetRect()));
-//            markdownElement.setXPosMod((e, i) -> mdWindow.xPos()).setYPosMod((e, i) -> mdWindow.yPos() + 12);
-//            markdownElement.setXSizeMod((e, i) -> mdWindow.xSize()).setYSizeMod((e, i) -> mdWindow.ySize() - 12);
-            scrollElement.addElement(markdownElement);
+//            markdownElement = new GuiMarkdownElement();
+//            markdownElement.setLinkListener(this::openLink);
+//            markdownElement.setImageListener(this::openLink);
+//            markdownElement.setColourProvider(() -> baseTextColour);
+//            markdownElement.setInsets(6, 6, 6, 2);
+
+            markdownContainer = new MDElementContainer(this);
+            markdownContainer.setInsets(6, 6, 6, 6);
+            markdownContainer.addAndFireReloadCallback(guiMarkdownElement -> guiMarkdownElement.setPosAndSize(scrollElement.getInsetRect()));
+            markdownContainer.setLinkClickCallback(this::openLink);
+            markdownContainer.linkDisplayTarget = scrollElement;
+//            markdownElement.addAndFireReloadCallback(guiMarkdownElement -> guiMarkdownElement.setPos(scrollElement.getInsetRect().x, scrollElement.getInsetRect().y).setXSize(scrollElement.getInsetRect().width));
+            scrollElement.addElement(markdownContainer);
+        }
+
+        //TODO add custom link confirmation dialog
+        private void openLink(String link, int button) {
+            GuiButton.playGenericClick(mc);
+            if (link.startsWith("https://") || link.startsWith("http://") || !link.contains(":")) {
+                URI uri;
+                try {
+                     uri = new URI(link);
+                }
+                catch (URISyntaxException e) {
+                    e.printStackTrace();
+                    PIHelpers.displayError("Failed to open link due to unknown error!\n"+e.getMessage());
+                    return;
+                }
+                GuiPopUpDialogBase dialog = new GuiPopUpDialogBase(this);
+                dialog.setXSize(300);
+                dialog.setDragBar(12);
+                dialog.setCloseOnCapturedClick(true);
+                MGuiElementBase background;
+                dialog.addChild(background = new StyledGuiRect("user_dialogs"));
+
+                GuiLabel infoLabel = new GuiLabel(I18n.format("pi.md.link_confirmation.txt"));
+                infoLabel.setWrap(true).setShadow(false);
+                infoLabel.setTextColour(StyleHandler.getInt("user_dialogs." + StyleHandler.StyleType.TEXT_COLOUR.getName()));
+                infoLabel.setXSize(dialog.xSize() - 30);
+                infoLabel.setHeightForText();
+                infoLabel.setRelPos(15, 10);
+                dialog.addChild(infoLabel);
+
+                GuiLabel urlLabel = new GuiLabel("\"" + link + "\"");
+                urlLabel.setWrap(true).setShadow(false);
+                urlLabel.setTextColour(StyleHandler.getInt("user_dialogs." + StyleHandler.StyleType.TEXT_COLOUR.getName()));
+                urlLabel.setXSize(dialog.xSize() - 30);
+                urlLabel.setHeightForText();
+                urlLabel.setPos(infoLabel.xPos(), infoLabel.maxYPos() + 10);
+                dialog.addChild(urlLabel);
+
+                GuiButton yesButton = new StyledGuiButton("user_dialogs." + StyleHandler.StyleType.BUTTON_STYLE.getName());
+                yesButton.setText(I18n.format("pi.button.yes"));
+                yesButton.setSize(80, 15);
+                yesButton.setPos(dialog.xPos() + 15, urlLabel.maxYPos() + 10);
+                yesButton.setListener(() -> Utils.openWebLink(uri));
+                dialog.addChild(yesButton);
+
+                GuiButton copyButton = new StyledGuiButton("user_dialogs." + StyleHandler.StyleType.BUTTON_STYLE.getName());
+                copyButton.setText(I18n.format("pi.button.copy_to_clipboard"));
+                copyButton.setSize(108, 15);
+                copyButton.setRelPos(yesButton, 81, 0);
+                copyButton.setListener(() -> Utils.setClipboardString(link));
+                dialog.addChild(copyButton);
+
+                GuiButton cancelButton = new StyledGuiButton("user_dialogs." + StyleHandler.StyleType.BUTTON_STYLE.getName());
+                cancelButton.setText(I18n.format("pi.button.cancel"));
+                cancelButton.setSize(80, 15);
+                cancelButton.setRelPos(copyButton, 109, 0);
+                dialog.addChild(cancelButton);
+
+                dialog.setYSize((cancelButton.maxYPos() + 10) - dialog.yPos());
+                background.setPosAndSize(dialog);
+                dialog.showCenter();
+                return;
+            }
+            DocumentationPage page = DocumentationManager.getPage(link);
+            if (!(page instanceof RootPage)) {
+                if (page == null) {
+                    PIHelpers.displayError("The specified page \"" + link + "\" could not be found!\nThis is ether a broken link or the mod to which the specified page belongs is not installed.");
+                }
+                else {
+                    TabManager.openPage(link, button == 2);
+                }
+            }
         }
 
         @Override
         public void reloadElement() {
             moveX = 0;
+            if (tabData == null || tabData.getDocPage() == null) {
+                LogHelper.bigDev("Null Tab Data");
+                return;
+            }
             name = tabData.getDocPage().getDisplayName();
             scrollBar.setYSize(mdWindow.ySize() - 12);
             scrollBar.getBackgroundElement().setYSize(mdWindow.ySize() - 12);
@@ -426,6 +504,36 @@ public class GuiPartMDWindow extends MGuiElementBase<GuiPartMDWindow> {
         }
 
         @Override
+        public boolean renderOverlayLayer(Minecraft minecraft, int mouseX, int mouseY, float partialTicks) {
+            if (super.renderOverlayLayer(minecraft, mouseX, mouseY, partialTicks)) {
+                return true;
+            }
+
+            if (isMouseOver(mouseX, mouseY) && hoverTime > 10 && !isDragging) {
+                List<String> list = new ArrayList<>();
+                DocumentationPage page = tabData.getDocPage();
+                if (page instanceof RootPage) {
+                    page = ((RootPage) page).getHomePage();
+                }
+
+                if (page != null) {
+                    if (page instanceof ModStructurePage) {
+                        list.add(TextFormatting.BLUE + page.getModName());
+                    }
+                    else {
+                        list.add(TextFormatting.BLUE + page.getModName() + ": " + TextFormatting.GOLD + name);
+                    }
+                    list.add(TextFormatting.GRAY + page.getPageURI());
+
+                    drawHoveringText(list, mouseX, mouseY, fontRenderer, screenWidth, screenHeight);
+                }
+                return true;
+            }
+
+            return false;
+        }
+
+        @Override
         public boolean onUpdate() {
             //Detect if the page has changes
             if (!pageURI.equals(tabData.pageURI)) {
@@ -442,7 +550,9 @@ public class GuiPartMDWindow extends MGuiElementBase<GuiPartMDWindow> {
                     scrollBar.getBackgroundElement().setXSize(4);
                     scrollBar.getSliderElement().setXSize(4);
                     scrollBar.setInsets(1, 0, 1, 0);
-                    scrollElement.reloadElement();
+                    scrollElement.setInsets(2, 1, 2, 6);
+                    markdownContainer.reloadElement();
+                    markdownContainer.layoutMarkdownElements();
                 }
             }
             else if (scrollBar.xSize() != 10) {
@@ -451,7 +561,9 @@ public class GuiPartMDWindow extends MGuiElementBase<GuiPartMDWindow> {
                 scrollBar.getBackgroundElement().setXSize(10);
                 scrollBar.getSliderElement().setXSize(8);
                 scrollBar.setInsets(1, 1, 1, 1);
-                scrollElement.reloadElement();
+                scrollElement.setInsets(2, 1, 2, 11);
+                markdownContainer.reloadElement();
+                markdownContainer.layoutMarkdownElements();
             }
 
             if (scrollBar.getRawPos() != tabData.scrollPosition) {
@@ -464,19 +576,33 @@ public class GuiPartMDWindow extends MGuiElementBase<GuiPartMDWindow> {
             //Reloading is done like this because it is an expensive task and the regular reloadElement method may be called multiple times during a reload operation.
             if (shouldReloadMD && isEnabled()) {
                 shouldReloadMD = false;
-                markdownElement.clear();
+//                markdownElement.clear();
+//                markdownElement.clearContainer();
                 DocumentationPage page = tabData.getDocPage();
 
+//                MDElementFactory factory = new MDElementFactory(markdownElement);
+//                factory.setColourSupplier(() -> baseTextColour);
+
                 if (page == null) {
-                    markdownElement.parseMarkdown(new String[]{ //
+                    String[] errorText = new String[]{ //
                             "An error occurred while loading the page!", //
                             "Page at " + tabData.pageURI + " could not be found.", //
                             "This error should not be possible unless PI is in an invalid state.", //
-                            "I suggest you try reloading PI."});
+                            "I suggest you try reloading PI."};
+
+                    updateMarkdown(Lists.newArrayList(errorText));
+//                    markdownElement.parseMarkdown(errorText);
+//                    new PiMarkdownReader(errorText).accept(factory);
                 }
                 else {
-                    markdownElement.parseMarkdown(page.getMarkdownLines());
+//                    markdownElement.parseMarkdown(page.getMarkdownLines());
+//                    new PiMarkdownReader(page.getMarkdownLines()).accept(factory);
+                    updateMarkdown(page.getMarkdownLines());
                 }
+//                markdownElement.reloadElement();
+//                scrollElement.updateScrollElement();
+//                scrollElement.reloadElement();
+//                markdownElement.updateLayout();
             }
             //endregion
 
@@ -484,5 +610,22 @@ public class GuiPartMDWindow extends MGuiElementBase<GuiPartMDWindow> {
 
             return super.onUpdate();
         }
+
+        private void updateMarkdown(List<String> mdLines) {
+            markdownContainer.clearContainer();
+
+            PiMarkdownReader reader = new PiMarkdownReader(mdLines);
+            MDElementFactory factory = new MDElementFactory(markdownContainer);
+            factory.setColourSupplier(() -> baseTextColour);
+            reader.accept(factory);
+
+            markdownContainer.layoutMarkdownElements();
+        }
     }
 }
+
+
+//        if (PIUpdateManager.downloadManager.running) {
+//                int i = (ClientEventHandler.elapsedTicks / 10) % 3;
+//                drawCenteredString(fontRenderer, "Downloading Updates" + (i == 0 ? "." : i == 1 ? ".." : "..."), xSize() / 2, 5, 0xFFFFFF, false);
+//                }

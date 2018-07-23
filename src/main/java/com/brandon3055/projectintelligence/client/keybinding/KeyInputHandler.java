@@ -28,7 +28,6 @@ public class KeyInputHandler {
     public void onKeyInput(InputEvent.KeyInputEvent event) {
         if (openPI.isPressed()) {
             Minecraft.getMinecraft().displayGuiScreen(new GuiProjectIntelligence());
-//            Minecraft.getMinecraft().displayGuiScreen(new GuiContentSelect(new GuiProjectIntelligence(), MD_CONTENT, IMAGE, ENTITY, ITEM_STACK));
         }
     }
 

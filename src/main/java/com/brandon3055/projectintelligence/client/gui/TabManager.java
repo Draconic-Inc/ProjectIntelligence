@@ -10,8 +10,6 @@ import com.brandon3055.projectintelligence.docdata.RootPage;
 import javax.annotation.Nullable;
 import java.util.LinkedList;
 
-import static com.brandon3055.projectintelligence.docdata.DocumentationManager.getModPage;
-
 /**
  * Created by brandon3055 on 10/11/2017.
  * This class is used to manage all active pages (tabs) and everything related to them.
@@ -100,21 +98,34 @@ public class TabManager {
         LinkedList<DocumentationPage> list = new LinkedList<>();
         DocumentationPage page = getActiveTab().getDocPage();
 
-        if (page instanceof RootPage/*page == null || (page.getSubPages().isEmpty() && page.getParent() == null)*/) {
-            for (String modid : DocumentationManager.getModStructureMap().keySet()) {
-                list.add(getModPage(modid));
-            }
-        }
-        else {
-            if (page.getSubPages().isEmpty()) {
+        if (page.getSubPages().isEmpty()) {
+            if (page.getParent() != null) {
                 list.addAll(page.getParent().getSubPages());
             }
             else {
-                list.addAll(page.getSubPages());
+                PIHelpers.displayError("No documentation pages were found! This most likely means the documentation failed to download for some reason.", true);
             }
+        }
+        else {
+            list.addAll(page.getSubPages());
         }
 
         return list;
+    }
+
+    public static String getButtonController() {
+        DocumentationPage page = getActiveTab().getDocPage();
+        if (page instanceof RootPage/*page == null || (page.getSubPages().isEmpty() && page.getParent() == null)*/) {
+            return page.getPageURI();
+        }
+        else {
+            if (page.getSubPages().isEmpty()) {
+                return page.getParent().getPageURI();
+            }
+            else {
+                return page.getPageURI();
+            }
+        }
     }
 
     public static void switchTab(TabData tab) {
@@ -158,6 +169,18 @@ public class TabManager {
             pageList.reloadElement();
             mdWindow.reloadElement();
         }
+    }
+
+    public static void clear() {
+        openTabs.clear();
+    }
+
+    public static void goBack() {
+        getActiveTab().back();
+    }
+
+    public static void goForward() {
+        getActiveTab().forward();
     }
 
     public static class TabData {

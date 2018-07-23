@@ -80,6 +80,9 @@ public class GuiContentSelect extends ModularGuiContainer<Container> {
         this.xSize = 224;
         this.ySize = 230;
         this.selectMode = selectMode;
+        if (selectMode == SelectMode.ICON && contentInfo == null) {
+            this.contentInfo.drawSlot = true;
+        }
     }
 
     public GuiContentSelect(GuiScreen parent, SelectMode selectMode, ContentInfo.ContentType... selectableTypes) {
@@ -107,19 +110,19 @@ public class GuiContentSelect extends ModularGuiContainer<Container> {
             if (allowedTypes.contains(ITEM_STACK)) {
                 manager.add(button = new GuiButton("Item Stack").setVanillaButtonRender(true).setSize(70, 16).setPos(nextButtonPos, guiTop() + 5));
                 button.setToggleMode(true).setToggleStateSupplier(() -> selectedType == ITEM_STACK);
-                button.setListener((event, eventSource) -> changeType(ITEM_STACK));
+                button.setListener(() -> changeType(ITEM_STACK));
                 nextButtonPos = button.maxXPos() + 2;
             }
             if (allowedTypes.contains(ENTITY)) {
                 manager.add(button = new GuiButton("Entity").setVanillaButtonRender(true).setSize(70, 16).setPos(nextButtonPos, guiTop() + 5));
                 button.setToggleMode(true).setToggleStateSupplier(() -> selectedType == ENTITY);
-                button.setListener((event, eventSource) -> changeType(ENTITY));
+                button.setListener(() -> changeType(ENTITY));
                 nextButtonPos = button.maxXPos() + 2;
             }
             if (allowedTypes.contains(IMAGE)) {
                 manager.add(button = new GuiButton("Image").setVanillaButtonRender(true).setSize(70, 16).setPos(nextButtonPos, guiTop() + 5));
                 button.setToggleMode(true).setToggleStateSupplier(() -> selectedType == IMAGE);
-                button.setListener((event, eventSource) -> changeType(IMAGE));
+                button.setListener(() -> changeType(IMAGE));
             }
         }
 
@@ -145,8 +148,8 @@ public class GuiContentSelect extends ModularGuiContainer<Container> {
             addInventorySelection(container, guiLeft() + ((xSize() - 206) / 2), guiTop() + ySize() - 82);
             container.addChild(new GuiLabel("Select item from your inventory" + (JeiHelper.jeiAvailable() ? " or JEI" : "")).setTextColour(0).setShadow(false).setAlignment(GuiAlign.LEFT).setWrap(true).setPos(guiLeft() + 105, guiTop() + 93).setSize(xSize() - 110, 14));
 
-            container.addChild(new GuiButton("OK").setSize(40, 14).setVanillaButtonRender(true).setPos(guiLeft() + xSize() - 108, guiTop() + 128).setButtonListener((guiButton, pressed) -> finished(false)));
-            container.addChild(new GuiButton("Cancel").setSize(60, 14).setVanillaButtonRender(true).setPos(guiLeft() + xSize() - 65, guiTop() + 128).setButtonListener((guiButton, pressed) -> finished(true)));
+            container.addChild(new GuiButton("OK").setSize(40, 14).setVanillaButtonRender(true).setPos(guiLeft() + xSize() - 108, guiTop() + 128).setListener((guiButton, pressed) -> finished(false)));
+            container.addChild(new GuiButton("Cancel").setSize(60, 14).setVanillaButtonRender(true).setPos(guiLeft() + xSize() - 65, guiTop() + 128).setListener((guiButton, pressed) -> finished(true)));
 
             container.addChild(new GuiLabel("Preview").setSize(200, 12).setTrim(false).setPos(guiLeft() - 205, guiTop()).setAlignment(GuiAlign.RIGHT));
             stackRenderer = new GuiStackIcon(contentInfo.stack);
@@ -195,10 +198,10 @@ public class GuiContentSelect extends ModularGuiContainer<Container> {
 
             GuiButton pickEntity = new GuiButton("Find Entity").setVanillaButtonRender(true).setSize(95, 14).setPos(guiLeft() + 124, guiTop() + 187);
             container.addChild(pickEntity);
-            pickEntity.setListener((event, eventSource) -> openEntitySelector(pickEntity));
+            pickEntity.setListener(() -> openEntitySelector(pickEntity));
 
-            container.addChild(new GuiButton("OK").setSize(40, 14).setVanillaButtonRender(true).setPos(guiLeft() + xSize() - 108, guiTop() + ySize() - 20).setButtonListener((guiButton, pressed) -> finished(false)));
-            container.addChild(new GuiButton("Cancel").setSize(60, 14).setVanillaButtonRender(true).setPos(guiLeft() + xSize() - 65, guiTop() + ySize() - 20).setButtonListener((guiButton, pressed) -> finished(true)));
+            container.addChild(new GuiButton("OK").setSize(40, 14).setVanillaButtonRender(true).setPos(guiLeft() + xSize() - 108, guiTop() + ySize() - 20).setListener((guiButton, pressed) -> finished(false)));
+            container.addChild(new GuiButton("Cancel").setSize(60, 14).setVanillaButtonRender(true).setPos(guiLeft() + xSize() - 65, guiTop() + ySize() - 20).setListener((guiButton, pressed) -> finished(true)));
 
             container.addChild(new GuiLabel("Preview").setSize(200, 12).setTrim(false).setPos(guiLeft() - 205, guiTop()).setAlignment(GuiAlign.RIGHT));
             entityRenderer = new GuiEntityRenderer();
@@ -215,23 +218,16 @@ public class GuiContentSelect extends ModularGuiContainer<Container> {
             MGuiElementBase container = new MGuiElementBase().addToGroup(IMAGE.name());
             manager.add(container);
 
-            Consumer<GuiTextField> change = textField -> {
-                if (textField.getText().contains("\n")){
-                    textField.setText(textField.getText().replace("\\n", "\n"));
-                }
-                contentInfo.hover_text = textField.getText();
-                entityRenderer.setHoverTextArray(element -> contentInfo.hover_text.isEmpty() ? new String[]{} : contentInfo.hover_text.split("\n"));
-            };
             container.addChild(imgURLField = newTextField("Image URL:", guiTextField -> updateImage(), 0, 0).setText(contentInfo.imageURL)).setHoverText("Currently only accepts http links https is not supported (yet)");
             container.addChild(imgWidthField = newSizeField("Width:", value -> setImageSize(Utils.parseInt(value.getText()), -1), 2, 6).setText("" + contentInfo.width).setEnabled(selectMode.hasSizePos()).setHoverText("Sets the width of the image. If width is set height will be automatically updated based on the images aspect ratio"));
             container.addChild(imgHeightField = newSizeField("Height:", value -> setImageSize(-1, Utils.parseInt(value.getText())), 3, 0).setText("" + contentInfo.height).setEnabled(selectMode.hasSizePos()).setHoverText("Sets the height of the image. If width is set width will be automatically updated based on the images aspect ratio"));
 
             GuiButton borderColour = new GuiButton("Border Colour").setPos(guiLeft() + 119, guiTop() + 62).setSize(100, 14).setWrap(true).setVanillaButtonRender(true).setEnabled(selectMode.hasSizePos());
-            borderColour.setListener((event, eventSource) -> new GuiPickColourDialog(borderColour).setIncludeAlpha(false).setColour(contentInfo.borderColour).setColourChangeListener(integer -> contentInfo.borderColour = integer).showCenter());
+            borderColour.setListener(() -> new GuiPickColourDialog(borderColour).setIncludeAlpha(false).setColour(contentInfo.borderColour).setCCColourChangeListener(colour -> contentInfo.borderColour = colour).showCenter());
             container.addChild(borderColour);
 
             GuiButton hoverColour = new GuiButton("Border Hover").setPos(guiLeft() + 119, guiTop() + 78).setSize(100, 14).setWrap(true).setVanillaButtonRender(true).setEnabled(selectMode.hasSizePos());
-            hoverColour.setListener((event, eventSource) -> new GuiPickColourDialog(hoverColour).setIncludeAlpha(false).setColour(contentInfo.borderColourHover).setColourChangeListener(integer -> contentInfo.borderColourHover = integer).showCenter());
+            hoverColour.setListener(() -> new GuiPickColourDialog(hoverColour).setIncludeAlpha(false).setColour(contentInfo.borderColourHover).setCCColourChangeListener(colour -> contentInfo.borderColourHover = colour).showCenter());
             container.addChild(hoverColour);
 
             container.addChild(newIntField("Padding:", value -> contentInfo.leftPadding = contentInfo.topPadding = contentInfo.bottomPadding = contentInfo.rightPadding = contentInfo.padding = value, 4, 0).setEnabled(selectMode.hasSizePos()).setLinkedValue(() -> "" + contentInfo.padding).setHoverText("Adds uniform padding (a border) around the image"));
@@ -252,18 +248,26 @@ public class GuiContentSelect extends ModularGuiContainer<Container> {
                 contentInfo.padding = 0;
             }, 6, 100).setLinkedValue(() -> "" + contentInfo.rightPadding).setEnabled(selectMode.hasSizePos()).setHoverText("Sets custom padding for the right side of the image"));
 
+            Consumer<GuiTextField> change = textField -> {
+                if (textField.getText().contains("\n")){
+                    textField.setText(textField.getText().replace("\\n", "\n"));
+                }
+                contentInfo.hover_text = textField.getText();
+                entityRenderer.setHoverTextArray(element -> contentInfo.hover_text.isEmpty() ? new String[]{} : contentInfo.hover_text.split("\n"));
+            };
             container.addChild(newTextField("Hover text", change, 7, 0).setText(contentInfo.hover_text)).setHoverText("Allows you to add mouse hover text to this entity. Accepts \\n for new lines and the select character \\§ for formatting");
-            container.addChild(new GuiLabel("jpg images are preferred due to their smaller file size. Please consider converting your image to jpg format.").setEnabledCallback(() -> imgURLField.getText().endsWith(".png")).setShadow(false).setPos(guiLeft() + 5, guiTop() + ySize() - 50).setSize(xSize() - 10, 20).setWrap(true).setTextColour(0xFF0000));
+            container.addChild(newTextField("Link pageURI or web address (optional)", textField -> contentInfo.linkTarget = textField.getText(), 9, 0).setText(contentInfo.hover_text)).setHoverText("Allows you to add a link to be opened when this image is clicked.");
 
+            container.addChild(new GuiLabel("jpg images are preferred due to their smaller file size. Please consider converting your image to jpg format.").setEnabledCallback(() -> imgURLField.getText().endsWith(".png")).setShadow(false).setPos(guiLeft() - 60, guiTop() + ySize() + 5).setSize(xSize() + 120, 20).setWrap(true).setTextColour(0xFF0000));
 
-            container.addChild(new GuiButton("OK").setSize(40, 14).setVanillaButtonRender(true).setPos(guiLeft() + xSize() - 108, guiTop() + ySize() - 20).setButtonListener((guiButton, pressed) -> finished(false)));
-            container.addChild(new GuiButton("Cancel").setSize(60, 14).setVanillaButtonRender(true).setPos(guiLeft() + xSize() - 65, guiTop() + ySize() - 20).setButtonListener((guiButton, pressed) -> finished(true)));
+            container.addChild(new GuiButton("OK").setSize(40, 14).setVanillaButtonRender(true).setPos(guiLeft() + xSize() - 108, guiTop() + ySize() - 20).setListener((guiButton, pressed) -> finished(false)));
+            container.addChild(new GuiButton("Cancel").setSize(60, 14).setVanillaButtonRender(true).setPos(guiLeft() + xSize() - 65, guiTop() + ySize() - 20).setListener((guiButton, pressed) -> finished(true)));
 
             imageRenderer = new GuiTexture(0, 0, 18, 18, new ResourceLocation(""));
             imageRenderer.setTexSizeOverride(18, 18).setTexSheetSize(18);
             imageRenderer.setXPosMod((guiStackIcon, integer) -> guiLeft() - 5 - guiStackIcon.xSize() - contentInfo.rightPadding).setYPosMod((guiTexture, integer) -> guiTop() + contentInfo.topPadding);
             GuiBorderedRect imgBack = new GuiBorderedRect();
-            imgBack.setBorderColourGetter(hovering -> hovering ? contentInfo.borderColourHover : contentInfo.borderColour);
+            imgBack.setBorderColourGetter(hovering -> hovering ? contentInfo.borderColourHover == null ? 0 : contentInfo.borderColourHover.argb() : contentInfo.borderColour == null ? 0 : contentInfo.borderColour.argb());
             imgBack.setXPosMod((guiStackIcon, integer) -> guiLeft() - 5 - guiStackIcon.xSize()).setYPosMod((guiTexture, integer) -> guiTop());
             imgBack.setSizeModifiers((g, i) -> imageRenderer.xSize() + contentInfo.leftPadding + contentInfo.rightPadding, (g, i) -> imageRenderer.ySize() + contentInfo.topPadding + contentInfo.bottomPadding);
 
@@ -287,7 +291,7 @@ public class GuiContentSelect extends ModularGuiContainer<Container> {
         if (stateSupplier != null) {
             button.setToggleMode(true).setToggleStateSupplier(stateSupplier);
         }
-        button.setListener((event, eventSource) -> onClick.accept(button));
+        button.setListener(() -> onClick.accept(button));
         return button;
     }
 
@@ -321,7 +325,7 @@ public class GuiContentSelect extends ModularGuiContainer<Container> {
         textField.setMaxStringLength(8);
 
         GuiButton percent = new GuiButton("%").setToggleMode(true).setToggleStateSupplier(() -> contentInfo.sizePercent);
-        percent.setListener((event, eventSource) -> {
+        percent.setListener(() -> {
             contentInfo.sizePercent = !contentInfo.sizePercent;
             textField.setValidator(s -> s.isEmpty() || Utils.validInteger(s));
         });
@@ -426,7 +430,7 @@ public class GuiContentSelect extends ModularGuiContainer<Container> {
         selector.addChild(new GuiBorderedRect().setPosAndSize(selector).setColours(0xFFFFFFFF, 0xFF000000));
         selector.setRendererBuilder(s -> {
             MGuiElementBase base = new GuiBorderedRect().setColours(0xFF000000, 0xFF707070).setSize(130, 40);
-            base.addChild(new GuiEntityRenderer().setForce2dSize(true).setPosAndSize(7, 11, 24, 24).setEntity(new ResourceLocation(s)).setSilentErrors(true));
+            base.addChild(new GuiEntityRenderer().setTrackMouse(true).setForce2dSize(true).setPosAndSize(7, 11, 24, 24).setEntity(new ResourceLocation(s)).setSilentErrors(true));
             base.addChild(new GuiLabel(s).setShadow(false).setPosAndSize(35, 0, 85, 40).setWrap(true));
             return base;
         });
@@ -469,7 +473,7 @@ public class GuiContentSelect extends ModularGuiContainer<Container> {
 
                 if (!stack.isEmpty()) {
                     slot.addChild(new GuiStackIcon(new StackReference(stack)).setPos(slot));
-                    slot.addChild(new GuiButton().setPosAndSize(slot).setListener((event, eventSource) -> itemStackSelected(new StackReference(stack), true)));
+                    slot.addChild(new GuiButton().setPosAndSize(slot).setListener(() -> itemStackSelected(new StackReference(stack), true)));
                 }
 
                 parent.addChild(slot);
@@ -478,7 +482,7 @@ public class GuiContentSelect extends ModularGuiContainer<Container> {
         parent.addChild(slot = new GuiSlotRender().setPos(invX + 188, guiTop() + ySize() - 24));
         if (!inv.offHandInventory.get(0).isEmpty()) {
             slot.addChild(new GuiStackIcon(new StackReference(inv.offHandInventory.get(0))).setPos(slot));
-            slot.addChild(new GuiButton().setPosAndSize(slot).setListener((event, eventSource) -> itemStackSelected(new StackReference(inv.offHandInventory.get(0)), true)));
+            slot.addChild(new GuiButton().setPosAndSize(slot).setListener(() -> itemStackSelected(new StackReference(inv.offHandInventory.get(0)), true)));
         }
     }
 
@@ -495,7 +499,7 @@ public class GuiContentSelect extends ModularGuiContainer<Container> {
             slot.addChild(stackIcon);
             GuiButton button = new GuiButton().setPosAndSize(slot);
             slot.addChild(button);
-            button.setButtonListener((guiButton, pressed) -> {
+            button.setListener((guiButton, pressed) -> {
                 if (pressed == 1) {
                     contentInfo.entityInventory[slotIndex] = ItemStack.EMPTY;
                     stackIcon.setStack(new StackReference(ItemStack.EMPTY));
@@ -597,6 +601,14 @@ public class GuiContentSelect extends ModularGuiContainer<Container> {
                 stackString.setText(itemStack.toString());
                 stackString.setCursorPositionZero();
             }
+        }
+    }
+
+    @Override
+    protected void keyTyped(char typedChar, int keyCode) throws IOException {
+        super.keyTyped(typedChar, keyCode);
+        if (keyCode == 28) {
+            finished(false);
         }
     }
 

@@ -1,6 +1,6 @@
 package com.brandon3055.projectintelligence.utils;
 
-import codechicken.lib.asm.ObfMapping;
+import codechicken.lib.reflect.ObfMapping;
 import com.brandon3055.brandonscore.utils.Utils;
 import com.brandon3055.projectintelligence.ProjectIntelligence;
 import org.apache.logging.log4j.Level;

@@ -1,8 +1,9 @@
 package com.brandon3055.projectintelligence.docdata;
 
+import codechicken.lib.reflect.ObfMapping;
 import com.brandon3055.brandonscore.handlers.FileHandler;
-import com.brandon3055.brandonscore.lib.FileDownloadHandler;
-import com.brandon3055.projectintelligence.ModHelper;
+import com.brandon3055.brandonscore.integration.ModHelperBC;
+import com.brandon3055.brandonscore.utils.DataUtils;
 import com.brandon3055.projectintelligence.PIHelpers;
 import com.brandon3055.projectintelligence.client.gui.GuiProjectIntelligence;
 import com.brandon3055.projectintelligence.client.gui.PIConfig;
@@ -31,14 +32,14 @@ import java.util.function.Predicate;
 public class DocumentationManager {
 
     public static File piConfigDirectory;
-    public static FileDownloadHandler downloadHandler = new FileDownloadHandler("PI-Download-Handler", 6);
+//    public static FileDownloadManager downloadHandler = new FileDownloadManager("PI-Download-Handler", 6);
 
     private static File docDirectoryCache = null;
-    private static String manifestURL = "http://pi.brandon3055.com/test/ModDocs/PI-manifest-Format.json";
+    private static File packDocDirectoryCache = null;
     private static DocDownloader downloader = null;
 //    private static String selectedPageURI = "";
 
-    private static RootPage rootPage = null;
+    private static RootPage rootPage = new RootPage();
 
     /**
      * This is a map of <Page URI, Doc Page> e.g. draconicevolution:fusion_crafting/core
@@ -82,6 +83,11 @@ public class DocumentationManager {
      */
     private static Map<String, String> activeModVersionMap = Collections.synchronizedMap(new HashMap<>());
 
+    /**
+     * This stores the file location for all avalible pack documentation. There will usually only ever be one set of pack documentation per
+     * mod pack if any but multiple sets of local pack documentation are supported.
+     */
+    private static Map<String, File> packDocFileMap = Collections.synchronizedMap(new HashMap<>());
 
     //############################################################################
     //# Initialization
@@ -116,14 +122,17 @@ public class DocumentationManager {
             return;
         }
 
-        startDocUpdater();
+        PIUpdateManager.performFullUpdateCheck();
+//        startDocUpdater();
+ //       loadDocumentationFromDisk();
     }
 
     /**
      * This method actually loads documentation from disk after it has been downloaded.
      */
     public static void loadDocumentationFromDisk() {
-        LogHelper.dev("Reloading mod documentation from disk...");
+        LogHelper.dev("");
+        LogHelper.dev("### Reloading mod documentation from disk... ###");
         clearDocDirCache();
         modStructureMap.clear();
         uriPageMap.clear();
@@ -156,7 +165,7 @@ public class DocumentationManager {
                 File structure = new File(verFolder, "structure/structure.json");
                 if (structure.exists()) {
                     LogHelper.dev("Found structure file! Structure file will be parsed and added to version list.");
-                    parseStructureFile(structure, verFolder);
+                    parseStructureFile(structure, verFolder, false);
                 }
                 else {
                     LogHelper.dev("No structure file found. This is not a valid version folder.");
@@ -164,37 +173,33 @@ public class DocumentationManager {
             }
         }
 
+        //Load pack documentation
+        File packDocDir = getPackDocDirectory();
+        List<File> packFolders = new ArrayList<>();  //e.g. procras2craft, tolkiencraft, dw20
+        parseFilesInDirectory(packDocDir, File::isDirectory, packFolders::add);
+        LogHelper.dev("");
+        LogHelper.dev("Found " + packFolders.size() + " potential pack documentation folders.");
+        for (File docFolder : packFolders) {
+            LogHelper.dev("Checking potential pack documentation folder: " + docFolder);
+            File structure = new File(docFolder, "structure/structure.json");
+            if (structure.exists()) {
+                LogHelper.dev("Found structure file! Structure file will be parsed and added to pack doc list.");
+                parseStructureFile(structure, docFolder, true);
+            }
+            else {
+                LogHelper.dev("No structure file found. This is not a valid pack doc folder.");
+            }
+        }
+
+        LogHelper.dev("");
+
         //At this point we should now have a map of all available documentation and all available versions of each mods documentation.
         //This is all stored in installedModVersionFileMap
 
         //Last thing to do is sort documentation versions (this also loads the appropriate versions)
         sortDocVersions();
+        loadRootPage();
         LanguageManager.reloadLookupMap();
-
-        //Old Parsing
-//        File[] modFiles;
-//
-//        if (docDir == null || !docDir.isDirectory() || (modFiles = docDir.listFiles((dir, name) -> dir.isDirectory())) == null) {
-//            PIHelpers.displayError("Error loading documentation files! The ModDocs folder does not exist or is not a directory!");
-//            return;
-//        }
-//
-//        for (File mod : modFiles) {
-//            if (!mod.isDirectory()) continue;
-//            File descriptors = new File(mod, "structure");
-//            File[] descFiles;
-//            if (!descriptors.exists() || !descriptors.isDirectory() || (descFiles = descriptors.listFiles((dir, name) -> name.endsWith("json"))) == null) {
-//                continue;
-//            }
-//
-//            for (File file : descFiles) {
-//                if (!parseStructureFile(file)) {
-//                    PIHelpers.displayError("Found invalid descriptor file: " + file);
-//                }
-//            }
-//        }
-//        LanguageManager.reloadLookupMap();
-
 
         GuiProjectIntelligence.requiresReload = true;
         if (PIHelpers.editor != null) {
@@ -209,7 +214,8 @@ public class DocumentationManager {
      */
     private static void loadRootPage() {
         rootPage = new RootPage();
-        modStructureMap.values().forEach(rootPage::addModPage);
+        DataUtils.forEachMatch(modStructureMap.values(), DocumentationPage::isPackDoc, rootPage::addModPage);
+        DataUtils.forEachMatch(modStructureMap.values(), page -> !page.isPackDoc(), rootPage::addModPage);
     }
 
     /**
@@ -219,10 +225,10 @@ public class DocumentationManager {
      * added along with the versionFolder for this file to {@link #installedModVersionFileMap}
      *
      * @param structureFile The mod structure file to be parsed.
-     * @param versionFolder The version folder for this structure file.
+     * @param versionFolder The version folder for this structure file. (~/modid/x.x.x)
      * @return true if the structure file was successful parsed.
      */
-    private static boolean parseStructureFile(File structureFile, File versionFolder) {
+    private static boolean parseStructureFile(File structureFile, File versionFolder, boolean isPackDoc) {
         try {
             JsonParser parser = new JsonParser();
             JsonReader jsonReader = new JsonReader(new FileReader(structureFile));
@@ -230,12 +236,17 @@ public class DocumentationManager {
             IOUtils.closeQuietly(jsonReader);
             if (element.isJsonObject()) {
                 JsonObject jObj = element.getAsJsonObject();
-                ModStructurePage structurePage = ModStructurePage.generateFromJson(jObj);
+                ModStructurePage structurePage = ModStructurePage.generateFromJson(jObj, isPackDoc);
 
                 //Make sure the structure file was valid (If it is not the generate method will return null)
                 if (structurePage == null) {
-                    PIHelpers.displayError("Found invalid mod structure file: " + structureFile + " No modid or lang detected.");
+                    PIHelpers.displayError("Found invalid doc structure file: " + structureFile + " No modid or lang detected.");
                     return false;
+                }
+
+                if (isPackDoc) {
+                    packDocFileMap.put(structurePage.modid, versionFolder);
+                    return true;
                 }
 
                 //Check that the structure file is in the correct directory for its modid and version. This is essential because mod id and version are used to find page md files
@@ -270,7 +281,7 @@ public class DocumentationManager {
         return true;
     }
 
-    public static void saveModToDisk(ModStructurePage modPage) {
+    public static void saveDocToDisk(ModStructurePage modPage) {
         if (!PIConfig.editMode()) {
             PIHelpers.displayError("Can not save documentation when not in edit mode!");
             return;
@@ -339,15 +350,15 @@ public class DocumentationManager {
             Map<String, File> versionFolderMap = installedModVersionFileMap.get(modid);
 
             //Sort the available versions
-            LinkedList<String> versions = new LinkedList(versionFolderMap.keySet());
+            LinkedList<String> versions = new LinkedList<>(versionFolderMap.keySet());
             versions.sort(VERSION_COMPARATOR);
             sortedModVersionMap.put(modid, versions);
 
             //Check if a version override is enabled for this mod.
             String versionOverride = PIConfig.modVersionOverrides.get(modid);
             if (versionOverride != null && versionFolderMap.containsKey(versionOverride)) {
-                if (loadDocVersion(versionFolderMap.get(versionOverride))) {
-                    LogHelper.dev("Version override enabled for mod: " + modid +" version " + versionOverride + " will be loaded");
+                if (loadDocVersion(versionFolderMap.get(versionOverride), false)) {
+                    LogHelper.dev("Version override enabled for mod: " + modid + " version " + versionOverride + " will be loaded");
                     activeModVersionMap.put(modid, versionOverride);
                     continue;
                 }
@@ -358,7 +369,8 @@ public class DocumentationManager {
             }
 
             //If no version override is enabled then find the best possible match for the version installed.
-            String installedVersion = ModHelper.getModVersion(modid);
+            String installedVersion = ModHelperBC.getModVersion(modid);
+            LogHelper.dev("Checking Mod: " + modid + " Installed: " + installedVersion);
             boolean versionLoaded = false;
 
             if (installedVersion != null) {
@@ -370,20 +382,28 @@ public class DocumentationManager {
                     String version = i.next();
                     if (compareVersion(installedVersion, version) >= 0) {
                         LogHelper.dev("Found best version match for mod: " + modid + " loading version " + version);
-                        loadDocVersion(versionFolderMap.get(version));
+                        loadDocVersion(versionFolderMap.get(version), false);
                         versionLoaded = true;
                         break;
                     }
+                }
+                if (!versionLoaded && !ObfMapping.obfuscated) {
+                    String version = versions.getLast();
+                    LogHelper.dev("No version match found for " + modid + " but mod is running in dev so loading the latest version: " + version);
+                    loadDocVersion(versionFolderMap.get(version), false);
                 }
             }
 
             if (!versionLoaded && PIConfig.editMode()) {
                 LogHelper.dev("Mod " + modid + " is not installed or its version is not supporter but edit mode is enabled. Loading latest version: " + versions.getLast());
-                loadDocVersion(versionFolderMap.get(versions.getLast()));
+                loadDocVersion(versionFolderMap.get(versions.getLast()), false);
             }
         }
 
-        loadRootPage();
+        //Load pack docks
+        for (String pack : packDocFileMap.keySet()) {
+            loadDocVersion(packDocFileMap.get(pack), true);
+        }
     }
 
     public static Comparator<String> VERSION_COMPARATOR = DocumentationManager::compareVersion;
@@ -393,7 +413,7 @@ public class DocumentationManager {
     /**
      * Compares 2 versions. Returns -1 if version1 is outdated, +1 if version2 is outdated, and 0 if they are the same.
      */
-    private static int compareVersion(String version1, String version2) {
+    public static int compareVersion(String version1, String version2) {
         if (version2 == null || version2.equals(version1)) {
             return 0;
         }
@@ -420,7 +440,7 @@ public class DocumentationManager {
      */
     //TODO There's a bit of redundant code here. I could just cache the structure page when its first parsed but if there are a lot of
     //versions installed this could be very inefficient. This needs further consideration.
-    private static boolean loadDocVersion(File versionFolder) {
+    private static boolean loadDocVersion(File versionFolder, boolean isPackDock) {
         LogHelper.dev("Loading Documentation from: " + versionFolder);
         File structureFile = new File(versionFolder, "structure/structure.json");
         try {
@@ -430,7 +450,7 @@ public class DocumentationManager {
             IOUtils.closeQuietly(jsonReader);
             if (element.isJsonObject()) {
                 JsonObject jObj = element.getAsJsonObject();
-                ModStructurePage structurePage = ModStructurePage.generateFromJson(jObj);
+                ModStructurePage structurePage = ModStructurePage.generateFromJson(jObj, isPackDock);
 
                 //This should never be null at this point we should have already successfully generated a page using this same file but just in case...
                 if (structurePage == null) {
@@ -474,11 +494,11 @@ public class DocumentationManager {
 
         //If not copying then just save a blank constructor.
         if (copyFrom == null) {
-            ModStructurePage modPage = new ModStructurePage(null, modid, newVersion);
+            ModStructurePage modPage = new ModStructurePage(null, modid, newVersion, false);
             structureFileMap.put(modPage, structure);
             modStructureMap.put(modid, modPage);
-            saveModToDisk(modPage);
-            LanguageManager.setPageName(modid, modid+":", existingPage.getModPageName(), LanguageManager.getUserLanguage());
+            saveDocToDisk(modPage);
+            LanguageManager.setPageName(modid, modid + ":", existingPage.getModPageName(), LanguageManager.getUserLanguage());
         }
         else {
             if (!versionFileMap.containsKey(copyFrom)) {
@@ -500,7 +520,7 @@ public class DocumentationManager {
                 IOUtils.closeQuietly(jsonReader);
                 if (element.isJsonObject()) {
                     JsonObject jObj = element.getAsJsonObject();
-                    ModStructurePage structurePage = ModStructurePage.generateFromJson(jObj);
+                    ModStructurePage structurePage = ModStructurePage.generateFromJson(jObj, false);
 
                     if (structurePage == null) {
                         throw new IOException("Error reading copied structure file. " + structure);
@@ -509,7 +529,7 @@ public class DocumentationManager {
                     LogHelper.dev("NewVersion: " + newVersion);
                     structureFileMap.put(structurePage, structure);
                     modStructureMap.put(modid, structurePage);
-                    saveModToDisk(structurePage);
+                    saveDocToDisk(structurePage);
                 }
                 else {
                     throw new IOException("Error reading copied structure file. (File is not a valid json)" + structure);
@@ -521,6 +541,8 @@ public class DocumentationManager {
         }
         checkAndReloadDocFiles();
     }
+    //    Its loading things from the ModDocd need think when not tired
+
 
     //endregion
 
@@ -528,26 +550,26 @@ public class DocumentationManager {
     //# Remote file handling
     //region //############################################################################
 
-    /**
-     * Starts the document update thread.
-     * When complete the thread will reload
-     */
-    public static void startDocUpdater() {
-        if (PIConfig.editMode() || (downloader != null && !downloader.finished)) {
-            if (PIConfig.editMode()) {
-                LogHelper.dev("Doc Update Canceled: edit mode");
-            }
-            else {
-                LogHelper.dev("Doc Update Canceled: Download in progress");
-            }
-            return;
-        }
-
-        File docDir = getDocDirectory();
-        downloader = new DocDownloader(docDir, manifestURL, DocumentationManager::loadDocumentationFromDisk);
-//        downloader.forceUpdate();
-        downloader.start();
-    }
+//    /**
+//     * Starts the document update thread.
+//     * When complete the thread will reload
+//     */
+//    public static void startDocUpdater() {
+//        if (PIConfig.editMode() || (downloader != null && !downloader.finished)) {
+//            if (PIConfig.editMode()) {
+//                LogHelper.dev("Doc Update Canceled: edit mode");
+//            }
+//            else {
+//                LogHelper.dev("Doc Update Canceled: Download in progress");
+//            }
+//            return;
+//        }
+//
+//        File docDir = getDocDirectory();
+//        downloader = new DocDownloader(docDir, manifestURL, DocumentationManager::loadDocumentationFromDisk);
+////        downloader.forceUpdate();
+//        downloader.start();
+//    }
 
     //endregion
 
@@ -557,6 +579,7 @@ public class DocumentationManager {
 
     public static void clearDocDirCache() {
         docDirectoryCache = null;
+        packDocDirectoryCache = null;
     }
 
     public static File getDocDirectory() {
@@ -586,6 +609,19 @@ public class DocumentationManager {
         return docDirectoryCache;
     }
 
+    public static File getPackDocDirectory() {
+        if (packDocDirectoryCache != null) {
+            return packDocDirectoryCache;
+        }
+
+        packDocDirectoryCache = new File(piConfigDirectory, "PackDocs");
+        if (!packDocDirectoryCache.exists() && !packDocDirectoryCache.mkdirs()) {
+            LogHelper.bigError("Failed to create pack document directory! Things are going to break! " + packDocDirectoryCache);
+        }
+
+        return packDocDirectoryCache;
+    }
+
     public static boolean hasModPage(String modid) {
         return modStructureMap.containsKey(modid);
     }
@@ -612,6 +648,10 @@ public class DocumentationManager {
      */
     public static synchronized DocumentationPage getPage(@Nullable String pageURI) {
         return pageURI == null || pageURI.equals(RootPage.ROOT_URI) ? rootPage : uriPageMap.get(pageURI);
+    }
+
+    public static Collection<DocumentationPage> getAllPages() {
+        return uriPageMap.values();
     }
 
     public static synchronized Map<String, ModStructurePage> getModStructureMap() {
@@ -649,7 +689,7 @@ public class DocumentationManager {
             return;
         }
 
-        ModStructurePage modPage = new ModStructurePage(null, modid, version);
+        ModStructurePage modPage = new ModStructurePage(null, modid, version, false);
         File modFolder = new File(getDocDirectory(), modid + "/" + version + "/structure");
 
         if (!modFolder.exists() && !modFolder.mkdirs()) {
@@ -664,23 +704,50 @@ public class DocumentationManager {
 
         structureFileMap.put(modPage, structure);
         modStructureMap.put(modid, modPage);
-        saveModToDisk(modPage);
+        saveDocToDisk(modPage);
 
 
-        LanguageManager.setPageName(modid, modid+":", modName, LanguageManager.getUserLanguage());
+        LanguageManager.setPageName(modid, modid + ":", modName, LanguageManager.getUserLanguage());
         checkAndReloadDocFiles();
     }
 
-    public static void deleteMod(String modid) {
+    public static void addLocalDoc(String docID, String docName) throws IOException {
+        if (!PIConfig.editMode()) {
+            return;
+        }
+
+        ModStructurePage docPage = new ModStructurePage(null, docID, "", true);
+        File docFolder = new File(getPackDocDirectory(), docID + "/structure");
+
+        if (!docFolder.exists() && !docFolder.mkdirs()) {
+            throw new IOException("Failed to create doc directory! " + docFolder);
+        }
+
+        File structure = new File(docFolder, "structure.json");
+
+        if (structure.exists()) {
+            throw new IOException("Mod structure file already exists! Perhaps it is invalid? Structure file:" + structure);
+        }
+
+        structureFileMap.put(docPage, structure);
+        modStructureMap.put(docID, docPage);
+        saveDocToDisk(docPage);
+
+
+        LanguageManager.setPageName(docID, docID + ":", docName, LanguageManager.getUserLanguage());
+        checkAndReloadDocFiles();
+    }
+
+    public static void deleteDoc(DocumentationPage page) {
         getDocDirectory();
         if (!PIConfig.editMode()) {
             return;
         }
 
-        File modFolder = new File(getDocDirectory(), modid);
-        if (modFolder.exists() && modFolder.isDirectory()) {
+        File docFolder = new File(page.isPackDoc() ? getPackDocDirectory() : getDocDirectory(), page.getModid());
+        if (docFolder.exists() && docFolder.isDirectory()) {
             try {
-                FileUtils.deleteDirectory(modFolder);
+                FileUtils.deleteDirectory(docFolder);
             }
             catch (IOException e) {
                 e.printStackTrace();

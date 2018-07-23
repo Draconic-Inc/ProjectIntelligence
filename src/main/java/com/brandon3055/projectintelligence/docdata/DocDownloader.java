@@ -66,39 +66,39 @@ public class DocDownloader extends Thread {
     }
 
     private void finishOnDownloadsComplete() {
-        LogHelper.dev("PIDocDownloader: Waiting for downloads...");
-        while (DocumentationManager.downloadHandler.running) {
-            timeSinceProgress++;
-
-            if (DocumentationManager.downloadHandler.filesDownloaded > lastProgress) {
-                lastProgress = DocumentationManager.downloadHandler.filesDownloaded;
-                timeSinceProgress = 0;
-            }
-
-            if (timeSinceProgress / 1000 > 30) {
-                LogHelper.error("Error downloading documentation. Download timed out after 30 seconds.");
-                PIHelpers.displayError("Failed to download documentation files. Download timed out.");
-                DocumentationManager.downloadHandler.stopDownloads();
-                DocumentationManager.downloadHandler.reset();
-                break;
-            }
-
-            try {
-                Thread.sleep(1);
-            }
-            catch (InterruptedException ignored) {}
-        }
-
-        if (!DocumentationManager.downloadHandler.failedFiles.isEmpty()) {
-            for (String url : DocumentationManager.downloadHandler.failedFiles.keySet()) {
-                LogHelper.error("Failed to download file! " + url + " -> " + DocumentationManager.downloadHandler.failedFiles.get(url));
-            }
-        }
-
-        finished = true;
-        DocumentationManager.downloadHandler.reset();
-        onComplete.run();
-        LogHelper.dev("PIDocDownloader: Finished!\n");
+//        LogHelper.dev("PIDocDownloader: Waiting for downloads...");
+//        while (DocumentationManager.downloadHandler.running) {
+//            timeSinceProgress++;
+//
+//            if (DocumentationManager.downloadHandler.filesDownloaded > lastProgress) {
+//                lastProgress = DocumentationManager.downloadHandler.filesDownloaded;
+//                timeSinceProgress = 0;
+//            }
+//
+//            if (timeSinceProgress / 1000 > 30) {
+//                LogHelper.error("Error downloading documentation. Download timed out after 30 seconds.");
+//                PIHelpers.displayError("Failed to download documentation files. Download timed out.");
+//                DocumentationManager.downloadHandler.stopDownloads();
+//                DocumentationManager.downloadHandler.reset();
+//                break;
+//            }
+//
+//            try {
+//                Thread.sleep(1);
+//            }
+//            catch (InterruptedException ignored) {}
+//        }
+//
+//        if (!DocumentationManager.downloadHandler.failedFiles.isEmpty()) {
+//            for (String url : DocumentationManager.downloadHandler.failedFiles.keySet()) {
+//                LogHelper.error("Failed to download file! " + url + " -> " + DocumentationManager.downloadHandler.failedFiles.get(url));
+//            }
+//        }
+//
+//        finished = true;
+//        DocumentationManager.downloadHandler.reset();
+//        onComplete.run();
+//        LogHelper.dev("PIDocDownloader: Finished!\n");
     }
 
     public DocDownloader forceUpdate() {
@@ -179,7 +179,7 @@ public class DocDownloader extends Thread {
         manifestFiles = getFilesToUpdate(manifestFiles);
 
         //Download Required files
-        manifestFiles.forEach((file, remoteFile) -> DocumentationManager.downloadHandler.addFileToQue(remoteFile.url, file));
+//        manifestFiles.forEach((file, remoteFile) -> DocumentationManager.downloadHandler.addFileToQue(remoteFile.url, file));
 
         //Delete old files
         //todo Delete files that are no longer needed

@@ -26,7 +26,7 @@ public class MDTagDialog extends JDialog {
         switch (type) {
             case RECIPE:
                 setColour1("border_colour:");
-                colourField1.setText("0xc6c6c6");
+                colourField1.setText("-1");
                 setColour2("border_colour_hover:");
                 colourField2.setText("-1");
                 setText1("Stack String:");
@@ -35,19 +35,20 @@ public class MDTagDialog extends JDialog {
                 setSpinner2("top_pad:");
                 setSpinner3("left_pad:");
                 setSpinner4("spacing:");
+                spinner4.setValue(4);
                 setSpinner5("bottom_pad:");
                 setSpinner6("right_pad:");
+
                 break;
             case LINK:
 
-                setColour1("border_colour:");
-                colourField1.setToolTipText("Used only for solid button style link");
-                setColour2("border_colour_hover:");
-                colourField2.setToolTipText("Used only for solid button style link");
-
-                setColour3("fill_colour:");
+                setColour1("colour:");
+//                colourField1.setText("0x4444FF");
+                setColour2("colour_hover:");
+//                colourField2.setText("0xFF69B4");
+                setColour3("border_colour:");
                 colourField3.setToolTipText("Used only for solid button style link");
-                setColour4("fill_colour_hover:");
+                setColour4("border_colour_hover:");
                 colourField4.setToolTipText("Used only for solid button style link");
 
                 setText1("Link Target");
@@ -63,7 +64,6 @@ public class MDTagDialog extends JDialog {
                 break;
             case RULE:
                 setColour1("colour:");
-                setAlign("align:");
                 setText1("width:");
                 textField1.setText("100%");
                 textField1.setToolTipText("This field accepts ether a fixed width or a percentage, thats a percentage of the screen width");
@@ -79,15 +79,15 @@ public class MDTagDialog extends JDialog {
                 setText1("width:");
                 textField1.setText("100%");
                 textField1.setToolTipText("This field accepts ether a fixed width or a percentage, thats a percentage of the screen width");
-                setAlign("align:");
+                //setAlign("align:");
                 alignSelector.setToolTipText("Sets the alignment of the table itself. Check the table documentation for info on aligning specific columns in the table");
-                setVertAlign("vertical_align:");
+                setVertAlign("vert_align:");
                 vertAlignSelector.setToolTipText("Sets the vertical alignment of content in cells that are taller than required for the content.");
-                setColour1("cell_colour:");
+                setColour1("border_colour:");
                 colourField1.setToolTipText("Sets the colour of the table cell renderer.");
                 setColour2("heading_colour");
                 colourField2.setToolTipText("Sets the colour of the heading cell (if a heading cell exists)");
-                setRender("render");
+                setRender("render_cells");
                 renderCheck.setToolTipText("Can be used to completely disable the table cell renderer. In this mode the table can be used as a layout/position tool to layout a group of elements.");
 
                 setSpinner1("rows");
@@ -98,6 +98,13 @@ public class MDTagDialog extends JDialog {
                 break;
         }
 
+        addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent e) {
+                previewField.setText("");
+            }
+        });
+
         pack();
         updateOutput();
         PIHelpers.centerWindowOn(this, parent);
@@ -105,6 +112,7 @@ public class MDTagDialog extends JDialog {
 
     public void setStack(String stack) {
         textField1.setText(stack);
+        updateOutput();
     }
 
     private void insert(ActionEvent evt) {
@@ -290,7 +298,7 @@ public class MDTagDialog extends JDialog {
         textLabel2.setVisible(false);
 
         styleSelector.setVisible(false);
-        styleSelector.setModel(new DefaultComboBoxModel<>(new String[] { "text", "vanilla", "solid" }));
+        styleSelector.setModel(new DefaultComboBoxModel<>(new String[]{"text", "vanilla", "solid"}));
         styleSelector.addItemListener(new ItemListener() {
             public void itemStateChanged(ItemEvent evt) {
                 itemChange(evt);
@@ -325,7 +333,7 @@ public class MDTagDialog extends JDialog {
         });
 
         alignSelector.setVisible(false);
-        alignSelector.setModel(new DefaultComboBoxModel<>(new String[] { "left", "center", "right" }));
+        alignSelector.setModel(new DefaultComboBoxModel<>(new String[]{"left", "center", "right"}));
         alignSelector.addItemListener(new ItemListener() {
             public void itemStateChanged(ItemEvent evt) {
                 itemChange(evt);
@@ -336,7 +344,7 @@ public class MDTagDialog extends JDialog {
         alignLabel.setVisible(false);
 
         vertAlignSelector.setVisible(false);
-        vertAlignSelector.setModel(new DefaultComboBoxModel<>(new String[] { "top", "middle", "bottom" }));
+        vertAlignSelector.setModel(new DefaultComboBoxModel<>(new String[]{"top", "middle", "bottom"}));
         vertAlignSelector.addItemListener(new ItemListener() {
             public void itemStateChanged(ItemEvent evt) {
                 itemChange(evt);
@@ -357,176 +365,13 @@ public class MDTagDialog extends JDialog {
 
         GroupLayout jPanel1Layout = new GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
-        jPanel1Layout.setHorizontalGroup(jPanel1Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addContainerGap()
-                        .addGroup(jPanel1Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                                .addComponent(jTextArea1)
-                                .addComponent(jSeparator1, GroupLayout.Alignment.TRAILING)
-                                .addGroup(GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
-                                        .addGroup(jPanel1Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                                                .addComponent(spinnerLabel1)
-                                                .addComponent(spinnerLabel4))
-                                        .addGap(22, 22, 22)
-                                        .addGroup(jPanel1Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                                                .addComponent(spinner4, GroupLayout.PREFERRED_SIZE, 49, GroupLayout.PREFERRED_SIZE)
-                                                .addComponent(spinner1, GroupLayout.PREFERRED_SIZE, 49, GroupLayout.PREFERRED_SIZE))
-                                        .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                        .addGroup(jPanel1Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                                                .addComponent(spinnerLabel2)
-                                                .addComponent(spinnerLabel5))
-                                        .addGap(22, 22, 22)
-                                        .addGroup(jPanel1Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                                                .addComponent(spinner2, GroupLayout.PREFERRED_SIZE, 49, GroupLayout.PREFERRED_SIZE)
-                                                .addComponent(spinner5, GroupLayout.PREFERRED_SIZE, 49, GroupLayout.PREFERRED_SIZE))
-                                        .addGap(30, 30, 30)
-                                        .addGroup(jPanel1Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                                                .addComponent(spinnerLabel6)
-                                                .addComponent(spinnerLabel3))
-                                        .addGap(23, 23, 23)
-                                        .addGroup(jPanel1Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                                                .addComponent(spinner6, GroupLayout.PREFERRED_SIZE, 49, GroupLayout.PREFERRED_SIZE)
-                                                .addComponent(spinner3, GroupLayout.PREFERRED_SIZE, 49, GroupLayout.PREFERRED_SIZE)))
-                                .addGroup(jPanel1Layout.createSequentialGroup()
-                                        .addGroup(jPanel1Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                                                .addComponent(colourLabel1)
-                                                .addComponent(colourLabel3))
-                                        .addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED)
-                                        .addGroup(jPanel1Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                                                .addComponent(colourField1, GroupLayout.PREFERRED_SIZE, 100, GroupLayout.PREFERRED_SIZE)
-                                                .addComponent(colourField3, GroupLayout.PREFERRED_SIZE, 100, GroupLayout.PREFERRED_SIZE))
-                                        .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                        .addGroup(jPanel1Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                                                .addComponent(colourLabel4)
-                                                .addComponent(colourLabel2))
-                                        .addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED)
-                                        .addGroup(jPanel1Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                                                .addComponent(colourField2, GroupLayout.PREFERRED_SIZE, 100, GroupLayout.PREFERRED_SIZE)
-                                                .addComponent(colourField4, GroupLayout.PREFERRED_SIZE, 100, GroupLayout.PREFERRED_SIZE))
-                                        .addGap(8, 8, 8))
-                                .addComponent(jSeparator2)
-                                .addGroup(jPanel1Layout.createSequentialGroup()
-                                        .addGroup(jPanel1Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                                                .addComponent(textLabel2)
-                                                .addComponent(textLabel1))
-                                        .addGap(10, 10, 10)
-                                        .addGroup(jPanel1Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                                                .addComponent(textField1)
-                                                .addComponent(textField2)))
-                                .addComponent(jSeparator3)
-                                .addGroup(GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
-                                        .addGap(0, 0, Short.MAX_VALUE)
-                                        .addComponent(jButton2)
-                                        .addGap(18, 18, 18)
-                                        .addComponent(jButton1))
-                                .addGroup(jPanel1Layout.createSequentialGroup()
-                                        .addComponent(styleLabel)
-                                        .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                                        .addComponent(styleSelector, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-                                        .addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED)
-                                        .addComponent(alignLabel)
-                                        .addGap(5, 5, 5)
-                                        .addComponent(alignSelector, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-                                        .addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED)
-                                        .addComponent(vertAlignLabel)
-                                        .addGap(5, 5, 5)
-                                        .addComponent(vertAlignSelector, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-                                        .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                                        .addComponent(renderCheck)
-                                        .addGap(0, 0, Short.MAX_VALUE))
-                                .addGroup(jPanel1Layout.createSequentialGroup()
-                                        .addComponent(jLabel10)
-                                        .addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED)
-                                        .addComponent(jScrollPane1)))
-                        .addContainerGap())
-        );
-        jPanel1Layout.setVerticalGroup(jPanel1Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addContainerGap()
-                        .addComponent(jTextArea1, GroupLayout.PREFERRED_SIZE, 38, GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                        .addGroup(jPanel1Layout.createParallelGroup(GroupLayout.Alignment.TRAILING)
-                                .addGroup(jPanel1Layout.createSequentialGroup()
-                                        .addGroup(jPanel1Layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-                                                .addComponent(colourLabel1)
-                                                .addComponent(colourField1, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE))
-                                        .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                                        .addGroup(jPanel1Layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-                                                .addComponent(colourLabel3)
-                                                .addComponent(colourField3, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)))
-                                .addGroup(jPanel1Layout.createSequentialGroup()
-                                        .addGroup(jPanel1Layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-                                                .addComponent(colourLabel2)
-                                                .addComponent(colourField2, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE))
-                                        .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                                        .addGroup(jPanel1Layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-                                                .addComponent(colourLabel4)
-                                                .addComponent(colourField4, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE))))
-                        .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jSeparator1, GroupLayout.PREFERRED_SIZE, 4, GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                        .addGroup(jPanel1Layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-                                .addComponent(spinnerLabel2)
-                                .addComponent(spinner2, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-                                .addComponent(spinnerLabel3)
-                                .addComponent(spinner3, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-                                .addComponent(spinnerLabel1)
-                                .addComponent(spinner1, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE))
-                        .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                        .addGroup(jPanel1Layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-                                .addComponent(spinnerLabel5)
-                                .addComponent(spinner5, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-                                .addComponent(spinnerLabel6)
-                                .addComponent(spinner6, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-                                .addComponent(spinnerLabel4)
-                                .addComponent(spinner4, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE))
-                        .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jSeparator2, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                        .addGroup(jPanel1Layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-                                .addComponent(textLabel1)
-                                .addComponent(textField1, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE))
-                        .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                        .addGroup(jPanel1Layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-                                .addComponent(textLabel2)
-                                .addComponent(textField2, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE))
-                        .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                        .addGroup(jPanel1Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                                .addGroup(jPanel1Layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-                                        .addComponent(vertAlignSelector, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-                                        .addComponent(vertAlignLabel)
-                                        .addComponent(renderCheck))
-                                .addGroup(jPanel1Layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-                                        .addComponent(alignSelector, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-                                        .addComponent(alignLabel))
-                                .addGroup(jPanel1Layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-                                        .addComponent(styleSelector, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-                                        .addComponent(styleLabel)))
-                        .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jSeparator3, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                        .addGroup(jPanel1Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                                .addComponent(jScrollPane1, GroupLayout.DEFAULT_SIZE, 103, Short.MAX_VALUE)
-                                .addGroup(jPanel1Layout.createSequentialGroup()
-                                        .addComponent(jLabel10)
-                                        .addGap(0, 0, Short.MAX_VALUE)))
-                        .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                        .addGroup(jPanel1Layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-                                .addComponent(jButton1)
-                                .addComponent(jButton2))
-                        .addContainerGap())
-        );
+        jPanel1Layout.setHorizontalGroup(jPanel1Layout.createParallelGroup(GroupLayout.Alignment.LEADING).addGroup(jPanel1Layout.createSequentialGroup().addContainerGap().addGroup(jPanel1Layout.createParallelGroup(GroupLayout.Alignment.LEADING).addComponent(jTextArea1).addComponent(jSeparator1, GroupLayout.Alignment.TRAILING).addGroup(GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup().addGroup(jPanel1Layout.createParallelGroup(GroupLayout.Alignment.LEADING).addComponent(spinnerLabel1).addComponent(spinnerLabel4)).addGap(22, 22, 22).addGroup(jPanel1Layout.createParallelGroup(GroupLayout.Alignment.LEADING).addComponent(spinner4, GroupLayout.PREFERRED_SIZE, 49, GroupLayout.PREFERRED_SIZE).addComponent(spinner1, GroupLayout.PREFERRED_SIZE, 49, GroupLayout.PREFERRED_SIZE)).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE).addGroup(jPanel1Layout.createParallelGroup(GroupLayout.Alignment.LEADING).addComponent(spinnerLabel2).addComponent(spinnerLabel5)).addGap(22, 22, 22).addGroup(jPanel1Layout.createParallelGroup(GroupLayout.Alignment.LEADING).addComponent(spinner2, GroupLayout.PREFERRED_SIZE, 49, GroupLayout.PREFERRED_SIZE).addComponent(spinner5, GroupLayout.PREFERRED_SIZE, 49, GroupLayout.PREFERRED_SIZE)).addGap(30, 30, 30).addGroup(jPanel1Layout.createParallelGroup(GroupLayout.Alignment.LEADING).addComponent(spinnerLabel6).addComponent(spinnerLabel3)).addGap(23, 23, 23).addGroup(jPanel1Layout.createParallelGroup(GroupLayout.Alignment.LEADING).addComponent(spinner6, GroupLayout.PREFERRED_SIZE, 49, GroupLayout.PREFERRED_SIZE).addComponent(spinner3, GroupLayout.PREFERRED_SIZE, 49, GroupLayout.PREFERRED_SIZE))).addGroup(jPanel1Layout.createSequentialGroup().addGroup(jPanel1Layout.createParallelGroup(GroupLayout.Alignment.LEADING).addComponent(colourLabel1).addComponent(colourLabel3)).addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED).addGroup(jPanel1Layout.createParallelGroup(GroupLayout.Alignment.LEADING).addComponent(colourField1, GroupLayout.PREFERRED_SIZE, 100, GroupLayout.PREFERRED_SIZE).addComponent(colourField3, GroupLayout.PREFERRED_SIZE, 100, GroupLayout.PREFERRED_SIZE)).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE).addGroup(jPanel1Layout.createParallelGroup(GroupLayout.Alignment.LEADING).addComponent(colourLabel4).addComponent(colourLabel2)).addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED).addGroup(jPanel1Layout.createParallelGroup(GroupLayout.Alignment.LEADING).addComponent(colourField2, GroupLayout.PREFERRED_SIZE, 100, GroupLayout.PREFERRED_SIZE).addComponent(colourField4, GroupLayout.PREFERRED_SIZE, 100, GroupLayout.PREFERRED_SIZE)).addGap(8, 8, 8)).addComponent(jSeparator2).addGroup(jPanel1Layout.createSequentialGroup().addGroup(jPanel1Layout.createParallelGroup(GroupLayout.Alignment.LEADING).addComponent(textLabel2).addComponent(textLabel1)).addGap(10, 10, 10).addGroup(jPanel1Layout.createParallelGroup(GroupLayout.Alignment.LEADING).addComponent(textField1).addComponent(textField2))).addComponent(jSeparator3).addGroup(GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup().addGap(0, 0, Short.MAX_VALUE).addComponent(jButton2).addGap(18, 18, 18).addComponent(jButton1)).addGroup(jPanel1Layout.createSequentialGroup().addComponent(styleLabel).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addComponent(styleSelector, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE).addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED).addComponent(alignLabel).addGap(5, 5, 5).addComponent(alignSelector, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE).addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED).addComponent(vertAlignLabel).addGap(5, 5, 5).addComponent(vertAlignSelector, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addComponent(renderCheck).addGap(0, 0, Short.MAX_VALUE)).addGroup(jPanel1Layout.createSequentialGroup().addComponent(jLabel10).addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED).addComponent(jScrollPane1))).addContainerGap()));
+        jPanel1Layout.setVerticalGroup(jPanel1Layout.createParallelGroup(GroupLayout.Alignment.LEADING).addGroup(jPanel1Layout.createSequentialGroup().addContainerGap().addComponent(jTextArea1, GroupLayout.PREFERRED_SIZE, 38, GroupLayout.PREFERRED_SIZE).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addGroup(jPanel1Layout.createParallelGroup(GroupLayout.Alignment.TRAILING).addGroup(jPanel1Layout.createSequentialGroup().addGroup(jPanel1Layout.createParallelGroup(GroupLayout.Alignment.BASELINE).addComponent(colourLabel1).addComponent(colourField1, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addGroup(jPanel1Layout.createParallelGroup(GroupLayout.Alignment.BASELINE).addComponent(colourLabel3).addComponent(colourField3, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE))).addGroup(jPanel1Layout.createSequentialGroup().addGroup(jPanel1Layout.createParallelGroup(GroupLayout.Alignment.BASELINE).addComponent(colourLabel2).addComponent(colourField2, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addGroup(jPanel1Layout.createParallelGroup(GroupLayout.Alignment.BASELINE).addComponent(colourLabel4).addComponent(colourField4, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)))).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addComponent(jSeparator1, GroupLayout.PREFERRED_SIZE, 4, GroupLayout.PREFERRED_SIZE).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addGroup(jPanel1Layout.createParallelGroup(GroupLayout.Alignment.BASELINE).addComponent(spinnerLabel2).addComponent(spinner2, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE).addComponent(spinnerLabel3).addComponent(spinner3, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE).addComponent(spinnerLabel1).addComponent(spinner1, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addGroup(jPanel1Layout.createParallelGroup(GroupLayout.Alignment.BASELINE).addComponent(spinnerLabel5).addComponent(spinner5, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE).addComponent(spinnerLabel6).addComponent(spinner6, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE).addComponent(spinnerLabel4).addComponent(spinner4, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addComponent(jSeparator2, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addGroup(jPanel1Layout.createParallelGroup(GroupLayout.Alignment.BASELINE).addComponent(textLabel1).addComponent(textField1, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addGroup(jPanel1Layout.createParallelGroup(GroupLayout.Alignment.BASELINE).addComponent(textLabel2).addComponent(textField2, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addGroup(jPanel1Layout.createParallelGroup(GroupLayout.Alignment.LEADING).addGroup(jPanel1Layout.createParallelGroup(GroupLayout.Alignment.BASELINE).addComponent(vertAlignSelector, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE).addComponent(vertAlignLabel).addComponent(renderCheck)).addGroup(jPanel1Layout.createParallelGroup(GroupLayout.Alignment.BASELINE).addComponent(alignSelector, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE).addComponent(alignLabel)).addGroup(jPanel1Layout.createParallelGroup(GroupLayout.Alignment.BASELINE).addComponent(styleSelector, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE).addComponent(styleLabel))).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addComponent(jSeparator3, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addGroup(jPanel1Layout.createParallelGroup(GroupLayout.Alignment.LEADING).addComponent(jScrollPane1, GroupLayout.DEFAULT_SIZE, 103, Short.MAX_VALUE).addGroup(jPanel1Layout.createSequentialGroup().addComponent(jLabel10).addGap(0, 0, Short.MAX_VALUE))).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addGroup(jPanel1Layout.createParallelGroup(GroupLayout.Alignment.BASELINE).addComponent(jButton1).addComponent(jButton2)).addContainerGap()));
 
         GroupLayout layout = new GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
-        layout.setHorizontalGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                .addComponent(jPanel1, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-        );
-        layout.setVerticalGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                .addGroup(layout.createSequentialGroup()
-                        .addComponent(jPanel1, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addContainerGap())
-        );
+        layout.setHorizontalGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING).addComponent(jPanel1, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE));
+        layout.setVerticalGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING).addGroup(layout.createSequentialGroup().addComponent(jPanel1, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE).addContainerGap()));
 
         setBounds(0, 0, 486, 484);
     }
@@ -562,34 +407,34 @@ public class MDTagDialog extends JDialog {
             case LINK:
                 tag = new StringBuilder("§link");
                 value = textField1.getText();
-                options = addIf(options, "alt_text:" + textField2.getText(), () -> !textField2.getText().isEmpty());
-                options = addIf(options, "border_colour:" + colour1, () -> !(colour1.equals("-1") || colour1.isEmpty()));
-                options = addIf(options, "border_colour_hover:" + colour2, () -> !(colour2.equals("-1") || colour2.isEmpty()));
-                options = addIf(options, "fill_colour:" + colour3, () -> !(colour3.equals("-1") || colour3.isEmpty()));
-                options = addIf(options, "fill_colour_hover:" + colour4, () -> !(colour4.equals("-1") || colour4.isEmpty()));
+                options = addIf(options, "alt_text:\"" + textField2.getText() + "\"", () -> !textField2.getText().isEmpty());
+                options = addIf(options, "border_colour:" + colour3, () -> !(colour3.equals("-1") || colour3.isEmpty()));
+                options = addIf(options, "border_colour_hover:" + colour4, () -> !(colour4.equals("-1") || colour4.isEmpty()));
+                options = addIf(options, "colour:" + colour1, () -> !(colour1.equals("-1") || colour1.isEmpty()));
+                options = addIf(options, "colour_hover:" + colour2, () -> !(colour2.equals("-1") || colour2.isEmpty()));
                 options = addIf(options, "padding:" + p1, () -> p1 > 0);
                 options = addIf(options, "top_pad:" + p2, () -> p2 > 0);
                 options = addIf(options, "left_pad:" + p3, () -> p3 > 0);
                 options = addIf(options, "bottom_pad:" + p5, () -> p5 > 0);
                 options = addIf(options, "right_pad:" + p6, () -> p6 > 0);
-                options = addIf(options, "render:" + styleSelector.getSelectedItem(), () -> !styleSelector.getSelectedItem().equals("text"));
+                options = addIf(options, "link_style:" + styleSelector.getSelectedItem(), () -> !styleSelector.getSelectedItem().equals("text"));
                 break;
             case RULE:
                 tag = new StringBuilder("§rule");
                 options = addIf(options, "colour:" + colour1, () -> !(colour1.equals("-1") || colour1.isEmpty()));
                 options = addIf(options, "height:" + p1, () -> p1 > 0);
-                options = addIf(options, "top_padding:" + p2, () -> p2 > 0);
-                options = addIf(options, "bottom_padding:" + p3, () -> p3 > 0);
+                options = addIf(options, "top_pad:" + p2, () -> p2 > 0);
+                options = addIf(options, "bottom_pad:" + p3, () -> p3 > 0);
                 options = addIf(options, "width:" + textField1.getText(), () -> true);
                 options = addIf(options, "align:" + alignSelector.getSelectedItem(), () -> !alignSelector.getSelectedItem().equals("left"));
-                previewField.setText(tag + "[" + options + "]");
+                previewField.setText(tag + "{" + options + "}");
                 return;
             case TABLE:
-                options = addIf(options, "cell_colour:" + colour1, () -> !(colour1.equals("-1") || colour1.isEmpty()));
+                options = addIf(options, "border_colour:" + colour1, () -> !(colour1.equals("-1") || colour1.isEmpty()));
                 options = addIf(options, "heading_colour:" + colour2, () -> !(colour2.equals("-1") || colour2.isEmpty()));
                 options = addIf(options, "width:" + textField1.getText(), () -> true);
-                options = addIf(options, "align:" + alignSelector.getSelectedItem(), () -> !alignSelector.getSelectedItem().equals("left"));
-                options = addIf(options, "vertical_align:" + vertAlignSelector.getSelectedItem(), () -> !vertAlignSelector.getSelectedItem().equals("top"));
+                //options = addIf(options, "align:" + alignSelector.getSelectedItem(), () -> !alignSelector.getSelectedItem().equals("left"));
+                options = addIf(options, "vert_align:" + vertAlignSelector.getSelectedItem(), () -> !vertAlignSelector.getSelectedItem().equals("top"));
                 tag = new StringBuilder("§table[" + options + "]");
                 int rows = Math.max(1, (int) spinner1.getValue());
                 int columns = Math.max(1, (int) spinner2.getValue());
@@ -626,6 +471,27 @@ public class MDTagDialog extends JDialog {
     }
 
     private void itemChange(ItemEvent evt) {
+        if (type == TagType.LINK && evt.getSource() == styleSelector && styleSelector.getSelectedItem() != null) {
+            if (styleSelector.getSelectedItem().equals("vanilla")) {
+                colourField1.setText("0xE0E0E0");
+                colourField2.setText("0xFFFFA0");
+                colourField3.setText("-1");
+                colourField4.setText("-1");
+            }
+            else if (styleSelector.getSelectedItem().equals("text")) {
+                colourField1.setText("0x4444FF");
+                colourField2.setText("0xFF69B4");
+                colourField3.setText("-1");
+                colourField4.setText("-1");
+            }
+            else {
+                colourField1.setText("0x303030");
+                colourField2.setText("0x303030");
+                colourField3.setText("0xFFFFFF");
+                colourField4.setText("0x00FF00");
+            }
+
+        }
         updateOutput();
     }
 
@@ -736,7 +602,10 @@ public class MDTagDialog extends JDialog {
     //endregion
 
     public enum TagType {
-        RECIPE, LINK, RULE, TABLE
+        RECIPE,
+        LINK,
+        RULE,
+        TABLE
     }
 
     // Variables declaration - do not modify                     

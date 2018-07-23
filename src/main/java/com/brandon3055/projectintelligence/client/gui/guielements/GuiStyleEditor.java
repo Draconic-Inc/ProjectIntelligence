@@ -63,7 +63,7 @@ public class GuiStyleEditor extends GuiPopUpDialogBase<GuiStyleEditor> {
                 .setShadow(false).setAlignment(GuiAlign.CENTER));
 
         GuiButton close = new StyledGuiButton("user_dialogs.button_style").setPos(this).translate(xSize() - 14, 3).setSize(11, 11);
-        close.setListener((event, eventSource) -> close());
+        close.setListener(this::close);
         close.setHoverText(I18n.format("pi.button.close"));
         close.addChild(new GuiTexture(64, 16, 5, 5, PITextures.PI_PARTS).setRelPos(3, 3));
         addChild(close);
@@ -89,7 +89,7 @@ public class GuiStyleEditor extends GuiPopUpDialogBase<GuiStyleEditor> {
 
         GuiButton savePreset = new StyledGuiButton("user_dialogs.button_style").setText(I18n.format("pi.button.save")).setPos(saveName.maxXPos() + 1, saveName.yPos()).setSize(41, 14).addToGroup("PRESETS");
         savePreset.setHoverText(I18n.format("pi.style.save_preset.info"));
-        savePreset.setListener((event, eventSource) -> {
+        savePreset.setListener(() -> {
             if (saveName.getText().isEmpty()) {
                 GuiPopupDialogs.createDialog(this, GuiPopupDialogs.DialogType.OK_OPTION, I18n.format("pi.style.save_no_name.txt"), "").showCenter();
                 return;
@@ -111,7 +111,7 @@ public class GuiStyleEditor extends GuiPopUpDialogBase<GuiStyleEditor> {
 
         GuiButton openEditor = new StyledGuiButton("user_dialogs.button_style").setText(I18n.format("pi.button.open_style_editor")).setPos(xPos() + 4, maxYPos() - 18).setSize(xSize() - 8, 14);
         openEditor.addToGroup("PRESETS");
-        openEditor.setListener((event, eventSource) -> setChildGroupEnabled("EDITOR_TREE", true).setChildGroupEnabled("PRESETS", false));
+        openEditor.setListener(() -> setChildGroupEnabled("EDITOR_TREE", true).setChildGroupEnabled("PRESETS", false));
         addChild(openEditor);
 
         presetList = new GuiScrollElement();
@@ -141,7 +141,7 @@ public class GuiStyleEditor extends GuiPopUpDialogBase<GuiStyleEditor> {
 
         GuiButton closeEditor = new StyledGuiButton("user_dialogs.button_style").setText(I18n.format("pi.button.close_style_editor")).setPos(xPos() + 3, maxYPos() - 15).setSize(xSize() - 6, 12);
         closeEditor.addToGroup("EDITOR_TREE");
-        closeEditor.setListener((event, eventSource) -> setChildGroupEnabled("EDITOR_TREE", false).setChildGroupEnabled("PRESETS", true));
+        closeEditor.setListener(() -> setChildGroupEnabled("EDITOR_TREE", false).setChildGroupEnabled("PRESETS", true));
         addChild(closeEditor);
 
         setChildGroupEnabled("EDITOR_TREE", false);
@@ -156,7 +156,7 @@ public class GuiStyleEditor extends GuiPopUpDialogBase<GuiStyleEditor> {
 
         for (String preset : StyleHandler.getCustomPresets()) {
             GuiButton button = new StyledGuiButton("user_dialogs.sub_elements.button_style").setShadow(false).setText(preset).setYSize(12).setAlignment(GuiAlign.LEFT);
-            button.setListener((event, eventSource) -> {
+            button.setListener(() -> {
                 if (StyleHandler.unsavedChanges) {
                     GuiPopupDialogs.createDialog(this, GuiPopupDialogs.DialogType.OK_CANCEL_OPTION, I18n.format("pi.style.confirm_load_unsaved.txt") + "\n" + preset, "")//
                             .setOkListener((event1, eventSource1) -> StyleHandler.loadPreset(preset, true)).showCenter();
@@ -167,7 +167,7 @@ public class GuiStyleEditor extends GuiPopUpDialogBase<GuiStyleEditor> {
             });
 
             GuiButton delete = new StyledGuiButton("style_editor.button_style").setSize(9, 9);
-            delete.setListener((event, eventSource) -> GuiPopupDialogs.createDialog(this, GuiPopupDialogs.DialogType.YES_NO_OPTION, I18n.format("pi.style.delete_preset_confirm.txt") + "\n" + preset, I18n.format("pi.style.confirm_delete.txt"))//
+            delete.setListener(() -> GuiPopupDialogs.createDialog(this, GuiPopupDialogs.DialogType.YES_NO_OPTION, I18n.format("pi.style.delete_preset_confirm.txt") + "\n" + preset, I18n.format("pi.style.confirm_delete.txt"))//
                     .setYesListener((event1, eventSource1) -> {
                         StyleHandler.deletePreset(preset);
                         reloadElement();
@@ -183,7 +183,7 @@ public class GuiStyleEditor extends GuiPopUpDialogBase<GuiStyleEditor> {
 
         for (String preset : StyleHandler.getDefaultPresets()) {
             GuiButton button = new StyledGuiButton("user_dialogs.sub_elements.button_style").setShadow(false).setText(I18n.format("pi.style.default." + preset)).setYSize(12).setAlignment(GuiAlign.LEFT);
-            button.setListener((event, eventSource) -> {
+            button.setListener(() -> {
                 if (StyleHandler.unsavedChanges) {
                     GuiPopupDialogs.createDialog(this, GuiPopupDialogs.DialogType.OK_CANCEL_OPTION, I18n.format("pi.style.confirm_load_unsaved.txt") + "\n" + preset, "")//
                             .setOkListener((event1, eventSource1) -> StyleHandler.loadPreset(preset, true)).showCenter();
@@ -240,7 +240,7 @@ public class GuiStyleEditor extends GuiPopUpDialogBase<GuiStyleEditor> {
         public void addChildElements() {
             if (hasSubs) {
                 showHide = new GuiButton().setYPos(1).setXPosMod((guiButton, integer) -> maxXPos() - 12).setSize(11, 10);
-                showHide.setListener((event, eventSource) -> {
+                showHide.setListener(() -> {
                     if (subsShown) {
                         subsShown = false;
                         removeChildByGroup("SUB_PROPS");
@@ -349,14 +349,14 @@ public class GuiStyleEditor extends GuiPopUpDialogBase<GuiStyleEditor> {
 
                 int rely = 0;
                 GuiButton copy = new GuiButton(I18n.format("pi.button.copy_value")).setAlignment(GuiAlign.LEFT).setRelPos(1, rely += 1).setSize(98, 12).setBorderColours(0, 0xFF707070);
-                copy.setListener((event, eventSource) -> {
+                copy.setListener(() -> {
                     GuiScreen.setClipboardString(String.valueOf(((IntegerProperty) property).getValue()));
                     context.close();
                 });
                 context.addChild(copy);
 
                 GuiButton paste = new GuiButton(I18n.format("pi.button.paste_value")).setAlignment(GuiAlign.LEFT).setRelPos(1, rely += 13).setSize(98, 12).setBorderColours(0, 0xFF707070);
-                paste.setListener((event, eventSource) -> {
+                paste.setListener(() -> {
                     try {
                         long value = Long.decode(GuiScreen.getClipboardString());
                         ((IntegerProperty) property).setValue((int) value);
@@ -370,7 +370,7 @@ public class GuiStyleEditor extends GuiPopUpDialogBase<GuiStyleEditor> {
 
                 if (property.isColour()) {
                     GuiButton copyHex = new GuiButton(I18n.format("pi.button.copy_hex_value")).setAlignment(GuiAlign.LEFT).setRelPos(1, rely += 13).setSize(98, 12).setBorderColours(0, 0xFF707070);
-                    copyHex.setListener((event, eventSource) -> {
+                    copyHex.setListener(() -> {
                         int value = ((IntegerProperty) property).getValue();
                         GuiScreen.setClipboardString(Integer.toHexString(value));
                         context.close();
@@ -378,7 +378,7 @@ public class GuiStyleEditor extends GuiPopUpDialogBase<GuiStyleEditor> {
                     context.addChild(copyHex);
 
                     GuiButton pasteHex = new GuiButton(I18n.format("pi.button.paste_hex_value")).setAlignment(GuiAlign.LEFT).setRelPos(1, rely += 13).setSize(98, 12).setBorderColours(0, 0xFF707070);
-                    pasteHex.setListener((event, eventSource) -> {
+                    pasteHex.setListener(() -> {
                         try {
                             String value = GuiScreen.getClipboardString();
                             if (value.startsWith("#") || value.toLowerCase().startsWith("0x")) {
@@ -396,13 +396,13 @@ public class GuiStyleEditor extends GuiPopUpDialogBase<GuiStyleEditor> {
                     context.addChild(pasteHex);
 
                     GuiButton lighten = new GuiButton(I18n.format("pi.button.lighten")).setAlignment(GuiAlign.LEFT).setRelPos(1, rely += 13).setSize(98, 12).setBorderColours(0, 0xFF707070);
-                    lighten.setListener((event, eventSource) -> {
+                    lighten.setListener(() -> {
                         Colour colour = ((ColourProperty) property).getColour();
                         ((ColourProperty) property).setValue(changeShade(colour.argb(), 0.05));
                     });
                     context.addChild(lighten);
                     GuiButton darken = new GuiButton(I18n.format("pi.button.darken")).setAlignment(GuiAlign.LEFT).setRelPos(1, rely + 13).setSize(98, 12).setBorderColours(0, 0xFF707070);
-                    darken.setListener((event, eventSource) -> {
+                    darken.setListener(() -> {
                         Colour colour = ((ColourProperty) property).getColour();
                         ((ColourProperty) property).setValue(changeShade(colour.argb(), -0.05));
                     });

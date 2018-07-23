@@ -6,10 +6,7 @@ import com.brandon3055.brandonscore.client.gui.modulargui.MGuiElementBase;
 import com.brandon3055.brandonscore.client.gui.modulargui.baseelements.GuiButton;
 import com.brandon3055.brandonscore.client.gui.modulargui.baseelements.GuiPopUpDialogBase;
 import com.brandon3055.brandonscore.client.gui.modulargui.baseelements.GuiScrollElement;
-import com.brandon3055.brandonscore.client.gui.modulargui.guielements.GuiBorderedRect;
-import com.brandon3055.brandonscore.client.gui.modulargui.guielements.GuiLabel;
-import com.brandon3055.brandonscore.client.gui.modulargui.guielements.GuiTextFieldDialog;
-import com.brandon3055.brandonscore.client.gui.modulargui.guielements.GuiTexture;
+import com.brandon3055.brandonscore.client.gui.modulargui.guielements.*;
 import com.brandon3055.brandonscore.client.gui.modulargui.lib.GuiAlign;
 import com.brandon3055.projectintelligence.PIHelpers;
 import com.brandon3055.projectintelligence.client.PITextures;
@@ -61,15 +58,18 @@ public class GuiPIConfig extends GuiPopUpDialogBase<GuiPIConfig> {
         configList.addElement(new GuiLabel(TextFormatting.UNDERLINE + I18n.format("pi.config.basic_config")).setYSize(12).setShadow(false).setTextColGetter(hovering -> StyleHandler.getInt("user_dialogs." + TEXT_COLOUR.getName())));
 
         addConfig(new ConfigProperty(this, "pi.config.open_style_settings").setAction(() -> menu.styleEditor.toggleShown(true, 550)).setCloseOnClick(true));
+        addConfig(new ConfigProperty(this, () -> "pi.config.set_pi_language", () -> (LanguageManager.isCustomUserLanguageSet() ? "" : I18n.format("pi.lang.mc_default") + " ") + LanguageManager.LANG_NAME_MAP.get(LanguageManager.getUserLanguage())).setHoverText(I18n.format("pi.config.set_pi_language.info"), TextFormatting.GRAY + I18n.format("pi.config.set_pi_language_note.info")).setAction(this::openLanguageSelector));
 
         //Advanced Settings
         configList.addElement(new GuiLabel(TextFormatting.UNDERLINE + I18n.format("pi.config.advanced_config")).setYSize(12).setShadow(false).setTextColGetter(hovering -> StyleHandler.getInt("user_dialogs." + TEXT_COLOUR.getName())));
 
-        addConfig(new ConfigProperty(this, () -> "pi.config.set_pi_language", () -> (LanguageManager.isCustomUserLanguageSet() ? "" : I18n.format("pi.lang.mc_default") + " ") + LanguageManager.LANG_NAME_MAP.get(LanguageManager.getUserLanguage())).setHoverText(I18n.format("pi.config.set_pi_language.info"), TextFormatting.GRAY + I18n.format("pi.config.set_pi_language_note.info")).setAction(this::openLanguageSelector));
 
         //region Edit Mode Settings
         addConfig(new ConfigProperty(this, () -> "pi.config.edit_mode", () -> PIConfig.editMode() + "").setAction(() -> {
             PIConfig.setEditMode(!PIConfig.editMode());
+            if (!PIConfig.editMode()) {
+                PIHelpers.closeEditor();
+            }
             PIConfig.save();
             DocumentationManager.checkAndReloadDocFiles();
         }));
@@ -117,7 +117,7 @@ public class GuiPIConfig extends GuiPopUpDialogBase<GuiPIConfig> {
 
         //Close Button
         GuiButton close = new StyledGuiButton("user_dialogs.button_style").setPos(this).translate(xSize() - 14, 3).setSize(11, 11);
-        close.setListener((event, eventSource) -> close());
+        close.setListener(this::close);
         close.setHoverText(I18n.format("pi.button.close"));
         close.addChild(new GuiTexture(64, 16, 5, 5, PITextures.PI_PARTS).setRelPos(3, 3));
         addChild(close);
@@ -281,6 +281,19 @@ public class GuiPIConfig extends GuiPopUpDialogBase<GuiPIConfig> {
     //Misc helper code
     public void openLanguageSelector() {
         StyledSelectDialog<String> langSelect = new StyledSelectDialog<>(this, "user_dialogs", "Select Language");
+        langSelect.setInsets(14, 2, 18, 2);
+
+        //Add Search Box
+        GuiTextField filter = new GuiTextField();
+        langSelect.addChild(filter);
+        filter.setSize(langSelect.xSize() - 4, 14).setPos(langSelect.xPos() + 2, langSelect.maxYPos() - 16);
+        filter.setListener((event, eventSource) -> langSelect.reloadElement());
+        langSelect.setSelectionFilter(item -> {
+            String ft = filter.getText().toLowerCase();
+            return ft.isEmpty() || item.toLowerCase().contains(ft) || LanguageManager.LANG_NAME_MAP.getOrDefault(item, "").toLowerCase().contains(ft);
+        });
+
+        //Add Items
         String doTrans = I18n.format("pi.lang.disable_override");
         if (LanguageManager.isCustomUserLanguageSet()) {
             langSelect.addItem(doTrans);
@@ -292,7 +305,10 @@ public class GuiPIConfig extends GuiPopUpDialogBase<GuiPIConfig> {
             GuiButton.playGenericClick(mc);
             DocumentationManager.checkAndReloadDocFiles();
         });
+
         langSelect.setCloseOnSelection(true);
         langSelect.showCenter(this.displayZLevel + 50);
+
+
     }
 }

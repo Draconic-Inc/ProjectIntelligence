@@ -3,6 +3,7 @@ package com.brandon3055.projectintelligence.client.gui;
 import com.brandon3055.brandonscore.handlers.FileHandler;
 import com.brandon3055.projectintelligence.PIHelpers;
 import com.brandon3055.projectintelligence.client.gui.guielements.GuiPartMenu;
+import com.brandon3055.projectintelligence.client.gui.guielements.GuiPartPageList.SearchMode;
 import com.brandon3055.projectintelligence.utils.LogHelper;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -37,6 +38,7 @@ public class PIConfig {
 
     //editor Config
     public static volatile boolean editorAlwaysOnTop = false;
+    public static volatile boolean editorLineWrap = false;
     public static Map<String, String> modVersionOverrides = new HashMap<>();
 
     //language
@@ -44,6 +46,10 @@ public class PIConfig {
     public static Map<String, String> pageLangOverrides = new HashMap<>();
     public static Map<String, String> modLangOverrides = new HashMap<>();
 
+    //Search Config
+    public static SearchMode searchMode = SearchMode.EVERYWHERE;
+
+    public static String homePage = "";
 
     public static void initialize() {
         File piFolder = new File(FileHandler.brandon3055Folder, "ProjectIntelligence");
@@ -61,6 +67,7 @@ public class PIConfig {
         jObj.addProperty("editMode", editMode);
         jObj.addProperty("editingRepoLoc", editingRepoLoc);
         jObj.addProperty("editorAlwaysOnTop", editorAlwaysOnTop);
+        jObj.addProperty("editorLineWrap", editorLineWrap);
 
         jObj.addProperty("screenMode", screenMode);
         jObj.addProperty("screenPosOverride", screenPosOverride);
@@ -68,6 +75,10 @@ public class PIConfig {
         jObj.addProperty("screenPosY", screenPosY);
 
         jObj.addProperty("userLanguage", userLanguage);
+
+        jObj.addProperty("homePage", homePage);
+
+        jObj.addProperty("searchMode", searchMode.name());
 
         JsonObject langOverrides = new JsonObject();
         pageLangOverrides.forEach(langOverrides::addProperty);
@@ -122,6 +133,7 @@ public class PIConfig {
         editMode = JsonUtils.getBoolean(jObj, "editMode", false);
         editingRepoLoc = JsonUtils.getString(jObj, "editingRepoLoc", "");
         editorAlwaysOnTop = JsonUtils.getBoolean(jObj, "editorAlwaysOnTop", false);
+        editorLineWrap = JsonUtils.getBoolean(jObj, "editorLineWrap", true);
 
         screenMode = JsonUtils.getInt(jObj, "screenMode", screenMode);
         screenPosOverride = JsonUtils.getBoolean(jObj, "screenPosOverride", false);
@@ -129,6 +141,16 @@ public class PIConfig {
         screenPosY = JsonUtils.getInt(jObj, "screenPosY", 0);
 
         userLanguage = JsonUtils.getString(jObj, "userLanguage", "[MINECRAFT-LANG]");
+
+        homePage = JsonUtils.getString(jObj, "homePage", "projectintelligence:");
+
+        try {
+            searchMode = SearchMode.valueOf(JsonUtils.getString(jObj, "searchMode", SearchMode.EVERYWHERE.name()));
+        }
+        catch (Exception e) {
+            LogHelper.error("Detected invalid search mode in PI Config! Default mode will be used.");
+            e.printStackTrace();
+        }
 
         pageLangOverrides.clear();
         if (jObj.has("pageLangOverrides") && jObj.get("pageLangOverrides").isJsonObject()) {
@@ -149,6 +171,12 @@ public class PIConfig {
         }
     }
 
+    public static void setHomePage(String homePage) {
+        PIConfig.homePage = homePage;
+        save();
+        GuiProjectIntelligence.requiresReload = true;
+    }
+
     public static void setEditMode(boolean editMode) {
         PIConfig.editMode = editMode;
 
@@ -161,10 +189,6 @@ public class PIConfig {
     public static synchronized boolean editMode() {
         return editMode;
     }
-
-    //region old
-
-    public static boolean drawEditInfo = true;
 
     //Windows
     public static volatile int NAV_WINDOW = 0xFF3c3f41;

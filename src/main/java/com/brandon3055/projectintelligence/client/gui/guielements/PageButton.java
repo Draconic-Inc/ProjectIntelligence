@@ -7,6 +7,7 @@ import com.brandon3055.brandonscore.client.gui.modulargui.guielements.*;
 import com.brandon3055.brandonscore.client.gui.modulargui.lib.GuiAlign;
 import com.brandon3055.brandonscore.lib.DLRSCache;
 import com.brandon3055.brandonscore.lib.StackReference;
+import com.brandon3055.brandonscore.utils.Utils;
 import com.brandon3055.projectintelligence.client.PITextures;
 import com.brandon3055.projectintelligence.client.gui.ContentInfo;
 import com.brandon3055.projectintelligence.client.gui.GuiProjectIntelligence;
@@ -15,9 +16,12 @@ import com.brandon3055.projectintelligence.client.gui.TabManager;
 import com.brandon3055.projectintelligence.docdata.DocumentationManager;
 import com.brandon3055.projectintelligence.docdata.DocumentationPage;
 import com.brandon3055.projectintelligence.docdata.LanguageManager;
+import com.brandon3055.projectintelligence.docdata.LanguageManager.PageLangData;
+import com.brandon3055.projectintelligence.docdata.ModStructurePage;
 import com.brandon3055.projectintelligence.utils.LogHelper;
 import com.google.gson.JsonObject;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.resources.I18n;
 import net.minecraft.entity.Entity;
@@ -37,6 +41,7 @@ public class PageButton extends GuiButton {
     private GuiProjectIntelligence gui;
     private LinkedList<MGuiElementBase> icons = new LinkedList<>();
     private GuiLabel label;
+    private GuiTexture versMissMatch;
     private GuiButton langButton;
     private GuiTexture langButtonTexture;
     private boolean invalidIcons = false;
@@ -75,26 +80,31 @@ public class PageButton extends GuiButton {
         label.setYPos(yPos() + (ySize() / 2) - (label.ySize() / 2));
         icons.forEach(icon -> icon.setXPosMod((o, o2) -> xPos() + 2).setYPos(yPos() + (ySize() / 2) - (icon.ySize() / 2)));
 
-        langButton = new GuiButton().setSize(12, 12).setXPosMod((guiButton, integer) -> label.maxXPos() - 14).setYPos(label.maxYPos() - 14);
+        langButton = new GuiButton().setSize(12, 12).setXPosMod((guiButton, integer) -> label.maxXPos() - 14).setYPos(yPos() + 1);
         langButton.setBorderColours(0, 0xFF004080).setFillColour(0);
         langButton.zOffset += 10;
         String[] error = {I18n.format("pi.error.page_not_localized.info"), I18n.format("pi.error.page_not_localized_click_here.info")};
         langButton.setHoverTextArray(e -> LanguageManager.isPageLangOverridden(page.getPageURI()) ? new String[]{I18n.format("pi.button.language_override_enabled.info"), TextFormatting.GOLD + LanguageManager.LANG_NAME_MAP.get(LanguageManager.getPageLanguage(page.getPageURI()))} : error);
         addChild(langButton);
-        langButton.setListener((event, eventSource) -> openLanguageSelector());
+        langButton.setListener(() -> openLanguageSelector(false));
 
-        langButtonTexture = new GuiTexture(10, 10, PITextures.PI_PARTS).setXPosMod((guiButton, integer) -> label.maxXPos() - 13).setYPos(label.maxYPos() - 13);
+        langButtonTexture = new GuiTexture(10, 10, PITextures.PI_PARTS).setXPosMod((guiButton, integer) -> label.maxXPos() - 13).setYPos(yPos() + 2);
         langButtonTexture.setTexSizeOverride(13, 14);
         langButtonTexture.zOffset += 10;
         langButton.addChild(langButtonTexture);
+
+        versMissMatch = new GuiTexture(8, 8, PITextures.PI_PARTS).setXPosMod((guiButton, integer) -> label.maxXPos() - 13).setYPos(yPos() + 12);
+        versMissMatch.setTexSizeOverride(8, 8);
+        versMissMatch.setTexturePos(0, 24);
+        versMissMatch.zOffset += 10;
+        addChild(versMissMatch);
+
 
         super.addChildElements();
     }
 
     private void loadIcons() {
-        LogHelper.dev("Loading icons for page: " + page.getPageId());
         if (page.getIcons().isEmpty()) {
-            LogHelper.dev("No icons for page: " + page.getPageId());
             return;
         }
 
@@ -115,6 +125,7 @@ public class PageButton extends GuiButton {
                     StackReference stack = ci.stack;
                     if (stack != null && !stack.createStack().isEmpty()) {
                         icon = new GuiStackIcon(stack);
+                        ((GuiStackIcon) icon).setToolTip(ci.drawHover);
                     }
                     else {
                         icon = null;
@@ -202,8 +213,20 @@ public class PageButton extends GuiButton {
         else {
             LogHelper.bigDev("WHY IS THIS NULL!?!?!?!?!");//todo
         }
-//        TODO create language selection gui. Use a generified gui where i give it the list of avalible languages and a default that can be whatever.
-//        That way i can use it for both the page override and setting the user prefernce.
+
+        PageLangData data = LanguageManager.getLangData(page.getPageURI(), LanguageManager.getPageLanguage(page.getPageURI()));
+        if (data != null && data.matchLang != null) {
+            PageLangData matches = LanguageManager.getLangData(page.getPageURI(), data.matchLang);
+            if (matches != null && matches.pageRev > data.matchRev) {
+                versMissMatch.setHoverText(I18n.format("pi.error.page_lang_outdated", matches.lang));
+            }
+            else {
+                versMissMatch.setEnabled(false);
+            }
+        }
+        else {
+            versMissMatch.setEnabled(false);
+        }
 
         super.reloadElement();
     }
@@ -212,9 +235,52 @@ public class PageButton extends GuiButton {
 
     @Override
     public void onPressed(int mouseX, int mouseY, int mouseButton) {
-        TabManager.openPage(page.getPageURI(), mouseButton == 2);
-//        DocumentationManager.setSelectedPage(page);
-//        gui.reloadGui();
+        //Open Context Menu
+        if (mouseButton == 1) {
+
+            StyledSelectDialog<ContextMenuItem> context = new StyledSelectDialog<>(langButton, "user_dialogs", I18n.format("pi.page.cm.page_options"));
+            context.setSelectionListener(ContextMenuItem::onClicked);
+
+            ContextMenuItem menuItem = new ContextMenuItem(I18n.format("pi.page.cm.open_new_tab"));
+            menuItem.setAction(() -> TabManager.openPage(page.getPageURI(), true));
+            context.addItem(menuItem);
+
+            menuItem = new ContextMenuItem(I18n.format("pi.page.cm.override_lang"));
+            menuItem.setAction(() -> openLanguageSelector(false));
+            context.addItem(menuItem);
+
+            menuItem = new ContextMenuItem(I18n.format("pi.page.cm.override_mod_lang"));
+            menuItem.setAction(() -> openLanguageSelector(true));
+            context.addItem(menuItem);
+
+            menuItem = new ContextMenuItem(I18n.format("pi.page.cm.set_home_page"));
+            menuItem.setAction(() -> PIConfig.setHomePage(page.getPageURI()));
+            context.addItem(menuItem);
+
+            if (PIConfig.editMode()) {
+                menuItem = new ContextMenuItem(I18n.format("Copy page URI"));
+                menuItem.setAction(() -> Utils.setClipboardString(page.getPageURI()));
+                context.addItem(menuItem);
+            }
+
+            context.setYSize(16 + (context.getItems().size() * 16));
+            context.setCloseOnSelection(true);
+            context.show(200);
+            context.setPos(mouseX, mouseY).normalizePosition();
+        }
+        else {
+            boolean newTab = mouseButton == 2;
+
+            if (!newTab && TabManager.getActiveTab().pageURI.equals(page.getPageURI())) {
+                //Go back if the page is already selected
+                TabManager.openPage(page.getParent().getPageURI(), false);
+            }
+            else {
+                //Open Page
+                TabManager.openPage(page.getPageURI(), newTab);
+            }
+        }
+
         super.onPressed(mouseX, mouseY, mouseButton);
     }
 
@@ -258,13 +324,21 @@ public class PageButton extends GuiButton {
             drawBorderedRect(xPos(), yPos(), xSize(), ySize(), 1, highlighted ? GuiPartPageList.btnColourHover.argb() : GuiPartPageList.btnColour.argb(), highlighted ? GuiPartPageList.btnBorderHover.argb() : GuiPartPageList.btnBorder.argb());
         }
 
+        if (page.isHidden() && PIConfig.editMode()) {
+            drawColouredRect(xPos() + 1, yPos() + 1, xSize() - 2, ySize() - 2, 0xA0000000);
+            GlStateManager.pushMatrix();
+            GlStateManager.translate(xPos() + 1, yPos() + 1, 0);
+            GlStateManager.scale(0.62, 0.62, 0.5);
+            drawString(fontRenderer, "Hidden button. (only visible in edit mode)", 0, 0, 0xFF5050, false);
+            GlStateManager.popMatrix();
+        }
 
         super.renderElement(mc, mouseX, mouseY, partialTicks);
     }
 
     @Override
     public boolean onUpdate() {
-        if (page.cycle_icons()) {
+        if (page.cycle_icons() && !GuiScreen.isShiftKeyDown()) {
             updateIcons();
         }
         return super.onUpdate();
@@ -279,20 +353,76 @@ public class PageButton extends GuiButton {
 
     //endregion
 
-    public void openLanguageSelector() {
-        StyledSelectDialog<String> langSelect = new StyledSelectDialog<>(langButton, "user_dialogs", "Select Language");
+    public void openLanguageSelector(boolean mod) {
+        LogHelper.dev("Lang Selector");
+
+        StyledSelectDialog<String> langSelect = new StyledSelectDialog<>(langButton, "user_dialogs", I18n.format("pi.popup.select_language"));
         String doTrans = I18n.format("pi.lang.disable_override");
-        if (LanguageManager.isPageLangOverridden(page.getPageURI())) {
-            langSelect.addItem(doTrans);
+
+        //Add Search Box
+        GuiTextField filter = new GuiTextField();
+        langSelect.addChild(filter);
+        filter.setSize(langSelect.xSize() - 4, 14).setPos(langSelect.xPos() + 2, langSelect.maxYPos() - 16);
+        filter.setListener((event, eventSource) -> langSelect.reloadElement());
+        langSelect.setSelectionFilter(item -> {
+            String ft = filter.getText().toLowerCase();
+            return ft.isEmpty() || item.toLowerCase().contains(ft) || LanguageManager.LANG_NAME_MAP.getOrDefault(item, "").toLowerCase().contains(ft);
+        });
+
+        //Add languages
+        if (mod) {
+            ModStructurePage modPage = DocumentationManager.getModPage(page.getModid());
+            if (modPage == null) return;
+
+            if (LanguageManager.isModLangOverridden(modPage.getModid())) {
+                langSelect.addItem(doTrans);
+            }
+            langSelect.setSelected(LanguageManager.getModLanguage(modPage.getModid()));
+            LanguageManager.getAvailablePageLanguages(modPage.getPageURI()).forEach(langSelect::addItem);
         }
-        langSelect.setSelected(LanguageManager.getPageLanguage(page.getPageURI()));
-        LanguageManager.getAvailablePageLanguages(page.getPageURI()).forEach(langSelect::addItem);
+        else {
+            if (LanguageManager.isPageLangOverridden(page.getPageURI())) {
+                langSelect.addItem(doTrans);
+            }
+            langSelect.setSelected(LanguageManager.getPageLanguage(page.getPageURI()));
+            LanguageManager.getAvailablePageLanguages(page.getPageURI()).forEach(langSelect::addItem);
+        }
+
+
         langSelect.setSelectionListener(lang -> {
-            LanguageManager.setPageLangOverride(page.getPageURI(), lang.equals(doTrans) ? null : lang);
             langButton.playClickSound();
-            DocumentationManager.checkAndReloadDocFiles();
+            if (mod){
+                LanguageManager.setPageLangOverride(page.getPageURI(), lang.equals(doTrans) ? null : lang);
+            }
+            else {
+                LanguageManager.setPageLangOverride(page.getPageURI(), lang.equals(doTrans) ? null : lang);
+            }
         });
         langSelect.setCloseOnSelection(true);
         langSelect.showCenter(200);
+    }
+
+    private static class ContextMenuItem {
+        private String name;
+        private Runnable action;
+
+        private ContextMenuItem(String name) {
+            this.name = name;
+        }
+
+        public void setAction(Runnable action) {
+            this.action = action;
+        }
+
+        public void onClicked() {
+            if (action != null) {
+                action.run();
+            }
+        }
+
+        @Override
+        public String toString() {
+            return name;
+        }
     }
 }

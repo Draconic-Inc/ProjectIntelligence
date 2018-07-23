@@ -1,7 +1,9 @@
 package com.brandon3055.projectintelligence.client;
 
 import com.brandon3055.projectintelligence.CommonProxy;
+import com.brandon3055.projectintelligence.client.gui.PIConfig;
 import com.brandon3055.projectintelligence.client.keybinding.KeyInputHandler;
+import com.brandon3055.projectintelligence.docdata.DocumentationManager;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.common.event.FMLInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLPostInitializationEvent;
@@ -13,6 +15,9 @@ public class ClientProxy extends CommonProxy {
     public void preInit(FMLPreInitializationEvent event) {
         super.preInit(event);
 //        WikiDocManager.initialize();
+        PIConfig.initialize();
+        StyleHandler.initialize();
+        DocumentationManager.initialize();
     }
 
     @Override

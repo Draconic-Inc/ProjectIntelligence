@@ -6,14 +6,11 @@ import com.brandon3055.brandonscore.client.gui.modulargui.baseelements.GuiButton
 import com.brandon3055.brandonscore.client.gui.modulargui.guielements.GuiLabel;
 import com.brandon3055.brandonscore.client.gui.modulargui.guielements.GuiTexture;
 import com.brandon3055.brandonscore.client.gui.modulargui.lib.GuiAlign;
-import com.brandon3055.brandonscore.client.gui.modulargui.lib.GuiEvent;
-import com.brandon3055.brandonscore.client.gui.modulargui.lib.IGuiEventListener;
-import com.brandon3055.projectintelligence.client.ClientEventHandler;
+import com.brandon3055.projectintelligence.PIHelpers;
 import com.brandon3055.projectintelligence.client.PITextures;
 import com.brandon3055.projectintelligence.client.StyleHandler;
 import com.brandon3055.projectintelligence.client.gui.GuiProjectIntelligence;
 import com.brandon3055.projectintelligence.client.gui.PIConfig;
-import com.brandon3055.projectintelligence.docdata.DocumentationManager;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.renderer.GlStateManager;
@@ -25,9 +22,9 @@ import java.io.IOException;
 /**
  * Created by brandon3055 on 31/08/2016.
  */
-public class GuiPartMenu extends MGuiElementBase<GuiPartMenu> implements IGuiEventListener {
+public class GuiPartMenu extends MGuiElementBase<GuiPartMenu> {
     private GuiProjectIntelligence guiMain;
-//    private GuiPartConfigWindow piConfigWindow = null;
+    //    private GuiPartConfigWindow piConfigWindow = null;
     public GuiStyleEditor styleEditor = null;
     public GuiPIConfig configUI = null;
     private GuiLabel title;
@@ -56,7 +53,7 @@ public class GuiPartMenu extends MGuiElementBase<GuiPartMenu> implements IGuiEve
         closeButton.addAndFireReloadCallback(guiButton -> guiButton.setPos(maxXPos() - 20, yPos() + 3));
 //        closeButton.setRectBorderColourGetter((hovering, disabled) -> 0);
 //        closeButton.setRectFillColourGetter((hovering, disabled) -> 0);
-        closeButton.setListener((event, eventSource) -> guiMain.closeGui());
+        closeButton.setListener(() -> guiMain.closeGui());
         addChild(closeButton);
 
         GuiButton settingsButton = new GuiButton().setSize(16, 16).setHoverText(I18n.format("pi.button.settings.info"));
@@ -69,7 +66,7 @@ public class GuiPartMenu extends MGuiElementBase<GuiPartMenu> implements IGuiEve
         });
 //        settingsButton.setRectBorderColourGetter((hovering, disabled) -> 0);
 //        settingsButton.setRectFillColourGetter((hovering, disabled) -> 0);
-        settingsButton.setListener((event, eventSource) -> configUI.toggleShown());
+        settingsButton.setListener(() -> configUI.toggleShown());
         addChild(settingsButton);
 
         GuiButton maximizeButton = new GuiButton().setSize(16, 16).setHoverText(I18n.format("pi.button.maximize.info"));
@@ -81,7 +78,7 @@ public class GuiPartMenu extends MGuiElementBase<GuiPartMenu> implements IGuiEve
 //        maximizeButton.setRectBorderColourGetter((hovering, disabled) -> 0);
 //        maximizeButton.setRectFillColourGetter((hovering, disabled) -> 0);
         maximizeButton.setEnabledCallback(() -> PIConfig.screenMode > 0);
-        maximizeButton.setListener((event, eventSource) -> setGuiSize(true));
+        maximizeButton.setListener(() -> setGuiSize(true));
         addChild(maximizeButton);
 
         GuiButton minimizeButton = new GuiButton().setSize(16, 16).setHoverText(I18n.format("pi.button.minimize.info"));
@@ -93,47 +90,17 @@ public class GuiPartMenu extends MGuiElementBase<GuiPartMenu> implements IGuiEve
 //        minimizeButton.setRectBorderColourGetter((hovering, disabled) -> 0);
 //        minimizeButton.setRectFillColourGetter((hovering, disabled) -> 0);
         minimizeButton.setEnabledCallback(() -> PIConfig.screenMode < 6);
-        minimizeButton.setListener((event, eventSource) -> setGuiSize(false));
+        minimizeButton.setListener(() -> setGuiSize(false));
         addChild(minimizeButton);
 
-//        GuiButton editorButton = new StyledGuiButton("user_dialogs.button_style").setSize(100, 16);
-//        editorButton.setText("Display Editor");
-//        editorButton.setEnabledCallback(() -> PIConfig.editMode());
-//        editorButton.setPos((xSize() / 2) - 50, (ySize() / 2) - 8);
-//        editorButton.setListener((event, eventSource) -> PIHelpers.displayEditor());
-//        addChild(editorButton);
-
-        //region Old Code
-//        int xPos = xPos();
-//        int yPos = yPos();
-//        int xSize = xSize();
-
-//        if (PIConfig.editMode) {
-//            addChild(new MGuiButtonSolid("Reload", xPos + (xSize / 2), yPos + 3, 50, 12, "Reload").setColours(0xFF000000, 0xFF333333, 0xFF555555).setListener(guiMain));
-//            addChild(new MGuiButtonSolid("TOGGLE_EDIT_LINES", xPos + (xSize / 2) + 51, yPos + 3, 12, 12, "E").setColours(MENU_BAR, 0xFFFF0000, 0xFFFF0000).setListener(this).setHoverText(new String[]{"Toggle Edit. Edit lines and info."}));
-//        }
-
-//        String s = I18n.format("generic.options.txt");
-//        addChild(new MGuiButtonSolid() {
-//            @Override
-//            public int getFillColour(boolean hovering, boolean disabled) {
-//                return hovering ? mixColours(MENU_BAR, 0x00151515) : MENU_BAR;
-//            }
-//
-//            @Override
-//            public int getBorderColour(boolean hovering, boolean disabled) {
-//                return hovering ? mixColours(MENU_BAR, 0x00101010, true) : mixColours(MENU_BAR, 0x00202020, true);
-//            }
-//
-//            @Override
-//            public int getTextColour(boolean hovered, boolean disabled) {
-//                return TEXT_COLOUR;
-//            }
-//        }.setListener(this).setHoverText("Open Options Window").addReloadCallback(button -> {
-//            int size = fontRenderer.getStringWidth(s);
-//            button.setPos(GuiPartMenu.this.xPos() + GuiPartMenu.this.xSize() - (size + 170), GuiPartMenu.this.yPos() + 4).setSize(size + 4, 12).setText(s).setButtonName("OPTIONS");
-//        }));//.setColours(0xFF888888, 0xFF000000, 0xFF222222)
-        //endregion
+        GuiButton editorButton = new GuiButton(TextFormatting.UNDERLINE + ""+ TextFormatting.RED + I18n.format("pi.config.open_editor")).setSize(100, 14);
+        editorButton.addAndFireReloadCallback(guiButton -> guiButton.setPos(xPos() + (xSize() / 2) - 50, yPos() + (ySize() / 2) - 7));
+        editorButton.setFillColour(0);
+        editorButton.setBorderColours(0xFF707070, 0xFFA0A0A0);
+        editorButton.setEnabledCallback(PIConfig::editMode);
+//        editorButton.setPos((xSize() / 2) - 50, (ySize() / 2) - 7);
+        editorButton.setListener((event, eventSource) -> PIHelpers.displayEditor());
+        addChild(editorButton);
 
         super.addChildElements();
     }
@@ -200,36 +167,9 @@ public class GuiPartMenu extends MGuiElementBase<GuiPartMenu> implements IGuiEve
             }
         }
 
-        if (DocumentationManager.downloadHandler.running) {
-            int i = (ClientEventHandler.elapsedTicks / 10) % 3;
-            drawCenteredString(fontRenderer, "Downloading Updates" + (i == 0 ? "." : i == 1 ? ".." : "..."), xSize() / 2, 5, 0xFFFFFF, false);
-        }
-
         super.renderElement(minecraft, mouseX, mouseY, partialTicks);
     }
 
     //endregion
 
-    //region Interact
-
-    @Override
-    public void onMGuiEvent(GuiEvent event, MGuiElementBase eventElement) {
-//        if (eventElement instanceof GuiButton && ((GuiButton) eventElement).buttonName.equals("OPTIONS")) {
-//            if (piConfigWindow != null) {
-//                modularGui.getManager().remove(piConfigWindow);
-//                piConfigWindow = null;
-//            }
-//            else {
-//                piConfigWindow = new GuiPartConfigWindow((screenWidth / 2) - 128, (screenHeight / 2) - 100, 256, 200);
-//                modularGui.getManager().add(piConfigWindow, displayZLevel + 1);
-////                wikiConfigWindow.addChildElements();
-//            }
-//        }
-//        else if (eventElement instanceof GuiButton && ((GuiButton) eventElement).buttonName.equals("TOGGLE_EDIT_LINES")) {
-//            PIConfig.drawEditInfo = !PIConfig.drawEditInfo;
-//        }
-    }
-
-
-    //endregion
 }

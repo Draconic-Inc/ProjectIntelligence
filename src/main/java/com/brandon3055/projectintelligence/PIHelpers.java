@@ -49,8 +49,24 @@ public class PIHelpers {
      * Supports multiple calls. Errors will be added to a list to be displayed.
      */
     public static void displayError(String error) {
+        displayError(error, false);
+    }
+
+    /**
+     * Displays an error message in the PI gui or id the gui is not currently open schedules an error to be displayed the
+     * next time the gui is opened.
+     * <p>
+     * Supports multiple calls. Errors will be added to a list to be displayed.
+     * @param error The error message to display to the user
+     * @param noRepeat If true the error will only be displayed if there is no identical error already in the list.
+     */
+    public static void displayError(String error, boolean noRepeat) {
+        if (noRepeat && errorCache.contains(error)) {
+            return;
+        }
         LogHelperBC.error("[Pi Reported Error]: " + error);
         errorCache.add(error);
+        GuiProjectIntelligence.updateErrorDialog = true;
     }
 
     /**
@@ -123,24 +139,30 @@ public class PIHelpers {
 
     //region Editor Helpers
     public static void displayEditor() {
-        try {
-            UIManager.setLookAndFeel("com.bulenkov.darcula.DarculaLaf");
-        }
-        catch (Throwable ignored) {
+        if (editor == null) {
             try {
-                UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+                UIManager.setLookAndFeel("com.bulenkov.darcula.DarculaLaf");
             }
-            catch (Throwable ignored2) {}
+            catch (Throwable ignored) {
+                try {
+                    UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+                }
+                catch (Throwable ignored2) {}
+            }
+            editor = new PIEditor();
+            editor.reload();
         }
-
-
-//        if (editor == null) {
-        editor = new PIEditor();
-//        }
 
         editor.setVisible(true);
-        editor.reload();
+        editor.setExtendedState(JFrame.NORMAL);
+        editor.toFront();
         centerWindowOnMC(editor);
+    }
+
+    public static void closeEditor() {
+        if (editor != null && editor.isVisible()) {
+            editor.dispose();
+        }
     }
 
     public static void centerWindowOnMC(Component window) {

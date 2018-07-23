@@ -44,7 +44,7 @@ pi.style.user_dialogs.prop=User Dialogs
 pi.style.page_list.prop=Page List
 pi.style.page_buttons.prop=Page Buttons
 pi.style.page_icon.prop=Page Icon
-pi.style.hide_button.prop=Hide Button
+pi.style.hide_button.prop=Nav Buttons
 pi.style.dir_buttons.prop=Directory Buttons
 
 //Markdown Window
@@ -68,6 +68,7 @@ pi.style.shaded_borders.prop=Shaded Borders
 pi.style.header.prop=Header
 pi.style.body.prop=Body
 pi.style.footer.prop=Footer
+pi.style.search.prop=Search Box
 pi.style.scroll_bar.prop=Scroll Bar
 pi.style.scroll_slider.prop=Scroll Bar Slider
 pi.style.text_shadow.prop=Text Shadow
@@ -90,6 +91,13 @@ pi.button.open_style_editor=Open Style Editor
 pi.button.close_style_editor=Close Style Editor
 pi.button.save=Save
 pi.button.delete=Delete
+pi.button.yes=Yes
+pi.button.cancel=Cancel
+pi.button.copy_to_clipboard=Copy to Clipboard
+pi.button.search_settings=Search Mode
+pi.button.go_back=Go Back
+pi.button.go_forward=Go Forward
+
 
 //Config
 pi.config.basic_config=Basic Configuration
@@ -115,11 +123,38 @@ pi.lang.mc_default=MC:
 pi.button.close.info=Close Gui
 pi.button.minimize.info=Reduce Gui Size
 pi.button.maximize.info=Increase Gui Size
-pi.button.settings.info=Options
+pi.button.settings.info=Settings
 pi.button.toggle_nav_window.info=Toggle Navigation Window
-
 
 //Errors / Notifications
 pi.error.page_not_localized.info=It appears this page has not yet been translated to your selected language!
 pi.error.page_not_localized_click_here.info=Click here to see available languages for this page or change your selected language in the PI option menu
 pi.button.language_override_enabled.info=Language override is currently enabled for this page. Click here to configure override.
+pi.error.page_lang_outdated=This page translation was written for a previous %s revision. This page may be outdated.
+pi.md.no_recipe_for_item.txt=No recipe could be found for this item!
+pi.md.link_confirmation.txt=Are you sure you want to open the following link in your browser?
+
+//Misc UI Text
+pi.popup.select_language=Select Language
+
+//Page context menu items
+pi.page.cm.page_options=Page Options
+pi.page.cm.open_new_tab=Open in new tab
+pi.page.cm.override_lang=Override page language
+pi.page.cm.override_mod_lang=Override mod language
+pi.page.cm.set_home_page=Set as home page
+
+//Update Manager
+pi.update_manager.title=PI Update Manager
+pi.update.status.inactive=Inactive
+pi.update.status.dl_master_manifest=Fetching Master Manifest
+pi.update.status.dl_mod_manifests=Fetching Mod Manifests
+pi.update.status.dl_mod_documentation=Downloading Doc Updates
+pi.update.status.reload_documentation=Reloading Documentation
+
+//Search
+pi.search.mode.search_mode=Search Mode
+pi.search.mode.everywhere=Everywhere
+pi.search.mode.selected_mod=Current Mod
+pi.search.mode.page_sub_pages=This Page + Sub Pages
+pi.search.mode.page_only=This Page Only

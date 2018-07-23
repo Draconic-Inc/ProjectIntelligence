@@ -1,9 +1,6 @@
 package com.brandon3055.projectintelligence;
 
 import com.brandon3055.brandonscore.BrandonsCore;
-import com.brandon3055.projectintelligence.client.StyleHandler;
-import com.brandon3055.projectintelligence.client.gui.PIConfig;
-import com.brandon3055.projectintelligence.docdata.DocumentationManager;
 import com.brandon3055.projectintelligence.utils.LogHelper;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.SidedProxy;
@@ -36,10 +33,6 @@ public class ProjectIntelligence {
 
     @Mod.EventHandler
     public void preInit(FMLPreInitializationEvent event) {
-        PIConfig.initialize();
-        StyleHandler.initialize();
-        DocumentationManager.initialize();
-
         proxy.preInit(event);
     }
 

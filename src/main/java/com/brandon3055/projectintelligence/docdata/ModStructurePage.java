@@ -31,11 +31,14 @@ public class ModStructurePage extends DocumentationPage {
 //     */
 //    protected String modVersionRange = "";
 
-    protected ModStructurePage(DocumentationPage parent, String modid, String modVersion) {
-        super(parent, modid, modVersion);
+    protected ModStructurePage(DocumentationPage parent, String modid, String modVersion, boolean isPackDoc) {
+        super(parent, modid, modVersion, isPackDoc);
     }
 
     public File getMarkdownFile() {
+        if (isPackDoc) {
+            return new File(DocumentationManager.getPackDocDirectory(), modid + "/" + "structure" + "/"+ getLocalizationLang() + "/" + markdownFile);
+        }
         return new File(DocumentationManager.getDocDirectory(), modid +"/" + modVersion + "/" + "structure" + "/"+ getLocalizationLang() + "/" + markdownFile);
     }
 
@@ -112,17 +115,28 @@ public class ModStructurePage extends DocumentationPage {
         return URIPageMap;
     }
 
+    public File getVersionDir() {
+        if (isPackDoc) {
+            return new File(DocumentationManager.getPackDocDirectory(), modid);
+        }
+        return new File(DocumentationManager.getDocDirectory(), modid + "/" + modVersion);
+    }
+
+    public File getStructureDir() {
+        return new File(getVersionDir(),"structure");
+    }
+
     //############################################################################
     //# Read and Write to JSON
     //region //############################################################################
 
     @Nullable
-    public static ModStructurePage generateFromJson(JsonObject jObj) {
+    public static ModStructurePage generateFromJson(JsonObject jObj, boolean isPackDoc) {
         if (!JsonUtils.isString(jObj, "mod_id") || !JsonUtils.isString(jObj, "mod_version")) {
             return null;
         }
 
-        ModStructurePage page = new ModStructurePage(null, JsonUtils.getString(jObj, "mod_id"), JsonUtils.getString(jObj, "mod_version"));
+        ModStructurePage page = new ModStructurePage(null, JsonUtils.getString(jObj, "mod_id"), JsonUtils.getString(jObj, "mod_version"), isPackDoc);
         page.loadFromJson(jObj);
         return page;
     }
@@ -153,11 +167,11 @@ public class ModStructurePage extends DocumentationPage {
 //        }
 
 
-        if (JsonUtils.isJsonArray(jObj, "linked")) {
-            linked.clear();
-            for (JsonElement element : JsonUtils.getJsonArray(jObj, "linked")) {
+        if (JsonUtils.isJsonArray(jObj, "relations")) {
+            relations.clear();
+            for (JsonElement element : JsonUtils.getJsonArray(jObj, "relations")) {
                 if (JsonUtils.isString(element)) {
-                    linked.add(element.getAsJsonPrimitive().getAsString());
+                    relations.add(element.getAsJsonPrimitive().getAsString());
                 }
             }
         }
@@ -210,12 +224,12 @@ public class ModStructurePage extends DocumentationPage {
 //        }
 
 
-        if (linked.size() > 0) {
+        if (relations.size() > 0) {
             JsonArray array = new JsonArray();
-            for (String link : linked) {
+            for (String link : relations) {
                 array.add(new JsonPrimitive(link));
             }
-            jObj.add("linked", array);
+            jObj.add("relations", array);
         }
 
         if (icons.size() > 0) {

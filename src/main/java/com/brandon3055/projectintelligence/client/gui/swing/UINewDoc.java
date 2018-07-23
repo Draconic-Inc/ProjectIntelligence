@@ -9,26 +9,50 @@ import com.brandon3055.brandonscore.handlers.FileHandler;
 import com.brandon3055.projectintelligence.PIHelpers;
 
 import javax.swing.*;
-import java.awt.event.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ItemEvent;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
 import java.util.Map;
 
 /**
  *
  * @author brandon3055
  */
-public class UINewMod extends javax.swing.JDialog {
+public class UINewDoc extends javax.swing.JDialog {
 
     private final Map<String, String> idNameMap;
+    private boolean local;
     private boolean canceled = false;
+    private String info;
 
     /**
      * Creates new form UINewMod
      */
-    public UINewMod(java.awt.Frame parent, Map<String, String> idNameMap) {
+    public UINewDoc(java.awt.Frame parent, Map<String, String> idNameMap, boolean local) {
         super(parent, true);
         this.idNameMap = idNameMap;
+        this.local = local;
+        if (local) {
+            info = "Local doc is indented to give pack developers the ability to document their pack with project intelligence. Local doc is stored in a separate folder in the config directory and can not be uploaded to the online repo.\nPlease specify a name for this documentation e.g. the name of your mod pack aswell as a page id that contains only lowercase letters and no spaces (must not conflict with existing mod id's) e.g. your_pack_name";
+        }
+        else {
+            info = "Please ether select a mod from the list of installed mods (prefered) or manually type the modid and name of the mod you wish to add \ndocumentation for. (modid must be correct)\n\nThe mod version is the minimum version of the mod to which this documentation applies. If you want this to apply to all versions of the mod \nthen leave the default value of 0.0.0";
+        }
         initComponents();
-        idNameMap.keySet().forEach(idSelector::addItem);
+
+        if (local) {
+            idSelector.getEditor().getEditorComponent().addKeyListener(new KeyAdapter() {
+                @Override
+                public void keyReleased(KeyEvent evt) {
+                    idSelector.getEditor().setItem(String.valueOf(idSelector.getEditor().getItem()).toLowerCase().replace(" ", "_"));
+                }
+            });
+        }
+
+        if (!local) {
+            idNameMap.keySet().forEach(idSelector::addItem);
+        }
     }
 
     /**
@@ -52,54 +76,36 @@ public class UINewMod extends javax.swing.JDialog {
         jButton2 = new JButton();
 
         setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
-        setTitle("New Mod");
+        setTitle("New Doc");
 
         jTextArea1.setEditable(false);
         jTextArea1.setColumns(20);
         jTextArea1.setLineWrap(true);
         jTextArea1.setRows(5);
-        jTextArea1.setText("Please ether select a mod from the list of installed mods (prefered) or manually type the modid and name of the mod you wish to add \ndocumentation for. (modid must be correct)\n\nThe mod version is the minimum version of the mod to which this documentation applies. If you want this to apply to all versions of the mod \nthen leave the default value of 0.0.0");
+        jTextArea1.setText(info);
+        jTextArea1.setWrapStyleWord(true);
         jScrollPane1.setViewportView(jTextArea1);
 
         idSelector.setEditable(true);
         idSelector.setModel(new DefaultComboBoxModel<>(new String[] {}));
-        idSelector.addItemListener(new ItemListener() {
-            public void itemStateChanged(ItemEvent evt) {
-                modChange(evt);
-            }
-        });
-        idSelector.addKeyListener(new KeyAdapter() {
-            public void keyReleased(KeyEvent evt) {
-                modChangeType(evt);
-            }
-        });
+        idSelector.addItemListener(this::modChange);
 
-        jLabel1.setText("Mod ID:");
+        jLabel1.setText(local ? "Doc ID:" : "Mod ID:");
 
-        jLabel2.setText("Mod Name:");
+        jLabel2.setText(local ? "Doc Name:" : "Mod Name:");
 
         jLabel3.setText("Min Mod Version:");
+        jLabel3.setVisible(!local);
 
         versionField.setText("0.0.0");
-        versionField.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent evt) {
-                versionFieldActionPerformed(evt);
-            }
-        });
+        versionField.addActionListener(this::versionFieldActionPerformed);
+        versionField.setVisible(!local);
 
-        jButton1.setText("Add Mod");
-        jButton1.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent evt) {
-                addAction(evt);
-            }
-        });
+        jButton1.setText("Add Doc");
+        jButton1.addActionListener(this::addAction);
 
         jButton2.setText("Cancel");
-        jButton2.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent evt) {
-                cancelAction(evt);
-            }
-        });
+        jButton2.addActionListener(this::cancelAction);
 
         GroupLayout layout = new GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -158,16 +164,18 @@ public class UINewMod extends javax.swing.JDialog {
     private void addAction(ActionEvent evt) {
         String error = null;
 
-        if (PIHelpers.getSupportedMods().contains(getModID())) {
-            error = "Mod already exists! Please update existing documentation for this mod instead.";
+        if (PIHelpers.getSupportedMods().contains(getDocID())) {
+            error = "Mod already exists! Please update existing documentation for this mod instead.\n" +
+                    "If you need to make major changes to a new version of the mod then simply create\n" +
+                    "a new version of the documentation. See version help on the Mod tab for more info.";
         }
-        else if (getModID().isEmpty()) {
+        else if (getDocID().isEmpty()) {
             error = "Please specify a mod id!";
         }
-        else if (getModName().isEmpty()) {
+        else if (getDocName().isEmpty()) {
             error = "Please specify a mod name!";
         }
-        else if (!FileHandler.FILE_NAME_VALIDATOR.test(getModID())) {
+        else if (!FileHandler.FILE_NAME_VALIDATOR.test(getDocID())) {
             error = "Detected invalid mod id!";
         }
         else if (!FileHandler.FILE_NAME_VALIDATOR.test(getModVersion())) {
@@ -194,16 +202,14 @@ public class UINewMod extends javax.swing.JDialog {
         }
     }
 
-    private void modChangeType(KeyEvent evt) {}
-
-    public String getModID() {
+    public String getDocID() {
         if (idSelector.getSelectedItem() == null) {
             return null;
         }
         return idSelector.getSelectedItem().toString();
     }
     
-    public String getModName() {
+    public String getDocName() {
         return nameField.getText();
     }
     

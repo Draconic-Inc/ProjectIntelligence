@@ -1,7 +1,10 @@
 package com.brandon3055.projectintelligence.docdata;
 
+import com.brandon3055.brandonscore.integration.ModHelperBC;
 import com.brandon3055.projectintelligence.PIHelpers;
 import com.brandon3055.projectintelligence.client.gui.TabManager;
+import com.brandon3055.projectintelligence.docdata.LanguageManager.PageLangData;
+import com.google.common.base.Charsets;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -13,7 +16,6 @@ import org.apache.commons.io.IOUtils;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.nio.file.Files;
 import java.util.LinkedList;
 import java.util.Map;
 import java.util.Random;
@@ -29,16 +31,19 @@ public class DocumentationPage {
 
     protected DocumentationPage parent = null;
     protected LinkedList<JsonObject> icons = new LinkedList<>();
-    protected LinkedList<String> linked = new LinkedList<>();
+    //TODO Change to objects similar to icons
+    protected LinkedList<String> relations = new LinkedList<>();
 
-    protected int revision;
-    protected int targetEnRev;
+//    protected int revision;
+//    protected int targetEnRev;
     protected int sortingWeight;
 
     //    protected String lang;
     protected String modid;
     protected String pageId;
     protected String pageURI;
+
+    protected boolean isPackDoc;
 
     /**
      * This is the earliest version of the mod to which this documentation applies.
@@ -57,12 +62,16 @@ public class DocumentationPage {
     protected boolean hidden;
     protected boolean cycle_icons;
 
+    public final int treeDepth;
+
     private LinkedList<String> mdLineCache = null;
 
-    public DocumentationPage(DocumentationPage parent, String modid, String modVersion) {
+    public DocumentationPage(DocumentationPage parent, String modid, String modVersion, boolean isPackDoc) {
         this.parent = parent;
         this.modid = modid;
         this.modVersion = modVersion;
+        this.isPackDoc = isPackDoc;
+        this.treeDepth = parent == null ? 0 : parent.treeDepth + 1;
     }
 
     public LinkedList<DocumentationPage> getSubPages() {
@@ -89,6 +98,10 @@ public class DocumentationPage {
         return modid;
     }
 
+    public String getModName() {
+        return ModHelperBC.getModName(modid);
+    }
+
     public String getModPageName() {
         return LanguageManager.getPageName(getModid() + ":", getLocalizationLang());
     }
@@ -113,8 +126,8 @@ public class DocumentationPage {
         return cycle_icons;
     }
 
-    public LinkedList<String> getLinked() {
-        return linked;
+    public LinkedList<String> getRelations() {
+        return relations;
     }
 
 //    public boolean checkModVersion() {
@@ -126,30 +139,43 @@ public class DocumentationPage {
     }
 
     public File getMarkdownFile() {
+        if (isPackDoc) {
+            return new File(DocumentationManager.getPackDocDirectory(), modid + "/" + getLocalizationLang() + "/" + markdownFile);
+        }
         return new File(DocumentationManager.getDocDirectory(), modid +"/" + modVersion + "/" + getLocalizationLang() + "/" + markdownFile);
     }
 
-    public String getRawMarkdownString() {
-        if (rawMarkdownString == null) {
-            File mdFile = getMarkdownFile();
-
-            try {
-                rawMarkdownString = new String(Files.readAllBytes(mdFile.toPath()));
-            }
-            catch (IOException e) {
-                rawMarkdownString = "";
-            }
-        }
-
-        return rawMarkdownString;
+    public boolean isPackDoc() {
+        return isPackDoc;
     }
+
+    //    public String getRawMarkdownString() {
+//        if (rawMarkdownString == null) {
+//            File mdFile = getMarkdownFile();
+//
+//            try {
+//                rawMarkdownString = new String(Files.readAllBytes(mdFile.toPath()));
+//            }
+//            catch (IOException e) {
+//                rawMarkdownString = "";
+//            }
+//        }
+//
+//        return rawMarkdownString;
+//    }
 
     public LinkedList<String> getMarkdownLines() {
         if (mdLineCache == null) {
             mdLineCache = new LinkedList<>();
 
             File mdFile = getMarkdownFile();
-            if (!mdFile.exists() || markdownFile.isEmpty()) {
+            PageLangData data = LanguageManager.getLangData(pageURI, getLocalizationLang());
+            if (data == null) {
+                mdLineCache.add("This page has not yet been translated to your language!");
+                mdLineCache.add("Click the \"Broken Language\" icon on the page button to select an alternate language.");
+                mdLineCache.add("Or change your selected language in PI settings (PI language can be set independently from Minecraft language)");
+            }
+            else if (!mdFile.exists() || markdownFile.isEmpty()) {
                 mdLineCache.add("Error Loading Page!");
                 if (markdownFile.isEmpty()) {
                     mdLineCache.add("There is no document file listed for this page. This most likely means the documentation for this page has not been written yet.");
@@ -161,7 +187,7 @@ public class DocumentationPage {
             else {
                 try {
                     FileInputStream is = new FileInputStream(mdFile);
-                    mdLineCache.addAll(IOUtils.readLines(is));
+                    mdLineCache.addAll(IOUtils.readLines(is, Charsets.UTF_8));
                     IOUtils.closeQuietly(is);
                 }
                 catch (IOException e) {
@@ -190,9 +216,9 @@ public class DocumentationPage {
 //        return modVersion;
 //    }
 
-    public int getRevision() {
-        return revision;
-    }
+//    public int getRevision() {
+//        return revision;
+//    }
 
     /**
      * This is the page file path only used for locating the pages md file. {@link #getPageURI()} should be used for everything else.
@@ -235,7 +261,7 @@ public class DocumentationPage {
         }
 
         try {
-            FileUtils.writeStringToFile(getMarkdownFile(), rawMarkdownString);
+            FileUtils.writeStringToFile(getMarkdownFile(), rawMarkdownString, Charsets.UTF_8);
             saveToDisk();
         }
         catch (IOException e) {
@@ -267,14 +293,18 @@ public class DocumentationPage {
 //    }
 
     public void setRevision(int revision) {
-        this.revision = revision;
+//        this.revision = revision;
+        PageLangData data = LanguageManager.getLangData(pageURI, LanguageManager.getUserLanguage());
+        if (data != null) {
+            data.pageRev = revision;
+        }
         saveToDisk();
     }
-
-    public void setTargetEnRev(int targetEnRev) {
-        this.targetEnRev = targetEnRev;
-        saveToDisk();
-    }
+//
+//    public void setTargetEnRev(int targetEnRev) {
+//        this.targetEnRev = targetEnRev;
+//        saveToDisk();
+//    }
 
     public void setHidden(boolean hidden) {
         this.hidden = hidden;
@@ -298,17 +328,17 @@ public class DocumentationPage {
 //        displayName = JsonUtils.getString(jObj, "name", "[Unnamed]");
         markdownFile = JsonUtils.getString(jObj, "file", "");
 
-        revision = JsonUtils.getInt(jObj, "revision", 0);
+//        revision = JsonUtils.getInt(jObj, "revision", 0);
 //        targetEnRev = JsonUtils.getInt(jObj, "target_en_rev", -1);
         sortingWeight = JsonUtils.getInt(jObj, "sorting_weight", 0);
         cycle_icons = JsonUtils.getBoolean(jObj, "cycle_icons", false);
         hidden = JsonUtils.getBoolean(jObj, "hidden", false);
 
-        if (JsonUtils.isJsonArray(jObj, "linked")) {
-            linked.clear();
-            for (JsonElement element : JsonUtils.getJsonArray(jObj, "linked")) {
+        if (JsonUtils.isJsonArray(jObj, "relations")) {
+            relations.clear();
+            for (JsonElement element : JsonUtils.getJsonArray(jObj, "relations")) {
                 if (JsonUtils.isString(element)) {
-                    linked.add(element.getAsJsonPrimitive().getAsString());
+                    relations.add(element.getAsJsonPrimitive().getAsString());
                 }
             }
         }
@@ -332,7 +362,7 @@ public class DocumentationPage {
 
         for (JsonElement element : pageArray) {
             if (element.isJsonObject()) {
-                DocumentationPage subPage = new DocumentationPage(this, modid, modVersion);
+                DocumentationPage subPage = new DocumentationPage(this, modid, modVersion, isPackDoc);
                 subPage.loadFromJson(element.getAsJsonObject());
                 subPages.add(subPage);
             }
@@ -349,16 +379,16 @@ public class DocumentationPage {
         jObj.addProperty("cycle_icons", cycle_icons);
         jObj.addProperty("hidden", hidden);
 
-        if (revision > 0) jObj.addProperty("revision", revision);
+//        if (revision > 0) jObj.addProperty("revision", revision);
 //        if (targetEnRev != -1) jObj.addProperty("target_en_rev", targetEnRev);
         if (sortingWeight > 0) jObj.addProperty("sorting_weight", sortingWeight);
 
-        if (linked.size() > 0) {
+        if (relations.size() > 0) {
             JsonArray array = new JsonArray();
-            for (String link : linked) {
+            for (String link : relations) {
                 array.add(new JsonPrimitive(link));
             }
-            jObj.add("linked", array);
+            jObj.add("relations", array);
         }
 
         if (icons.size() > 0) {
@@ -389,7 +419,7 @@ public class DocumentationPage {
             parent.saveToDisk();
         }
         else if (this instanceof ModStructurePage) {
-            DocumentationManager.saveModToDisk((ModStructurePage) this);
+            DocumentationManager.saveDocToDisk((ModStructurePage) this);
         }
     }
 

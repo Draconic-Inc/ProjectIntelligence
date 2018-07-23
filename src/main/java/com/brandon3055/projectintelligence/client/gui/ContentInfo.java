@@ -1,5 +1,6 @@
 package com.brandon3055.projectintelligence.client.gui;
 
+import codechicken.lib.colour.Colour;
 import codechicken.lib.util.ArrayUtils;
 import com.brandon3055.brandonscore.lib.StackReference;
 import com.brandon3055.projectintelligence.utils.LogHelper;
@@ -15,7 +16,7 @@ public class ContentInfo {
 
     //Stack
     public StackReference stack = new StackReference(ItemStack.EMPTY);
-    boolean drawHover = true;//draw_hover (Mainly for stacks, Draws normal stack tooltip) //Default True
+    public boolean drawHover = true;//draw_hover (Mainly for stacks, Draws normal stack tooltip) //Default True
 //    String altHover = "";//alt_hover (Mainly for stacks, Draws alternate stack tooltip)
 
     //Entity
@@ -33,8 +34,8 @@ public class ContentInfo {
 
     //Image
     public String imageURL = "http://ss.brandon3055.com/iqx38ra.jpg";
-    public int borderColour = 0x000000;//border_colour
-    public int borderColourHover = 0x000000;//border_colour_hover
+    public Colour borderColour = null;//border_colour
+    public Colour borderColourHover = null;//border_colour_hover
     public int padding = 0;//padding
     public int leftPadding = 0;//left_pad
     public int rightPadding = 0;//right_pad
@@ -50,7 +51,6 @@ public class ContentInfo {
     public String hover_text = ""; //(hover text)
     public boolean drawSlot = false; //Default False
     public String linkTarget = "";
-    public boolean urlLinkTarget = false;
 
     public ContentInfo(ContentType type) {
         this.type = type;
@@ -146,8 +146,8 @@ public class ContentInfo {
                 tag += "[" + stack.toString() + "]";
                 ops = addIf(ops, "size:" + size + (sizePercent ? "%" : ""), () -> true);
                 ops = addIf(ops, "draw_slot:true", () -> drawSlot);
-                ops = addIf(ops, "draw_hover:false", () -> !drawHover);
-                ops = addIf(ops, "alt_hover:" + hover_text.replace("\n", "\\n"), () -> !hover_text.isEmpty());
+                ops = addIf(ops, "enable_tooltip:false", () -> !drawHover);
+                ops = addIf(ops, "tooltip:\"" + hover_text.replace("\n", "\\n") + "\"", () -> !hover_text.isEmpty());
                 break;
             case ENTITY:
                 tag += "[" + entity + "]";
@@ -155,10 +155,10 @@ public class ContentInfo {
                 ops = addIf(ops, "x_offset:" + xOffset, () -> xOffset > 0);
                 ops = addIf(ops, "y_offset:" + yOffset, () -> yOffset > 0);
                 ops = addIf(ops, "rotate_speed:" + rotationSpeed, () -> rotationSpeed != 1);
-                ops = addIf(ops, "rotation:" + rotation, () -> yOffset != 0);
-                ops = addIf(ops, "scale:" + scale, () -> yOffset != 1);
+                ops = addIf(ops, "rotation:" + rotation, () -> rotation != 0);
+                ops = addIf(ops, "scale:" + scale, () -> scale != 1);
 
-                ops = addIf(ops, "hover:" + hover_text.replace("\n", "\\n"), () -> !hover_text.isEmpty());
+                ops = addIf(ops, "tooltip:\"" + hover_text.replace("\n", "\\n") + "\"", () -> !hover_text.isEmpty());
                 ops = addIf(ops, "track_mouse:true", () -> trackMouse);
                 ops = addIf(ops, "draw_name:true", () -> drawName);
 
@@ -173,8 +173,8 @@ public class ContentInfo {
             case IMAGE:
                 tag = "§img[" + imageURL + "]";
 
-                ops = addIf(ops, "border_colour:0x" + borderColour, () -> borderColour >= 0);
-                ops = addIf(ops, "border_colour_hover:0x" + borderColourHover, () -> borderColourHover >= 0);
+                ops = addIf(ops, "border_colour:0x" + Integer.toHexString(borderColour == null ? 0 : borderColour.rgb()), () -> borderColour != null);
+                ops = addIf(ops, "border_colour_hover:0x" + Integer.toHexString(borderColourHover == null ? 0 : borderColourHover.rgb()), () -> borderColourHover != null);
                 if ((leftPadding == rightPadding) && (topPadding == bottomPadding) && (leftPadding == topPadding)) {
                     padding = leftPadding;
                     leftPadding = rightPadding = topPadding = bottomPadding = 0;
@@ -186,7 +186,8 @@ public class ContentInfo {
                 ops = addIf(ops, "bottom_pad:" + bottomPadding, () -> bottomPadding > 0);
                 ops = addIf(ops, "width:" + width + (sizePercent ? "%" : ""), () -> width > 0);
                 ops = addIf(ops, "height:" + height + (sizePercent ? "%" : ""), () -> height > 0);
-                ops = addIf(ops, "hover:" + hover_text.replace("\n", "\\n"), () -> !hover_text.isEmpty());
+                ops = addIf(ops, "tooltip:\"" + hover_text.replace("\n", "\\n") + "\"", () -> !hover_text.isEmpty());
+                ops = addIf(ops, "link_to:\"" + linkTarget + "\"", () -> !linkTarget.isEmpty());
 
                 break;
         }

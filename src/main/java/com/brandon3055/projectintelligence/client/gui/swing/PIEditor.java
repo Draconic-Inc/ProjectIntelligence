@@ -5,18 +5,22 @@
  */
 package com.brandon3055.projectintelligence.client.gui.swing;
 
+import codechicken.lib.math.MathHelper;
 import com.brandon3055.brandonscore.client.ProcessHandlerClient;
 import com.brandon3055.brandonscore.handlers.FileHandler;
+import com.brandon3055.brandonscore.integration.ModHelperBC;
 import com.brandon3055.brandonscore.utils.DataUtils;
 import com.brandon3055.brandonscore.utils.Utils;
-import com.brandon3055.projectintelligence.ModHelper;
 import com.brandon3055.projectintelligence.PIHelpers;
 import com.brandon3055.projectintelligence.client.gui.*;
 import com.brandon3055.projectintelligence.docdata.*;
+import com.brandon3055.projectintelligence.docdata.LanguageManager.PageLangData;
 import com.brandon3055.projectintelligence.utils.LogHelper;
+import com.google.common.base.Charsets;
 import com.google.common.collect.Maps;
 import com.google.gson.JsonObject;
 import net.minecraft.util.text.TextFormatting;
+import org.apache.commons.io.FileUtils;
 
 import javax.annotation.Nullable;
 import javax.swing.*;
@@ -28,6 +32,7 @@ import java.awt.*;
 import java.awt.event.*;
 import java.io.File;
 import java.io.IOException;
+import java.net.URL;
 import java.nio.file.Files;
 import java.util.*;
 import java.util.List;
@@ -54,11 +59,18 @@ public class PIEditor extends javax.swing.JFrame {
     private DefaultListModel<String> aliasListModel = new DefaultListModel<>();
     private boolean reloading = false;
     private UndoManager undo = new UndoManager();
+    private static Map<String, Integer> caretPositions = new HashMap<>();
+
 
     /**
      * Creates new form PIEditor
      */
     public PIEditor() {
+        URL icon = PIEditor.class.getResource("/assets/projectintelligence/textures/editor_icon.png");
+        if (icon != null) {
+            setIconImage(Toolkit.getDefaultToolkit().createImage(icon));
+        }
+
         initComponents();
         generateLineNumbers();
 //        addContextMenuItems();
@@ -80,12 +92,29 @@ public class PIEditor extends javax.swing.JFrame {
             }
         });
 
+        markdownWindow.setTabSize(2);
+
+        LanguageManager.ALL_LANGUAGES.forEach(matchLangBox::addItem);
+        matchLangBox.addItem("disabled");
+        matchLangBox.setSelectedItem("disabled");
+
         iconList.setModel(iconListModel);
         relationList.setModel(relationListModel);
         aliasList.setModel(aliasListModel);
         DefaultTreeSelectionModel selectModel = new DefaultTreeSelectionModel();
         selectModel.setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
         pageTree.setSelectionModel(selectModel);
+
+        markdownWindow.setWrapStyleWord(true);
+        JCheckBoxMenuItem item = new JCheckBoxMenuItem("Editor Line Wrap");
+        item.setSelected(PIConfig.editorLineWrap);
+        item.addActionListener(e -> {
+            PIConfig.editorLineWrap = item.isSelected();
+            markdownWindow.setLineWrap(PIConfig.editorLineWrap);
+            PIConfig.save();
+        });
+        jMenu3.add(item);
+
         reload();
     }
 
@@ -115,19 +144,10 @@ public class PIEditor extends javax.swing.JFrame {
 
     private void initComponents() {
 
-        treePopup = new JPopupMenu();
-        jMenuItem1 = new JMenuItem();
+        treeContextMenu = new JPopupMenu();
         mdContextMenu = new JPopupMenu();
         jPanel3 = new JPanel();
         jToolBar1 = new JToolBar();
-        jLabel1 = new JLabel();
-        jButton1 = new JButton();
-        jButton13 = new JButton();
-        jButton2 = new JButton();
-        jButton3 = new JButton();
-        jButton4 = new JButton();
-        jButton11 = new JButton();
-        jButton12 = new JButton();
         newModButton = new JButton();
         jSplitPane1 = new JSplitPane();
         mdScrollPane = new JScrollPane();
@@ -135,6 +155,16 @@ public class PIEditor extends javax.swing.JFrame {
         jScrollPane6 = new JScrollPane();
         pageTree = new JTree();
         newPageButton = new JButton();
+        jButton5 = new JButton();
+        jButton2 = new JButton();
+        jButton4 = new JButton();
+        jButton11 = new JButton();
+        jButton3 = new JButton();
+        jButton1 = new JButton();
+        jLabel1 = new JLabel();
+        jButton13 = new JButton();
+        jButton12 = new JButton();
+        jButton6 = new JButton();
         tabbedPain = new JTabbedPane();
         modPanel = new JPanel();
         nameLabel1 = new JLabel();
@@ -146,7 +176,7 @@ public class PIEditor extends javax.swing.JFrame {
         JButton nameHelp3 = new JButton();
         nameLabel3 = new JLabel();
         modVersionSelect = new JComboBox<>();
-        jButton9 = new JButton();
+        createFromExistingModButton = new JButton();
         copyDocFromSelected = new JCheckBox();
         jSeparator1 = new JSeparator();
         jSeparator3 = new JSeparator();
@@ -195,6 +225,8 @@ public class PIEditor extends javax.swing.JFrame {
         JButton revHelp1 = new JButton();
         jButton7 = new JButton();
         jButton8 = new JButton();
+        targetEnRev1 = new JLabel();
+        matchLangBox = new JComboBox<>();
         jMenuBar1 = new JMenuBar();
         jMenu1 = new JMenu();
         jMenu2 = new JMenu();
@@ -202,16 +234,29 @@ public class PIEditor extends javax.swing.JFrame {
         alwaysOnTop = new JCheckBoxMenuItem();
         changeLangButton = new JMenuItem();
 
-        jMenuItem1.setText("jMenuItem1");
-        treePopup.add(jMenuItem1);
+        treeContextMenu.addPopupMenuListener(new PopupMenuListener() {
+            public void popupMenuCanceled(PopupMenuEvent evt) {
+            }
+
+            public void popupMenuWillBecomeInvisible(PopupMenuEvent evt) {
+                treeMenuClose(evt);
+            }
+
+            public void popupMenuWillBecomeVisible(PopupMenuEvent evt) {
+                treeMenuOpen(evt);
+            }
+        });
 
         mdContextMenu.addPopupMenuListener(new PopupMenuListener() {
             public void popupMenuCanceled(PopupMenuEvent evt) {
             }
+
             public void popupMenuWillBecomeInvisible(PopupMenuEvent evt) {
                 mdMenuClose(evt);
             }
+
             public void popupMenuWillBecomeVisible(PopupMenuEvent evt) {
+                treeMenuOpen(evt);
                 mdMenuOpen(evt);
             }
         });
@@ -221,93 +266,6 @@ public class PIEditor extends javax.swing.JFrame {
 
         jToolBar1.setFloatable(false);
         jToolBar1.setRollover(true);
-
-        jLabel1.setText("Insert:");
-        jToolBar1.add(jLabel1);
-
-        jButton1.setText("Stack");
-        jButton1.setActionCommand("stack");
-        jButton1.setFocusable(false);
-        jButton1.setHorizontalTextPosition(SwingConstants.CENTER);
-        jButton1.setVerticalTextPosition(SwingConstants.BOTTOM);
-        jButton1.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent evt) {
-                insertAction(evt);
-            }
-        });
-        jToolBar1.add(jButton1);
-
-        jButton13.setText("Recipe");
-        jButton13.setActionCommand("recipe");
-        jButton13.setFocusable(false);
-        jButton13.setHorizontalTextPosition(SwingConstants.CENTER);
-        jButton13.setVerticalTextPosition(SwingConstants.BOTTOM);
-        jButton13.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent evt) {
-                insertAction(evt);
-            }
-        });
-        jToolBar1.add(jButton13);
-
-        jButton2.setText("Image");
-        jButton2.setActionCommand("image");
-        jButton2.setFocusable(false);
-        jButton2.setHorizontalTextPosition(SwingConstants.CENTER);
-        jButton2.setVerticalTextPosition(SwingConstants.BOTTOM);
-        jButton2.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent evt) {
-                insertAction(evt);
-            }
-        });
-        jToolBar1.add(jButton2);
-
-        jButton3.setText("Link");
-        jButton3.setActionCommand("link");
-        jButton3.setFocusable(false);
-        jButton3.setHorizontalTextPosition(SwingConstants.CENTER);
-        jButton3.setVerticalTextPosition(SwingConstants.BOTTOM);
-        jButton3.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent evt) {
-                insertAction(evt);
-            }
-        });
-        jToolBar1.add(jButton3);
-
-        jButton4.setText("Entity");
-        jButton4.setActionCommand("entity");
-        jButton4.setFocusable(false);
-        jButton4.setHorizontalTextPosition(SwingConstants.CENTER);
-        jButton4.setVerticalTextPosition(SwingConstants.BOTTOM);
-        jButton4.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent evt) {
-                insertAction(evt);
-            }
-        });
-        jToolBar1.add(jButton4);
-
-        jButton11.setText("Rule");
-        jButton11.setActionCommand("rule");
-        jButton11.setFocusable(false);
-        jButton11.setHorizontalTextPosition(SwingConstants.CENTER);
-        jButton11.setVerticalTextPosition(SwingConstants.BOTTOM);
-        jButton11.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent evt) {
-                insertAction(evt);
-            }
-        });
-        jToolBar1.add(jButton11);
-
-        jButton12.setText("Table");
-        jButton12.setActionCommand("table");
-        jButton12.setFocusable(false);
-        jButton12.setHorizontalTextPosition(SwingConstants.CENTER);
-        jButton12.setVerticalTextPosition(SwingConstants.BOTTOM);
-        jButton12.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent evt) {
-                insertAction(evt);
-            }
-        });
-        jToolBar1.add(jButton12);
 
         newModButton.setText("New Mod");
         newModButton.setToolTipText("Add documentation for a new mod.");
@@ -370,6 +328,11 @@ public class PIEditor extends javax.swing.JFrame {
         treeNode1.add(treeNode2);
         pageTree.setModel(new DefaultTreeModel(treeNode1));
         pageTree.setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
+        pageTree.addMouseListener(new MouseAdapter() {
+            public void mouseClicked(MouseEvent evt) {
+                pageTreeMouseClicked(evt);
+            }
+        });
         pageTree.addTreeSelectionListener(new TreeSelectionListener() {
             public void valueChanged(TreeSelectionEvent evt) {
                 pageSelected(evt);
@@ -387,32 +350,103 @@ public class PIEditor extends javax.swing.JFrame {
             }
         });
 
+        jButton5.setText("New Local Doc");
+        jButton5.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent evt) {
+                newLocalDoc(evt);
+            }
+        });
+
+        jButton2.setText("Image");
+        jButton2.setActionCommand("image");
+        jButton2.setFocusable(false);
+        jButton2.setHorizontalTextPosition(SwingConstants.CENTER);
+        jButton2.setVerticalTextPosition(SwingConstants.BOTTOM);
+        jButton2.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent evt) {
+                insertAction(evt);
+            }
+        });
+
+        jButton4.setText("Entity");
+        jButton4.setActionCommand("entity");
+        jButton4.setFocusable(false);
+        jButton4.setHorizontalTextPosition(SwingConstants.CENTER);
+        jButton4.setVerticalTextPosition(SwingConstants.BOTTOM);
+        jButton4.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent evt) {
+                insertAction(evt);
+            }
+        });
+
+        jButton11.setText("Rule");
+        jButton11.setActionCommand("rule");
+        jButton11.setFocusable(false);
+        jButton11.setHorizontalTextPosition(SwingConstants.CENTER);
+        jButton11.setVerticalTextPosition(SwingConstants.BOTTOM);
+        jButton11.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent evt) {
+                insertAction(evt);
+            }
+        });
+
+        jButton3.setText("Link");
+        jButton3.setActionCommand("link");
+        jButton3.setFocusable(false);
+        jButton3.setHorizontalTextPosition(SwingConstants.CENTER);
+        jButton3.setVerticalTextPosition(SwingConstants.BOTTOM);
+        jButton3.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent evt) {
+                insertAction(evt);
+            }
+        });
+
+        jButton1.setText("Stack");
+        jButton1.setActionCommand("stack");
+        jButton1.setFocusable(false);
+        jButton1.setHorizontalTextPosition(SwingConstants.CENTER);
+        jButton1.setVerticalTextPosition(SwingConstants.BOTTOM);
+        jButton1.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent evt) {
+                insertAction(evt);
+            }
+        });
+
+        jLabel1.setText("Insert:");
+
+        jButton13.setText("Recipe");
+        jButton13.setActionCommand("recipe");
+        jButton13.setFocusable(false);
+        jButton13.setHorizontalTextPosition(SwingConstants.CENTER);
+        jButton13.setVerticalTextPosition(SwingConstants.BOTTOM);
+        jButton13.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent evt) {
+                insertAction(evt);
+            }
+        });
+
+        jButton12.setText("Table");
+        jButton12.setActionCommand("table");
+        jButton12.setFocusable(false);
+        jButton12.setHorizontalTextPosition(SwingConstants.CENTER);
+        jButton12.setVerticalTextPosition(SwingConstants.BOTTOM);
+        jButton12.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent evt) {
+                insertAction(evt);
+            }
+        });
+
+        jButton6.setText("Open MD Reference");
+        jButton6.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent evt) {
+                openMDRef(evt);
+            }
+        });
+
         GroupLayout jPanel3Layout = new GroupLayout(jPanel3);
         jPanel3.setLayout(jPanel3Layout);
-        jPanel3Layout.setHorizontalGroup(jPanel3Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                .addGroup(jPanel3Layout.createSequentialGroup()
-                        .addContainerGap()
-                        .addGroup(jPanel3Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                                .addComponent(jSplitPane1)
-                                .addGroup(jPanel3Layout.createSequentialGroup()
-                                        .addComponent(newModButton, GroupLayout.PREFERRED_SIZE, 97, GroupLayout.PREFERRED_SIZE)
-                                        .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                                        .addComponent(newPageButton, GroupLayout.PREFERRED_SIZE, 93, GroupLayout.PREFERRED_SIZE)
-                                        .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                        .addComponent(jToolBar1, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)))
-                        .addContainerGap())
-        );
-        jPanel3Layout.setVerticalGroup(jPanel3Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                .addGroup(jPanel3Layout.createSequentialGroup()
-                        .addGroup(jPanel3Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                                .addGroup(jPanel3Layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-                                        .addComponent(newModButton)
-                                        .addComponent(newPageButton))
-                                .addComponent(jToolBar1, GroupLayout.PREFERRED_SIZE, 25, GroupLayout.PREFERRED_SIZE))
-                        .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jSplitPane1, GroupLayout.DEFAULT_SIZE, 417, Short.MAX_VALUE)
-                        .addContainerGap())
-        );
+        jPanel3Layout.setHorizontalGroup(jPanel3Layout.createParallelGroup(GroupLayout.Alignment.LEADING).addGroup(jPanel3Layout.createSequentialGroup().addContainerGap().addGroup(jPanel3Layout.createParallelGroup(GroupLayout.Alignment.LEADING).addComponent(jSplitPane1).addGroup(jPanel3Layout.createSequentialGroup().addComponent(newModButton, GroupLayout.PREFERRED_SIZE, 97, GroupLayout.PREFERRED_SIZE).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addComponent(newPageButton, GroupLayout.PREFERRED_SIZE, 93, GroupLayout.PREFERRED_SIZE).addGap(18, 18, 18).addComponent(jButton5).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE).addComponent(jButton6).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addComponent(jToolBar1, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE).addGap(41, 41, 41).addComponent(jLabel1).addComponent(jButton1).addComponent(jButton13).addComponent(jButton2).addComponent(jButton3).addComponent(jButton4).addComponent(jButton11).addComponent(jButton12).addContainerGap()))));
+        jPanel3Layout.setVerticalGroup(jPanel3Layout.createParallelGroup(GroupLayout.Alignment.LEADING).addGroup(jPanel3Layout.createSequentialGroup().addGroup(jPanel3Layout.createParallelGroup(GroupLayout.Alignment.LEADING).addGroup(jPanel3Layout.createParallelGroup(GroupLayout.Alignment.BASELINE).addComponent(newModButton).addComponent(newPageButton).addComponent(jButton5).addComponent(jButton6)).addComponent(jToolBar1, GroupLayout.PREFERRED_SIZE, 25, GroupLayout.PREFERRED_SIZE).addGroup(jPanel3Layout.createSequentialGroup().addGap(2, 2, 2).addComponent(jLabel1)).addComponent(jButton1, GroupLayout.PREFERRED_SIZE, 21, GroupLayout.PREFERRED_SIZE).addComponent(jButton13, GroupLayout.PREFERRED_SIZE, 21, GroupLayout.PREFERRED_SIZE).addComponent(jButton2, GroupLayout.PREFERRED_SIZE, 21, GroupLayout.PREFERRED_SIZE).addComponent(jButton3, GroupLayout.PREFERRED_SIZE, 21, GroupLayout.PREFERRED_SIZE).addComponent(jButton4, GroupLayout.PREFERRED_SIZE, 21, GroupLayout.PREFERRED_SIZE).addComponent(jButton11, GroupLayout.PREFERRED_SIZE, 21, GroupLayout.PREFERRED_SIZE).addComponent(jButton12, GroupLayout.PREFERRED_SIZE, 21, GroupLayout.PREFERRED_SIZE)).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addComponent(jSplitPane1, GroupLayout.DEFAULT_SIZE, 417, Short.MAX_VALUE).addContainerGap()));
 
         modPanel.setToolTipText("");
 
@@ -473,8 +507,8 @@ public class PIEditor extends javax.swing.JFrame {
             }
         });
 
-        jButton9.setText("Create documentation for new mod version");
-        jButton9.addActionListener(new ActionListener() {
+        createFromExistingModButton.setText("Create documentation for new mod version");
+        createFromExistingModButton.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent evt) {
                 newVersionAction(evt);
             }
@@ -542,101 +576,8 @@ public class PIEditor extends javax.swing.JFrame {
 
         GroupLayout modPanelLayout = new GroupLayout(modPanel);
         modPanel.setLayout(modPanelLayout);
-        modPanelLayout.setHorizontalGroup(modPanelLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                .addGroup(modPanelLayout.createSequentialGroup()
-                        .addGroup(modPanelLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                                .addGroup(modPanelLayout.createSequentialGroup()
-                                        .addContainerGap()
-                                        .addGroup(modPanelLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                                                .addComponent(nameLabel1)
-                                                .addComponent(nameLabel2))
-                                        .addGap(44, 44, 44)
-                                        .addComponent(modNameField, GroupLayout.PREFERRED_SIZE, 221, GroupLayout.PREFERRED_SIZE)
-                                        .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                                        .addComponent(nameHelp1))
-                                .addGroup(modPanelLayout.createSequentialGroup()
-                                        .addGap(113, 113, 113)
-                                        .addComponent(modIdField, GroupLayout.PREFERRED_SIZE, 221, GroupLayout.PREFERRED_SIZE)
-                                        .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                                        .addComponent(nameHelp2))
-                                .addGroup(modPanelLayout.createSequentialGroup()
-                                        .addContainerGap()
-                                        .addGroup(modPanelLayout.createParallelGroup(GroupLayout.Alignment.LEADING, false)
-                                                .addComponent(jButton9, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                                .addComponent(copyDocFromSelected)
-                                                .addGroup(modPanelLayout.createSequentialGroup()
-                                                        .addComponent(nameLabel3)
-                                                        .addGap(18, 18, 18)
-                                                        .addComponent(modVersionSelect, GroupLayout.PREFERRED_SIZE, 173, GroupLayout.PREFERRED_SIZE))
-                                                .addComponent(jSeparator1))
-                                        .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                                        .addComponent(nameHelp3)))
-                        .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jSeparator3, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                        .addGroup(modPanelLayout.createParallelGroup(GroupLayout.Alignment.TRAILING)
-                                .addGroup(modPanelLayout.createSequentialGroup()
-                                        .addComponent(addRelation1)
-                                        .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                                        .addComponent(editRelation1)
-                                        .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                                        .addComponent(removeRelation1))
-                                .addGroup(GroupLayout.Alignment.LEADING, modPanelLayout.createSequentialGroup()
-                                        .addComponent(relationsLabel1)
-                                        .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                                        .addComponent(relationsHelp1))
-                                .addComponent(jScrollPane5, GroupLayout.Alignment.LEADING, GroupLayout.DEFAULT_SIZE, 319, Short.MAX_VALUE))
-                        .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED, 296, Short.MAX_VALUE)
-                        .addComponent(jButton10)
-                        .addContainerGap())
-        );
-        modPanelLayout.setVerticalGroup(modPanelLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                .addGroup(modPanelLayout.createSequentialGroup()
-                        .addContainerGap()
-                        .addGroup(modPanelLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                                .addGroup(GroupLayout.Alignment.TRAILING, modPanelLayout.createSequentialGroup()
-                                        .addGap(0, 0, Short.MAX_VALUE)
-                                        .addComponent(jButton10))
-                                .addComponent(jSeparator3)
-                                .addGroup(modPanelLayout.createSequentialGroup()
-                                        .addGroup(modPanelLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                                                .addGroup(modPanelLayout.createSequentialGroup()
-                                                        .addGroup(modPanelLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-                                                                .addComponent(relationsLabel1)
-                                                                .addComponent(relationsHelp1, GroupLayout.PREFERRED_SIZE, 24, GroupLayout.PREFERRED_SIZE))
-                                                        .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                                                        .addComponent(jScrollPane5, GroupLayout.PREFERRED_SIZE, 114, GroupLayout.PREFERRED_SIZE)
-                                                        .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                                                        .addGroup(modPanelLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-                                                                .addComponent(removeRelation1, GroupLayout.PREFERRED_SIZE, 24, GroupLayout.PREFERRED_SIZE)
-                                                                .addComponent(editRelation1, GroupLayout.PREFERRED_SIZE, 24, GroupLayout.PREFERRED_SIZE)
-                                                                .addComponent(addRelation1, GroupLayout.PREFERRED_SIZE, 24, GroupLayout.PREFERRED_SIZE)))
-                                                .addGroup(modPanelLayout.createSequentialGroup()
-                                                        .addGroup(modPanelLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-                                                                .addComponent(nameLabel1)
-                                                                .addComponent(modNameField, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-                                                                .addComponent(nameHelp1, GroupLayout.PREFERRED_SIZE, 24, GroupLayout.PREFERRED_SIZE))
-                                                        .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                                                        .addGroup(modPanelLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-                                                                .addComponent(nameLabel2)
-                                                                .addComponent(modIdField, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-                                                                .addComponent(nameHelp2, GroupLayout.PREFERRED_SIZE, 24, GroupLayout.PREFERRED_SIZE))
-                                                        .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                                                        .addGroup(modPanelLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                                                                .addGroup(modPanelLayout.createSequentialGroup()
-                                                                        .addGroup(modPanelLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-                                                                                .addComponent(nameLabel3)
-                                                                                .addComponent(modVersionSelect, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE))
-                                                                        .addGap(1, 1, 1)
-                                                                        .addComponent(jSeparator1, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-                                                                        .addGap(4, 4, 4)
-                                                                        .addComponent(jButton9)
-                                                                        .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                                                                        .addComponent(copyDocFromSelected))
-                                                                .addComponent(nameHelp3, GroupLayout.PREFERRED_SIZE, 100, GroupLayout.PREFERRED_SIZE))))
-                                        .addGap(0, 0, Short.MAX_VALUE)))
-                        .addContainerGap())
-        );
+        modPanelLayout.setHorizontalGroup(modPanelLayout.createParallelGroup(GroupLayout.Alignment.LEADING).addGroup(modPanelLayout.createSequentialGroup().addGroup(modPanelLayout.createParallelGroup(GroupLayout.Alignment.LEADING).addGroup(modPanelLayout.createSequentialGroup().addContainerGap().addGroup(modPanelLayout.createParallelGroup(GroupLayout.Alignment.LEADING).addComponent(nameLabel1).addComponent(nameLabel2)).addGap(44, 44, 44).addComponent(modNameField, GroupLayout.PREFERRED_SIZE, 221, GroupLayout.PREFERRED_SIZE).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addComponent(nameHelp1)).addGroup(modPanelLayout.createSequentialGroup().addGap(113, 113, 113).addComponent(modIdField, GroupLayout.PREFERRED_SIZE, 221, GroupLayout.PREFERRED_SIZE).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addComponent(nameHelp2)).addGroup(modPanelLayout.createSequentialGroup().addContainerGap().addGroup(modPanelLayout.createParallelGroup(GroupLayout.Alignment.LEADING, false).addComponent(createFromExistingModButton, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE).addComponent(copyDocFromSelected).addGroup(modPanelLayout.createSequentialGroup().addComponent(nameLabel3).addGap(18, 18, 18).addComponent(modVersionSelect, GroupLayout.PREFERRED_SIZE, 173, GroupLayout.PREFERRED_SIZE)).addComponent(jSeparator1)).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addComponent(nameHelp3))).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addComponent(jSeparator3, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addGroup(modPanelLayout.createParallelGroup(GroupLayout.Alignment.TRAILING).addGroup(modPanelLayout.createSequentialGroup().addComponent(addRelation1).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addComponent(editRelation1).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addComponent(removeRelation1)).addGroup(GroupLayout.Alignment.LEADING, modPanelLayout.createSequentialGroup().addComponent(relationsLabel1).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addComponent(relationsHelp1)).addComponent(jScrollPane5, GroupLayout.Alignment.LEADING, GroupLayout.DEFAULT_SIZE, 315, Short.MAX_VALUE)).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED, 292, Short.MAX_VALUE).addComponent(jButton10).addContainerGap()));
+        modPanelLayout.setVerticalGroup(modPanelLayout.createParallelGroup(GroupLayout.Alignment.LEADING).addGroup(modPanelLayout.createSequentialGroup().addContainerGap().addGroup(modPanelLayout.createParallelGroup(GroupLayout.Alignment.LEADING).addGroup(GroupLayout.Alignment.TRAILING, modPanelLayout.createSequentialGroup().addGap(0, 0, Short.MAX_VALUE).addComponent(jButton10)).addComponent(jSeparator3).addGroup(modPanelLayout.createSequentialGroup().addGroup(modPanelLayout.createParallelGroup(GroupLayout.Alignment.LEADING).addGroup(modPanelLayout.createSequentialGroup().addGroup(modPanelLayout.createParallelGroup(GroupLayout.Alignment.BASELINE).addComponent(relationsLabel1).addComponent(relationsHelp1, GroupLayout.PREFERRED_SIZE, 24, GroupLayout.PREFERRED_SIZE)).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addComponent(jScrollPane5, GroupLayout.PREFERRED_SIZE, 114, GroupLayout.PREFERRED_SIZE).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addGroup(modPanelLayout.createParallelGroup(GroupLayout.Alignment.BASELINE).addComponent(removeRelation1, GroupLayout.PREFERRED_SIZE, 24, GroupLayout.PREFERRED_SIZE).addComponent(editRelation1, GroupLayout.PREFERRED_SIZE, 24, GroupLayout.PREFERRED_SIZE).addComponent(addRelation1, GroupLayout.PREFERRED_SIZE, 24, GroupLayout.PREFERRED_SIZE))).addGroup(modPanelLayout.createSequentialGroup().addGroup(modPanelLayout.createParallelGroup(GroupLayout.Alignment.BASELINE).addComponent(nameLabel1).addComponent(modNameField, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE).addComponent(nameHelp1, GroupLayout.PREFERRED_SIZE, 24, GroupLayout.PREFERRED_SIZE)).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addGroup(modPanelLayout.createParallelGroup(GroupLayout.Alignment.BASELINE).addComponent(nameLabel2).addComponent(modIdField, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE).addComponent(nameHelp2, GroupLayout.PREFERRED_SIZE, 24, GroupLayout.PREFERRED_SIZE)).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addGroup(modPanelLayout.createParallelGroup(GroupLayout.Alignment.LEADING).addGroup(modPanelLayout.createSequentialGroup().addGroup(modPanelLayout.createParallelGroup(GroupLayout.Alignment.BASELINE).addComponent(nameLabel3).addComponent(modVersionSelect, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)).addGap(1, 1, 1).addComponent(jSeparator1, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE).addGap(4, 4, 4).addComponent(createFromExistingModButton).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addComponent(copyDocFromSelected)).addComponent(nameHelp3, GroupLayout.PREFERRED_SIZE, 100, GroupLayout.PREFERRED_SIZE)))).addGap(0, 0, Short.MAX_VALUE))).addContainerGap()));
 
         tabbedPain.addTab("Mod", modPanel);
 
@@ -742,7 +683,7 @@ public class PIEditor extends javax.swing.JFrame {
 
         jSeparator2.setOrientation(SwingConstants.VERTICAL);
 
-        targetEnRev.setText("Target EN Revision:");
+        targetEnRev.setText("Matches Rev:");
 
         addIcon.setText("+");
         addIcon.setToolTipText("Add icon");
@@ -828,14 +769,14 @@ public class PIEditor extends javax.swing.JFrame {
             }
         });
 
-        updateEnRev.setText("Set Current Version");
+        updateEnRev.setText("Update to latest");
         updateEnRev.setToolTipText("Sets the target English Revision to the current english revision of this page.");
         updateEnRev.setActionCommand("revision");
         updateEnRev.setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
         updateEnRev.setMargin(new Insets(0, 4, 0, 4));
         updateEnRev.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent evt) {
-                updateEnRev(evt);
+                updateMatchRev(evt);
             }
         });
 
@@ -847,13 +788,13 @@ public class PIEditor extends javax.swing.JFrame {
 
         enRevField.addChangeListener(new ChangeListener() {
             public void stateChanged(ChangeEvent evt) {
-                enRevChange(evt);
+                matchRevChange(evt);
             }
         });
 
-        revHelp1.setText("?");
+        revHelp1.setText("<html>Lang<br>Help</html>");
         revHelp1.setToolTipText("Click for more info about this field.");
-        revHelp1.setActionCommand("enRev");
+        revHelp1.setActionCommand("matchRev");
         revHelp1.setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
         revHelp1.setMargin(new Insets(0, 4, 0, 4));
         revHelp1.addActionListener(new ActionListener() {
@@ -878,142 +819,18 @@ public class PIEditor extends javax.swing.JFrame {
             }
         });
 
+        targetEnRev1.setText("Matches Lang:");
+
+        matchLangBox.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent evt) {
+                matchLangChange(evt);
+            }
+        });
+
         GroupLayout pagePanelLayout = new GroupLayout(pagePanel);
         pagePanel.setLayout(pagePanelLayout);
-        pagePanelLayout.setHorizontalGroup(pagePanelLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                .addGroup(pagePanelLayout.createSequentialGroup()
-                        .addContainerGap()
-                        .addGroup(pagePanelLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                                .addComponent(idLabel)
-                                .addComponent(weightLabel)
-                                .addComponent(revisionLabel)
-                                .addComponent(targetEnRev)
-                                .addComponent(nameLabel))
-                        .addGap(8, 8, 8)
-                        .addGroup(pagePanelLayout.createParallelGroup(GroupLayout.Alignment.LEADING, false)
-                                .addGroup(pagePanelLayout.createSequentialGroup()
-                                        .addGroup(pagePanelLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                                                .addComponent(idField, GroupLayout.Alignment.TRAILING, GroupLayout.PREFERRED_SIZE, 221, GroupLayout.PREFERRED_SIZE)
-                                                .addGroup(pagePanelLayout.createParallelGroup(GroupLayout.Alignment.TRAILING, false)
-                                                        .addComponent(nameField)
-                                                        .addComponent(weightField, GroupLayout.DEFAULT_SIZE, 221, Short.MAX_VALUE)
-                                                        .addComponent(revisionField)))
-                                        .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                                        .addGroup(pagePanelLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                                                .addComponent(revHelp)
-                                                .addComponent(nameHelp)
-                                                .addComponent(idHelp)
-                                                .addComponent(weightHelp)))
-                                .addGroup(pagePanelLayout.createSequentialGroup()
-                                        .addComponent(enRevField)
-                                        .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                                        .addComponent(updateEnRev)
-                                        .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                                        .addComponent(revHelp1)))
-                        .addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(jSeparator2, GroupLayout.PREFERRED_SIZE, 2, GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                        .addGroup(pagePanelLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                                .addComponent(jScrollPane3, GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
-                                .addGroup(pagePanelLayout.createSequentialGroup()
-                                        .addComponent(cycleIcons)
-                                        .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED, 80, Short.MAX_VALUE)
-                                        .addComponent(addIcon)
-                                        .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                                        .addComponent(editIcon)
-                                        .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                                        .addComponent(removeIcon))
-                                .addGroup(pagePanelLayout.createSequentialGroup()
-                                        .addComponent(iconsLabel)
-                                        .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                                        .addComponent(iconsHelp)))
-                        .addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addGroup(pagePanelLayout.createParallelGroup(GroupLayout.Alignment.TRAILING)
-                                .addGroup(pagePanelLayout.createSequentialGroup()
-                                        .addComponent(addRelation)
-                                        .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                                        .addComponent(editRelation)
-                                        .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                                        .addComponent(removeRelation))
-                                .addGroup(GroupLayout.Alignment.LEADING, pagePanelLayout.createSequentialGroup()
-                                        .addComponent(relationsLabel)
-                                        .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                                        .addComponent(relationsHelp))
-                                .addComponent(jScrollPane4, GroupLayout.Alignment.LEADING, GroupLayout.DEFAULT_SIZE, 319, Short.MAX_VALUE))
-                        .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jSeparator4, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                        .addGroup(pagePanelLayout.createParallelGroup(GroupLayout.Alignment.LEADING, false)
-                                .addComponent(jButton8, GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
-                                .addComponent(toggleHidden)
-                                .addComponent(jButton7, GroupLayout.DEFAULT_SIZE, 140, Short.MAX_VALUE))
-                        .addContainerGap())
-        );
-        pagePanelLayout.setVerticalGroup(pagePanelLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                .addGroup(GroupLayout.Alignment.TRAILING, pagePanelLayout.createSequentialGroup()
-                        .addGroup(pagePanelLayout.createParallelGroup(GroupLayout.Alignment.TRAILING)
-                                .addGroup(pagePanelLayout.createSequentialGroup()
-                                        .addGap(4, 4, 4)
-                                        .addGroup(pagePanelLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-                                                .addComponent(nameLabel)
-                                                .addComponent(nameField, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-                                                .addComponent(nameHelp, GroupLayout.PREFERRED_SIZE, 24, GroupLayout.PREFERRED_SIZE)
-                                                .addComponent(iconsHelp, GroupLayout.PREFERRED_SIZE, 24, GroupLayout.PREFERRED_SIZE)
-                                                .addComponent(iconsLabel)
-                                                .addComponent(relationsLabel)
-                                                .addComponent(relationsHelp, GroupLayout.PREFERRED_SIZE, 24, GroupLayout.PREFERRED_SIZE))
-                                        .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                                        .addGroup(pagePanelLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                                                .addGroup(pagePanelLayout.createSequentialGroup()
-                                                        .addComponent(jScrollPane3, GroupLayout.PREFERRED_SIZE, 114, GroupLayout.PREFERRED_SIZE)
-                                                        .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                                                        .addGroup(pagePanelLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-                                                                .addComponent(cycleIcons)
-                                                                .addComponent(removeIcon, GroupLayout.PREFERRED_SIZE, 24, GroupLayout.PREFERRED_SIZE)
-                                                                .addComponent(editIcon, GroupLayout.PREFERRED_SIZE, 24, GroupLayout.PREFERRED_SIZE)
-                                                                .addComponent(addIcon, GroupLayout.PREFERRED_SIZE, 24, GroupLayout.PREFERRED_SIZE)))
-                                                .addGroup(pagePanelLayout.createSequentialGroup()
-                                                        .addGroup(pagePanelLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-                                                                .addComponent(idLabel)
-                                                                .addComponent(idField, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-                                                                .addComponent(idHelp, GroupLayout.PREFERRED_SIZE, 24, GroupLayout.PREFERRED_SIZE))
-                                                        .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                                                        .addGroup(pagePanelLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-                                                                .addComponent(weightLabel)
-                                                                .addComponent(weightHelp, GroupLayout.PREFERRED_SIZE, 24, GroupLayout.PREFERRED_SIZE)
-                                                                .addComponent(weightField, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE))
-                                                        .addGap(28, 28, 28)
-                                                        .addGroup(pagePanelLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-                                                                .addComponent(revisionLabel)
-                                                                .addComponent(revHelp, GroupLayout.PREFERRED_SIZE, 24, GroupLayout.PREFERRED_SIZE)
-                                                                .addComponent(revisionField, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE))
-                                                        .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                                                        .addGroup(pagePanelLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-                                                                .addComponent(updateEnRev, GroupLayout.PREFERRED_SIZE, 24, GroupLayout.PREFERRED_SIZE)
-                                                                .addComponent(enRevField, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-                                                                .addComponent(targetEnRev)
-                                                                .addComponent(revHelp1, GroupLayout.PREFERRED_SIZE, 24, GroupLayout.PREFERRED_SIZE)))
-                                                .addGroup(pagePanelLayout.createSequentialGroup()
-                                                        .addComponent(jScrollPane4, GroupLayout.PREFERRED_SIZE, 114, GroupLayout.PREFERRED_SIZE)
-                                                        .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                                                        .addGroup(pagePanelLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-                                                                .addComponent(removeRelation, GroupLayout.PREFERRED_SIZE, 24, GroupLayout.PREFERRED_SIZE)
-                                                                .addComponent(editRelation, GroupLayout.PREFERRED_SIZE, 24, GroupLayout.PREFERRED_SIZE)
-                                                                .addComponent(addRelation, GroupLayout.PREFERRED_SIZE, 24, GroupLayout.PREFERRED_SIZE))))
-                                        .addGap(0, 2, Short.MAX_VALUE))
-                                .addGroup(pagePanelLayout.createSequentialGroup()
-                                        .addContainerGap()
-                                        .addGroup(pagePanelLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                                                .addComponent(jSeparator2)
-                                                .addComponent(jSeparator4)
-                                                .addGroup(pagePanelLayout.createSequentialGroup()
-                                                        .addComponent(toggleHidden)
-                                                        .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                                        .addComponent(jButton8, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-                                                        .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                                                        .addComponent(jButton7, GroupLayout.PREFERRED_SIZE, 24, GroupLayout.PREFERRED_SIZE)))))
-                        .addContainerGap())
-        );
+        pagePanelLayout.setHorizontalGroup(pagePanelLayout.createParallelGroup(GroupLayout.Alignment.LEADING).addGroup(pagePanelLayout.createSequentialGroup().addContainerGap().addGroup(pagePanelLayout.createParallelGroup(GroupLayout.Alignment.LEADING).addGroup(GroupLayout.Alignment.TRAILING, pagePanelLayout.createParallelGroup(GroupLayout.Alignment.LEADING).addGroup(GroupLayout.Alignment.TRAILING, pagePanelLayout.createSequentialGroup().addGroup(pagePanelLayout.createParallelGroup(GroupLayout.Alignment.LEADING).addComponent(idLabel).addComponent(weightLabel).addComponent(nameLabel)).addGap(30, 30, 30)).addGroup(pagePanelLayout.createSequentialGroup().addComponent(revisionLabel).addGap(66, 66, 66))).addGroup(pagePanelLayout.createSequentialGroup().addGroup(pagePanelLayout.createParallelGroup(GroupLayout.Alignment.LEADING).addComponent(targetEnRev).addComponent(targetEnRev1)).addGap(36, 36, 36))).addGroup(pagePanelLayout.createParallelGroup(GroupLayout.Alignment.LEADING).addGroup(pagePanelLayout.createSequentialGroup().addGroup(pagePanelLayout.createParallelGroup(GroupLayout.Alignment.LEADING, false).addGroup(pagePanelLayout.createSequentialGroup().addGroup(pagePanelLayout.createParallelGroup(GroupLayout.Alignment.LEADING).addComponent(idField, GroupLayout.Alignment.TRAILING, GroupLayout.PREFERRED_SIZE, 221, GroupLayout.PREFERRED_SIZE).addComponent(nameField, GroupLayout.PREFERRED_SIZE, 221, GroupLayout.PREFERRED_SIZE)).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)).addGroup(GroupLayout.Alignment.TRAILING, pagePanelLayout.createSequentialGroup().addComponent(weightField, GroupLayout.PREFERRED_SIZE, 61, GroupLayout.PREFERRED_SIZE).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addComponent(weightHelp).addGap(123, 123, 123))).addGroup(pagePanelLayout.createParallelGroup(GroupLayout.Alignment.LEADING).addComponent(nameHelp).addComponent(idHelp))).addGroup(pagePanelLayout.createSequentialGroup().addGroup(pagePanelLayout.createParallelGroup(GroupLayout.Alignment.LEADING).addGroup(pagePanelLayout.createSequentialGroup().addGroup(pagePanelLayout.createParallelGroup(GroupLayout.Alignment.LEADING).addComponent(revisionField, GroupLayout.Alignment.TRAILING, GroupLayout.PREFERRED_SIZE, 61, GroupLayout.PREFERRED_SIZE).addComponent(enRevField, GroupLayout.PREFERRED_SIZE, 61, GroupLayout.PREFERRED_SIZE)).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addGroup(pagePanelLayout.createParallelGroup(GroupLayout.Alignment.LEADING).addComponent(revHelp).addComponent(updateEnRev))).addComponent(matchLangBox, GroupLayout.PREFERRED_SIZE, 104, GroupLayout.PREFERRED_SIZE)).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addComponent(revHelp1))).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addComponent(jSeparator2, GroupLayout.PREFERRED_SIZE, 2, GroupLayout.PREFERRED_SIZE).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addGroup(pagePanelLayout.createParallelGroup(GroupLayout.Alignment.LEADING).addComponent(jScrollPane3, GroupLayout.DEFAULT_SIZE, 294, Short.MAX_VALUE).addGroup(pagePanelLayout.createSequentialGroup().addComponent(cycleIcons).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED, 78, Short.MAX_VALUE).addComponent(addIcon).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addComponent(editIcon).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addComponent(removeIcon)).addGroup(pagePanelLayout.createSequentialGroup().addComponent(iconsLabel).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addComponent(iconsHelp))).addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED).addGroup(pagePanelLayout.createParallelGroup(GroupLayout.Alignment.TRAILING).addGroup(pagePanelLayout.createSequentialGroup().addComponent(addRelation).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addComponent(editRelation).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addComponent(removeRelation)).addGroup(GroupLayout.Alignment.LEADING, pagePanelLayout.createSequentialGroup().addComponent(relationsLabel).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addComponent(relationsHelp)).addComponent(jScrollPane4, GroupLayout.Alignment.LEADING, GroupLayout.DEFAULT_SIZE, 317, Short.MAX_VALUE)).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addComponent(jSeparator4, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addGroup(pagePanelLayout.createParallelGroup(GroupLayout.Alignment.LEADING, false).addComponent(jButton8, GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE).addComponent(toggleHidden).addComponent(jButton7, GroupLayout.DEFAULT_SIZE, 140, Short.MAX_VALUE)).addContainerGap()));
+        pagePanelLayout.setVerticalGroup(pagePanelLayout.createParallelGroup(GroupLayout.Alignment.LEADING).addGroup(GroupLayout.Alignment.TRAILING, pagePanelLayout.createSequentialGroup().addGroup(pagePanelLayout.createParallelGroup(GroupLayout.Alignment.TRAILING).addGroup(pagePanelLayout.createSequentialGroup().addGap(4, 4, 4).addGroup(pagePanelLayout.createParallelGroup(GroupLayout.Alignment.BASELINE).addComponent(nameLabel).addComponent(nameField, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE).addComponent(nameHelp, GroupLayout.PREFERRED_SIZE, 24, GroupLayout.PREFERRED_SIZE).addComponent(iconsHelp, GroupLayout.PREFERRED_SIZE, 24, GroupLayout.PREFERRED_SIZE).addComponent(iconsLabel).addComponent(relationsLabel).addComponent(relationsHelp, GroupLayout.PREFERRED_SIZE, 24, GroupLayout.PREFERRED_SIZE)).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addGroup(pagePanelLayout.createParallelGroup(GroupLayout.Alignment.LEADING).addGroup(pagePanelLayout.createSequentialGroup().addGroup(pagePanelLayout.createParallelGroup(GroupLayout.Alignment.LEADING).addGroup(pagePanelLayout.createSequentialGroup().addComponent(jScrollPane3, GroupLayout.PREFERRED_SIZE, 114, GroupLayout.PREFERRED_SIZE).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addGroup(pagePanelLayout.createParallelGroup(GroupLayout.Alignment.BASELINE).addComponent(cycleIcons).addComponent(removeIcon, GroupLayout.PREFERRED_SIZE, 24, GroupLayout.PREFERRED_SIZE).addComponent(editIcon, GroupLayout.PREFERRED_SIZE, 24, GroupLayout.PREFERRED_SIZE).addComponent(addIcon, GroupLayout.PREFERRED_SIZE, 24, GroupLayout.PREFERRED_SIZE))).addGroup(pagePanelLayout.createSequentialGroup().addComponent(jScrollPane4, GroupLayout.PREFERRED_SIZE, 114, GroupLayout.PREFERRED_SIZE).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addGroup(pagePanelLayout.createParallelGroup(GroupLayout.Alignment.BASELINE).addComponent(removeRelation, GroupLayout.PREFERRED_SIZE, 24, GroupLayout.PREFERRED_SIZE).addComponent(editRelation, GroupLayout.PREFERRED_SIZE, 24, GroupLayout.PREFERRED_SIZE).addComponent(addRelation, GroupLayout.PREFERRED_SIZE, 24, GroupLayout.PREFERRED_SIZE)))).addGap(0, 0, Short.MAX_VALUE)).addGroup(pagePanelLayout.createSequentialGroup().addGroup(pagePanelLayout.createParallelGroup(GroupLayout.Alignment.BASELINE).addComponent(idLabel).addComponent(idField, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE).addComponent(idHelp, GroupLayout.PREFERRED_SIZE, 24, GroupLayout.PREFERRED_SIZE)).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addGroup(pagePanelLayout.createParallelGroup(GroupLayout.Alignment.BASELINE).addComponent(weightLabel).addComponent(weightHelp, GroupLayout.PREFERRED_SIZE, 24, GroupLayout.PREFERRED_SIZE).addComponent(weightField, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addGroup(pagePanelLayout.createParallelGroup(GroupLayout.Alignment.BASELINE).addComponent(revisionLabel).addComponent(revHelp, GroupLayout.PREFERRED_SIZE, 24, GroupLayout.PREFERRED_SIZE).addComponent(revisionField, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)).addGroup(pagePanelLayout.createParallelGroup(GroupLayout.Alignment.LEADING).addGroup(pagePanelLayout.createSequentialGroup().addGroup(pagePanelLayout.createParallelGroup(GroupLayout.Alignment.BASELINE).addComponent(enRevField, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE).addComponent(targetEnRev).addComponent(updateEnRev, GroupLayout.PREFERRED_SIZE, 26, GroupLayout.PREFERRED_SIZE)).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE).addGroup(pagePanelLayout.createParallelGroup(GroupLayout.Alignment.BASELINE).addComponent(matchLangBox, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE).addComponent(targetEnRev1))).addGroup(pagePanelLayout.createSequentialGroup().addGap(1, 1, 1).addComponent(revHelp1)))))).addGroup(pagePanelLayout.createSequentialGroup().addContainerGap().addGroup(pagePanelLayout.createParallelGroup(GroupLayout.Alignment.LEADING).addComponent(jSeparator2).addComponent(jSeparator4).addGroup(pagePanelLayout.createSequentialGroup().addComponent(toggleHidden).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE).addComponent(jButton8, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addComponent(jButton7, GroupLayout.PREFERRED_SIZE, 24, GroupLayout.PREFERRED_SIZE))))).addContainerGap()));
 
         tabbedPain.addTab("Page Properties", pagePanel);
 
@@ -1024,8 +841,10 @@ public class PIEditor extends javax.swing.JFrame {
         jMenu2.addMenuListener(new MenuListener() {
             public void menuCanceled(MenuEvent evt) {
             }
+
             public void menuDeselected(MenuEvent evt) {
             }
+
             public void menuSelected(MenuEvent evt) {
                 editMenuSelect(evt);
             }
@@ -1057,32 +876,17 @@ public class PIEditor extends javax.swing.JFrame {
 
         GroupLayout layout = new GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
-        layout.setHorizontalGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                .addGroup(layout.createSequentialGroup()
-                        .addContainerGap()
-                        .addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                                .addGroup(layout.createSequentialGroup()
-                                        .addGap(6, 6, 6)
-                                        .addComponent(tabbedPain))
-                                .addComponent(jPanel3, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                        .addContainerGap())
-        );
-        layout.setVerticalGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                .addGroup(layout.createSequentialGroup()
-                        .addContainerGap()
-                        .addComponent(jPanel3, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(tabbedPain, GroupLayout.PREFERRED_SIZE, 212, GroupLayout.PREFERRED_SIZE)
-                        .addGap(8, 8, 8))
-        );
+        layout.setHorizontalGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING).addGroup(layout.createSequentialGroup().addContainerGap().addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING).addGroup(layout.createSequentialGroup().addGap(6, 6, 6).addComponent(tabbedPain)).addComponent(jPanel3, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)).addContainerGap()));
+        layout.setVerticalGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING).addGroup(layout.createSequentialGroup().addContainerGap().addComponent(jPanel3, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addComponent(tabbedPain, GroupLayout.PREFERRED_SIZE, 212, GroupLayout.PREFERRED_SIZE).addGap(8, 8, 8)));
 
-        setBounds(0, 0, 1230, 755);
+        setBounds(0, 0, 1222, 755);
     }
 
     public void reload() {
         reloading = true;
         alwaysOnTop.setSelected(PIConfig.editorAlwaysOnTop);
         setAlwaysOnTop(PIConfig.editorAlwaysOnTop);
+        markdownWindow.setLineWrap(PIConfig.editorLineWrap);
         updateTree();
         reloading = false;
     }
@@ -1141,7 +945,9 @@ public class PIEditor extends javax.swing.JFrame {
 
     private DefaultMutableTreeNode loadModPages(DocumentationPage page) {
         DefaultMutableTreeNode pageNode = new DefaultMutableTreeNode(new TreePageContainer(page));
-        for (DocumentationPage subPage : page.getSubPages()) {
+        List<DocumentationPage> pages = new ArrayList<>(page.getSubPages());
+        pages.sort(Comparator.comparingInt(DocumentationPage::getSortingWeight));
+        for (DocumentationPage subPage : pages) {
             pageNode.add(loadModPages(subPage));
         }
 
@@ -1242,7 +1048,7 @@ public class PIEditor extends javax.swing.JFrame {
 
         String selected = selectedPageURI;
         modPage.getModAliases().add(newAlias);
-        DocumentationManager.saveModToDisk(modPage);
+        DocumentationManager.saveDocToDisk(modPage);
         DocumentationManager.checkAndReloadDocFiles();
         setSelectedPage(DocumentationManager.getPage(selected));
     }
@@ -1268,7 +1074,7 @@ public class PIEditor extends javax.swing.JFrame {
         modPage.getModAliases().remove(selected);
         modPage.getModAliases().add(modified);
         String s = selectedPageURI;
-        DocumentationManager.saveModToDisk(modPage);
+        DocumentationManager.saveDocToDisk(modPage);
         DocumentationManager.checkAndReloadDocFiles();
         setSelectedPage(DocumentationManager.getPage(s));
     }
@@ -1288,7 +1094,7 @@ public class PIEditor extends javax.swing.JFrame {
 
         modPage.getModAliases().remove(selected);
         String s = selectedPageURI;
-        DocumentationManager.saveModToDisk(modPage);
+        DocumentationManager.saveDocToDisk(modPage);
         DocumentationManager.checkAndReloadDocFiles();
         setSelectedPage(DocumentationManager.getPage(s));
     }
@@ -1310,7 +1116,7 @@ public class PIEditor extends javax.swing.JFrame {
             return;
         }
 
-        DocumentationManager.deleteMod(page.getModid());
+        DocumentationManager.deleteDoc(page);
         DocumentationManager.checkAndReloadDocFiles();
     }
 
@@ -1319,7 +1125,11 @@ public class PIEditor extends javax.swing.JFrame {
     private void weightChanged(ChangeEvent evt) {
         DocumentationPage page = getSelected();
         if (page != null) {
-            page.setSortingWeight((Integer) weightField.getValue());
+            int weight = MathHelper.clip((Integer) weightField.getValue(), -2048, 2048);
+            weightField.setValue(weight);
+            page.setSortingWeight(weight);
+            updateTree();
+            setSelectedPage(page);
         }
     }
 
@@ -1345,13 +1155,6 @@ public class PIEditor extends javax.swing.JFrame {
         }
     }
 
-    private void enRevChange(ChangeEvent evt) {
-        DocumentationPage page = getSelected();
-        if (page != null) {
-            page.setTargetEnRev((Integer) enRevField.getValue());
-        }
-    }
-
     private void updateEnRev(ActionEvent evt) {
         // TODO add your handling code here:
     }
@@ -1364,9 +1167,28 @@ public class PIEditor extends javax.swing.JFrame {
     }
 
     private void newPageAction(ActionEvent evt) {
-        DocumentationPage page = getSelected();
-        if (page == null) return;
-        String id = JOptionPane.showInputDialog(this, "Please enter the id for the new page. Id should use \"snake_case\"\nformatting and should be based on the content this page is for.\ne.g. a page for Draconium Ore would use the id draconium_ore", "Choose page ID", JOptionPane.PLAIN_MESSAGE);
+        addPage(getSelected());
+    }
+
+    private void addPage(DocumentationPage parentPage) {
+        addPage(parentPage, null);
+    }
+
+    private void addPage(DocumentationPage parentPage, String mdTemplate) {
+        if (parentPage == null) return;
+
+        String name = JOptionPane.showInputDialog(this, "Please choose a display name for this page.", "Choose page Name", JOptionPane.PLAIN_MESSAGE);
+        if (name == null) {
+            return;
+        }
+
+        String id = name.toLowerCase().replaceAll(" ", "_");
+
+        id = (String) JOptionPane.showInputDialog(this, "Please enter the id for the new page. Id should use \"snake_case\"\n" +//
+                "formatting and should be based on the content this page is for.\n" +//
+                "e.g. a page for Draconium Ore would use the id draconium_ore\n\n" + //
+                "Note: A possible id has been generated from the name you gave.\n" + //
+                "Change this if you need to.", "Choose page ID", JOptionPane.PLAIN_MESSAGE, null, null, id);
         if (id == null) return;
 
         id = id.toLowerCase().replaceAll(" ", "_");
@@ -1376,32 +1198,55 @@ public class PIEditor extends javax.swing.JFrame {
             return;
         }
 
-        if (DocumentationManager.getPage(page.getPageURI() + "/" + id) != null) {
+        if (DocumentationManager.getPage(parentPage.getPageURI() + (parentPage instanceof ModStructurePage ? "" : "/") + id) != null) {
             JOptionPane.showMessageDialog(this, "The selected page already contains a sub page with this id!\nPlease choose a different id.", "Duplicate ID", JOptionPane.ERROR_MESSAGE);
             return;
         }
 
-        String name = JOptionPane.showInputDialog(this, "Please choose a display name for this page.", "Choose page Name", JOptionPane.PLAIN_MESSAGE);
-        if (name == null) {
-            return;
+        DocumentationPage newPage = new DocumentationPage(parentPage, parentPage.getModid(), parentPage.getModVersion(), parentPage.isPackDoc());
+        parentPage.getSubPages().add(newPage);
+        newPage.setPageId(id);
+        newPage.generatePageURIs(parentPage.getPageURI(), new HashMap<>());
+        LanguageManager.setPageName(parentPage.getModid(), newPage.getPageURI(), name, LanguageManager.getUserLanguage());
+
+        if (mdTemplate != null) {
+            LogHelper.dev("Adding Template:\n" + mdTemplate);
+            try {
+                newPage.setRawMarkdown(mdTemplate);
+            }
+            catch (DocumentationPage.MDException e) {
+                JOptionPane.showMessageDialog(this, "An error occurred!\n\n" + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+            }
         }
 
-        DocumentationPage newPage = new DocumentationPage(page, page.getModid(), page.getModVersion());
-        page.getSubPages().add(newPage);
-        newPage.setPageId(id);
-        newPage.generatePageURIs(page.getPageURI(), new HashMap<>());
-        LanguageManager.setPageName(page.getModid(), newPage.getPageURI(), name, LanguageManager.getUserLanguage());
         DocumentationManager.checkAndReloadDocFiles();
+        setSelectedPage(DocumentationManager.getPage(newPage.getPageURI()));
     }
 
     private void newModAction(ActionEvent evt) {
-        UINewMod ui = new UINewMod(this, Maps.filterEntries(ModHelper.getModNameMap(), input -> input != null && !PIHelpers.getSupportedMods().contains(input.getKey())));
+        UINewDoc ui = new UINewDoc(this, Maps.filterEntries(ModHelperBC.getModNameMap(), input -> input != null && !PIHelpers.getSupportedMods().contains(input.getKey())), false);
         PIHelpers.centerWindowOnMC(ui);
         ui.setVisible(true);
 
         if (!ui.isCanceled()) {
             try {
-                DocumentationManager.addMod(ui.getModID(), ui.getModName(), ui.getModVersion());
+                DocumentationManager.addMod(ui.getDocID(), ui.getDocName(), ui.getModVersion());
+            }
+            catch (IOException e) {
+                e.printStackTrace();
+                JOptionPane.showMessageDialog(this, e.getMessage(), "An Error Occurred!", JOptionPane.ERROR_MESSAGE);
+            }
+        }
+    }
+
+    private void newLocalDoc(ActionEvent evt) {
+        UINewDoc ui = new UINewDoc(this, Collections.emptyMap(), true);
+        PIHelpers.centerWindowOnMC(ui);
+        ui.setVisible(true);
+
+        if (!ui.isCanceled()) {
+            try {
+                DocumentationManager.addLocalDoc(ui.getDocID(), ui.getDocName());
             }
             catch (IOException e) {
                 e.printStackTrace();
@@ -1411,7 +1256,7 @@ public class PIEditor extends javax.swing.JFrame {
     }
 
     private void changeLangAction(ActionEvent evt) {
-        // TODO add your handling code here:
+        JOptionPane.showMessageDialog(this, "This button is not implemented yet.\n" + "Please change language in game ether by changing the game language or by setting a different language in PI itself.", "Info", JOptionPane.INFORMATION_MESSAGE);
     }
 
     private void updatePageId(ActionEvent evt) {
@@ -1501,16 +1346,14 @@ public class PIEditor extends javax.swing.JFrame {
         }
 
         ContentInfo selected = iconList.getSelectedValue();
+        int selectedIndex = iconList.getSelectedIndex();
         if (selected == null) {
             JOptionPane.showMessageDialog(this, "Please select an icon to delete!", "Error", JOptionPane.ERROR_MESSAGE);
             return;
         }
 
         ProcessHandlerClient.syncTask(() -> {
-            LogHelper.bigDev(page.getIcons().contains(selected.getAsIconObj()) + " " + selected.getAsIconObj());
-            LogHelper.dev(page.getIcons());
-            LogHelper.dev(selected.hasEquipment());
-            page.getIcons().remove(selected.getAsIconObj());
+            page.getIcons().remove(selectedIndex);
             page.saveToDisk();
             PIHelpers.reloadPageList();
             setSelectedPage(DocumentationManager.getPage(selectedPageURI));
@@ -1519,11 +1362,11 @@ public class PIEditor extends javax.swing.JFrame {
 
     //endregion
 
-    //region Relations
+    //region Relations / Match Version
 
     private void addRelation(ActionEvent evt) {
 //        DocumentationPage page = getSelected();
-//        JOptionPane.showMessageDialog(this, "Relations are not yet implemented!", "NYI", JOptionPane.ERROR_MESSAGE);
+        JOptionPane.showMessageDialog(this, "Relations are not yet implemented!", "NYI", JOptionPane.ERROR_MESSAGE);
 //        if (page == null || true) {
 //            return;
 //        }
@@ -1551,11 +1394,55 @@ public class PIEditor extends javax.swing.JFrame {
     }
 
     private void editRelation(ActionEvent evt) {
-        // TODO add your handling code here:
     }
 
     private void removeRelation(ActionEvent evt) {
-        // TODO add your handling code here:
+    }
+
+    //TODO this code to set language matching is a bit of a mess and needs to be re written.
+    private void updateMatchRev(ActionEvent evt) {
+        DocumentationPage page = getSelected();
+        if (page == null) {
+            return;
+        }
+        PageLangData data = LanguageManager.getLangData(page.getPageURI(), LanguageManager.getUserLanguage());
+        if (data == null) {
+            JOptionPane.showMessageDialog(this, "Please update the page name first.", "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+        Object item = matchLangBox.getSelectedItem();
+        data.setMatchLang(item == null || item.equals("disabled") ? null : "" + item, (int) enRevField.getValue());
+    }
+
+    private void matchLangChange(ActionEvent evt) {
+        DocumentationPage page = getSelected();
+        if (page == null) {
+            return;
+        }
+        PageLangData data = LanguageManager.getLangData(page.getPageURI(), LanguageManager.getUserLanguage());
+        Object item = matchLangBox.getSelectedItem();
+        String lang = item == null || item.equals("disabled") ? null : "" + item;
+        if (data == null) {
+            if (lang == null) return;
+            JOptionPane.showMessageDialog(this, "Please update the page name first.. ", "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+        data.setMatchLang(lang, (int) enRevField.getValue());
+        enRevField.setEnabled(lang != null);
+    }
+
+    private void matchRevChange(ChangeEvent evt) {
+        DocumentationPage page = getSelected();
+        if (page == null) {
+            return;
+        }
+        PageLangData data = LanguageManager.getLangData(page.getPageURI(), LanguageManager.getUserLanguage());
+        if (data == null) {
+            JOptionPane.showMessageDialog(this, "Please update the page name first...", "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+        Object item = matchLangBox.getSelectedItem();
+        data.setMatchLang(item == null || item.equals("disabled") ? null : "" + item, (int) enRevField.getValue());
     }
 
 //    private SelectIcon createSelectDialog(Map<String, java.util.List<String>> map, String message, String startType, String startContent) {
@@ -1574,11 +1461,17 @@ public class PIEditor extends javax.swing.JFrame {
         if (component instanceof DefaultMutableTreeNode && ((DefaultMutableTreeNode) component).getUserObject() instanceof TreePageContainer) {
             setSelectedPage(((TreePageContainer) ((DefaultMutableTreeNode) component).getUserObject()).getPage());
         }
-        else { setSelectedPage(null); }
+        else {
+            setSelectedPage(null);
+        }
     }
 
     private void setSelectedPage(@Nullable DocumentationPage page) {
         reloading = true;
+        if (!selectedPageURI.isEmpty()) {
+            caretPositions.put(selectedPageURI, markdownWindow.getCaretPosition());
+        }
+
         selectedPageURI = page == null ? "" : page.getPageURI();
         boolean isModPage = page instanceof ModStructurePage;
         boolean pageSelected = page != null;
@@ -1609,7 +1502,7 @@ public class PIEditor extends javax.swing.JFrame {
             LinkedList<String> versions = DocumentationManager.sortedModVersionMap.get(modid);
 
             //Mod Fields
-            modNameField.setText(page.getModPageName());
+            modNameField.setText(LanguageManager.getPageLangName(page.getModid() + ":", page.getLocalizationLang()));
             modIdField.setText(modid);
             modVersionSelect.removeAllItems();
             modVersionSelect.addItem("[Default-Best-Match]");
@@ -1617,10 +1510,9 @@ public class PIEditor extends javax.swing.JFrame {
             modVersionSelect.setSelectedItem(page.getModVersion());
 
             //Page Fields
-            nameField.setText(isModPage ? "" : page.getDisplayName());
+            nameField.setText(isModPage ? "" : LanguageManager.getPageLangName(page));
             idField.setText(isModPage ? "" : page.getPageId());
             weightField.setValue(page.getSortingWeight());
-            revisionField.setValue(page.getRevision());
             cycleIcons.setSelected(page.cycle_icons());
             toggleHidden.setSelected(page.isHidden());
 
@@ -1646,13 +1538,29 @@ public class PIEditor extends javax.swing.JFrame {
             markdownWindow.setText("");
         }
 
+        //Pack Dock
+        boolean isPackPage = page != null && page.isPackDoc();
+        modVersionSelect.setEnabled(!isPackPage);
+        createFromExistingModButton.setEnabled(!isPackPage);
+        revisionField.setEnabled(!isPackPage);
+        matchLangBox.setEnabled(!isPackPage);
+        targetEnRev.setEnabled(!isPackPage);
+
+
         reloadLists();
         reloading = false;
 
         BoundedRangeModel model = mdScrollPane.getVerticalScrollBar().getModel();
-        double scrollPos = (double) model.getValue() / (double) (model.getMaximum() - model.getMinimum());
-        ProcessHandlerClient.syncTask(() -> TabManager.openPage(page == null ? null : page.getPageURI(), false));
+//        double scrollPos = (double) model.getValue() / (double) (model.getMaximum() - model.getMinimum());
+        if (page != null){
+            //This is a mess... The entire tree loading system in the editor needs a proper overhaul.
+            ProcessHandlerClient.syncTask(() -> TabManager.openPage(getSelectedPageURI(), false));
+        }
 //        ProcessHandlerClient.syncTask(() -> TabManager.getActiveTab().updateScroll(scrollPos));
+    }
+
+    private synchronized String getSelectedPageURI() {
+        return selectedPageURI;
     }
 
     private void readMDFile(DocumentationPage page) {
@@ -1661,6 +1569,9 @@ public class PIEditor extends javax.swing.JFrame {
 
         try {
             markdownWindow.setText(new String(Files.readAllBytes(mdFile.toPath())));
+            int pos = caretPositions.getOrDefault(page.getPageURI(), 0);
+            markdownWindow.setCaretPosition(MathHelper.clip(pos, 0, markdownWindow.getText().length() - 1));
+
             set = true;
         }
         catch (IOException ignored) {}
@@ -1680,6 +1591,27 @@ public class PIEditor extends javax.swing.JFrame {
             return;
         }
 
+        PageLangData data = LanguageManager.getLangData(page.getPageURI(), LanguageManager.getUserLanguage());
+        if (data != null) {
+            if (data.matchLang != null) {
+                matchLangBox.setSelectedItem(data.matchLang);
+                enRevField.setValue(data.matchRev);
+            }
+            else {
+                matchLangBox.setSelectedItem("disabled");
+            }
+            revisionField.setValue(data.pageRev);
+            enRevField.setEnabled(data.matchLang != null);
+            if (enRevField.isEnabled()) {
+                revisionField.setValue(data.pageRev);
+            }
+        }
+        else {
+            matchLangBox.setSelectedItem("disabled");
+            enRevField.setEnabled(false);
+        }
+
+
         page.getIcons().forEach(jsonObject -> iconListModel.addElement(ContentInfo.fromIconObj(jsonObject)));
 
         ModStructurePage sp = DocumentationManager.getModPage(page.getModid());
@@ -1688,12 +1620,15 @@ public class PIEditor extends javax.swing.JFrame {
         }
 
         if (!(page instanceof ModStructurePage)) {
-            page.getLinked().forEach(s -> relationListModel.addElement(s));
+            page.getRelations().forEach(s -> relationListModel.addElement(s));
         }
     }
 
     private void deletePage(ActionEvent evt) {
-        DocumentationPage page = getSelected();
+        deletePage(getSelected());
+    }
+
+    private void deletePage(DocumentationPage page) {
         if (page != null && !(page instanceof ModStructurePage) && JOptionPane.showConfirmDialog(this, "Are you sure you want to delete this page and its sub pages? \"" + page.getDisplayName() + "\" This can not be undone!", "Confirm Delete", JOptionPane.YES_NO_OPTION) == 0) {
             page.deletePage();
             reload();
@@ -1701,11 +1636,113 @@ public class PIEditor extends javax.swing.JFrame {
         }
     }
 
+    private void pageTreeMouseClicked(MouseEvent evt) {
+        if (SwingUtilities.isRightMouseButton(evt)) {
+            TreePath path = pageTree.getPathForLocation(evt.getX(), evt.getY());
+            if (path == null) return;
+
+            TreePageContainer container = (TreePageContainer) ((DefaultMutableTreeNode) path.getLastPathComponent()).getUserObject();
+            generateTreeContext(container).forEach(comp -> treeContextMenu.add(comp));
+            treeContextMenu.show(evt.getComponent(), evt.getX(), evt.getY());
+        }
+    }
+
+    private java.util.List<JComponent> generateTreeContext(TreePageContainer container) {
+        List<JComponent> menuItems = new LinkedList<>();
+        JMenuItem item;
+
+        JLabel label = new JLabel(container.getPage().getDisplayName());
+        label.setHorizontalAlignment(SwingConstants.CENTER);
+        menuItems.add(label);
+        menuItems.add(new JPopupMenu.Separator());
+
+        item = new JMenuItem("Copy Page URI");
+        item.addActionListener(e -> Utils.setClipboardString(container.pageURI));
+        menuItems.add(item);
+
+        if (!(container.getPage() instanceof RootPage)) {
+            item = new JMenuItem("New Page");
+            item.addActionListener(e -> addPage(container.getPage()));
+            menuItems.add(item);
+        }
+
+        if (!container.isStructPage) {
+            LogHelper.dev("Add Delete " + container.getPage().getClass() + " " + container.isStructPage);
+            item = new JMenuItem("Delete Page");
+            item.addActionListener(e -> deletePage(container.getPage()));
+            menuItems.add(item);
+        }
+
+        if (!(container.getPage() instanceof RootPage)) {
+            menuItems.add(new JPopupMenu.Separator());
+            JMenu menu = new JMenu("Load Page Template");
+
+            File templatesDir = new File(DocumentationManager.getDocDirectory().getParent(), "PageTemplates");
+            if (templatesDir.exists()) {
+                File[] files = templatesDir.listFiles((dir, name) -> name.endsWith(".template"));
+                if (files != null) {
+                    for (File file : files) {
+                        JMenuItem tempItem = new JMenuItem(file.getName().replace(".template", ""));
+                        tempItem.addActionListener(e -> {
+                            try {
+                                addPage(container.getPage(), FileUtils.readFileToString(file, Charsets.UTF_8));
+                            }
+                            catch (IOException e1) {
+                                JOptionPane.showMessageDialog(this, "An error occurred!\n\n" + e1.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+                            }
+                        });
+                        menu.add(tempItem);
+                    }
+                }
+            }
+
+            menuItems.add(menu);
+        }
+
+        String clipboard = Utils.getClipboardString();
+        if (!clipboard.isEmpty()) {
+            item = new JMenuItem("Add page to templates");
+            item.addActionListener(e -> {
+                File templatesDir = new File(DocumentationManager.getDocDirectory().getParent(), "PageTemplates");
+                String name = JOptionPane.showInputDialog("Please specify a name for the template.\n" + "Please note that currently the only way to remove a template is to manually delete it from disk.\n" + "Templates are stored in: " + templatesDir.getAbsolutePath());
+                if (name != null) {
+                    File file = new File(templatesDir, name + ".template");
+                    if (file.exists()) {
+                        int response = JOptionPane.showConfirmDialog(this, "There is already a template with that name. Do you wish to replace it?", "Replace", JOptionPane.YES_NO_OPTION);
+                        if (response == 1) return;
+                    }
+                    try {
+                        FileUtils.copyFile(container.getPage().getMarkdownFile(), file);
+                    }
+                    catch (IOException e1) {
+                        JOptionPane.showMessageDialog(this, "An error occurred!\n\n" + e1.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+                    }
+//                    FileUtils.writeStringToFile(file, container.getPage()., Charsets.UTF_8);
+                }
+            });
+            menuItems.add(item);
+        }
+
+
+        return menuItems;
+    }
+
+    private void treeMenuOpen(PopupMenuEvent evt) {
+    }
+
+    private void treeMenuClose(PopupMenuEvent evt) {
+        treeContextMenu.removeAll();
+    }
+
     //endregion
 
     //region MD Editing
 
     private void mdTextChange(KeyEvent evt) {
+        markdownWindow.setLineWrap(true);
+        markdownWindow.setTabSize(2);
+        markdownWindow.setWrapStyleWord(true);
+
         DocumentationPage page = getSelected();
         if (page == null) {
             markdownWindow.setText("");
@@ -1725,34 +1762,36 @@ public class PIEditor extends javax.swing.JFrame {
     private void insertAction(ActionEvent evt) {
         String action = evt.getActionCommand();
 
-        Consumer<ContentInfo> applyContentTag = new Consumer<ContentInfo>() {
-            @Override
-            public void accept(ContentInfo contentInfo) {
-                if (contentInfo != null) {
-                    String tag = contentInfo.toMDTag();
-                    markdownWindow.insert(tag + " ", markdownWindow.getCaretPosition());
-                    markdownWindow.moveCaretPosition(markdownWindow.getCaretPosition() + tag.length());
-                    toFront();
-                    mdTextChange(null);
-                }
+        Consumer<ContentInfo> applyContentTag = contentInfo -> {
+            if (contentInfo != null) {
+                String tag = contentInfo.toMDTag();
+                markdownWindow.insert(tag + " ", markdownWindow.getCaretPosition());
+                markdownWindow.moveCaretPosition(markdownWindow.getCaretPosition() + tag.length());
+                mdTextChange(null);
             }
+            toFront();
         };
 
         switch (action) {
             case "stack":
+                toBack();
                 PIHelpers.openContentChooser(null, MD_CONTENT, applyContentTag, ITEM_STACK);
                 break;
             case "recipe": {
+                toBack();
                 PIHelpers.openContentChooser(null, GuiContentSelect.SelectMode.PICK_STACK, contentInfo -> SwingUtilities.invokeLater(() -> {
+                    toFront();
                     if (contentInfo == null) return;
                     MDTagDialog tagD = new MDTagDialog(this, MDTagDialog.TagType.RECIPE);
                     tagD.setStack(contentInfo.stack.toString());
                     tagD.setVisible(true);
                     markdownWindow.insert(tagD.getTag(), markdownWindow.getCaretPosition());
+                    mdTextChange(null);
                 }), ContentInfo.ContentType.ITEM_STACK);
                 break;
             }
             case "image":
+                toBack();
                 PIHelpers.openContentChooser(null, MD_CONTENT, applyContentTag, IMAGE);
                 break;
             case "link": {
@@ -1762,6 +1801,7 @@ public class PIEditor extends javax.swing.JFrame {
                 break;
             }
             case "entity":
+                toBack();
                 PIHelpers.openContentChooser(null, MD_CONTENT, applyContentTag, ENTITY);
                 break;
             case "rule": {
@@ -1914,6 +1954,33 @@ public class PIEditor extends javax.swing.JFrame {
             }
         });
 
+        if (markdownWindow.getText().replaceAll(" ", "").replaceAll("\n", "").isEmpty()) {
+            menuItems.add(new JPopupMenu.Separator());
+            JMenu menu = new JMenu("Load Template");
+
+            File templatesDir = new File(DocumentationManager.getDocDirectory().getParent(), "PageTemplates");
+            if (templatesDir.exists()) {
+                File[] files = templatesDir.listFiles((dir, name) -> name.endsWith(".template"));
+                if (files != null) {
+                    for (File file : files) {
+                        JMenuItem tempItem = new JMenuItem(file.getName().replace(".template", ""));
+                        tempItem.addActionListener(e -> {
+                            try {
+                                markdownWindow.setText(FileUtils.readFileToString(file, Charsets.UTF_8));
+                                mdTextChange(null);
+                            }
+                            catch (IOException e1) {
+                                JOptionPane.showMessageDialog(this, "An error occurred!\n\n" + e1.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+                            }
+                        });
+                        menu.add(tempItem);
+                    }
+                }
+            }
+
+            menuItems.add(menu);
+        }
+
         return menuItems;
     }
 
@@ -1937,9 +2004,41 @@ public class PIEditor extends javax.swing.JFrame {
 
     //endregion
 
+    private String getHelpInfo(String topic) {
+        switch (topic) {
+            //Mod
+            case "modName":
+                return "This is the display name for the mod. e.g. Draconic Evolution or Thermal Expansion. This name supports translation.";
+            case "modID":
+                return "This is the mod id as specified by the mod itself.";
+            case "versionHelp":
+                return "Ok so read carefully this can be confusing. This sets the minimum version of the mod to which this documentation applies.\n" + "So if you want this to apply to all versions ever set this to 0.0.0 and if this is the only documentation version written for\n" + "this mod then this will apply to all versions of the mod.\n\n" + "Now say the mod releases a new version that changes a bunch of things. Do NOT change the existing documentation!\n" + "This would make it incompatible with the previous version of the mod. Instead you must create a copy of the documentation with\n" + "the minimum mod version set to match the new mod version. You can then make the required changes to the copy.\n\n" + "So what this does is creates two completely separate sets of documentation. One with its min version set to 0.0.0 and the other\n" + "set to say, 1.0.0 for example. Now if the installed mod version is less then 1.0.0 it will use the documentation targeting 0.0.0\n" + "otherwise it will use the documentation for 1.0.0. Do not be afraid to create a new doc version when something changes! All files are indexed\n" + "by their hashes on the server so it does not matter if you copy the entire documentation for a mod only to change one page. The server\n" + "will only need to store that one extra page.";
+            case "aliases":
+                return "Aliases are to be used in the event that a mod changes its mod id or has multiple id's such a mod like Project Red that is split into modules.\n" + "Though in the case of a mod like Project red it should be sufficient to just use the ID for the core main mod that all of the other modules depend on.\n" + "Alternatively it may make more sense to have separate documentation for each module.\n\n" + "But back to the point there are times where mods have to or just decide to change their name such as when forge started enforcing lowercase id's.\n" + "This forced DraconicEvolution to change to draconicevolution. In the case of DE if doc had already been created for the uppercase ID then the lowercase\n" + "ID would be added as an alias.";
+
+            //Page Properties
+            case "name":
+                return "This is the name of the page. This name supports localization.\n" + "For help with adding translations see \"Lang Help\"";
+            case "id":
+                return "This is the unique id for this page. This should be unique within the context of the parent page. Meaning a page can not have two sub pages with the same id.\n" + "The id should be lowercase camel_case, Any uppercase characters will be automatically converted to lowercase and spaces will be replaced with underscores _.\n\n" + "The id should be indicative of the page content so a page about Draconium Ore should use the id draconium_ore.";
+            case "weight":
+                return "Page weight is used to determine the order in which pages are displayed in the page list.\n" + "Pages with a higher weight will sink down and be displayed bellow pages with a lower weight.\n" + "Pages with the same weight should be displayed in the order they were added but this is not guaranteed.";
+            case "revision":
+                return "This is the page revision. Whenever a page is updated the revision should be incremented. This is can be used to link translated pages to the default language.\n" + "E.g. say you write a page in english and it has a revision number of 1. That page is then translated to chinese. The translated page would be set to match\n" + "revision 1 of the english translation. Now if something on in the english translation changes its revision will increment and as a result the chinese translation\n" + "will be automatically marked as potentially outdated because its still targeting revision 1 of the english translation.";
+            case "matchRev":
+                return "As mentioned in the help info for the revision field (which you should read first) this can be used to match a page translation to the default translation revision\n" + "(usually english). That way when the targeted page updates this page will automatically be marked as potentially outdated.";
+            case "icons":
+                return "This is where you can add icons to be displayed to the left of the page name in the page list. An icon can be ether an item stack, entity or correctly sized image.\n" + "By default if you add more than one icon the first will be displayed and the others will be used as fallback icons. This means if your documentation spans multiple\n" + "mod versions and the id for an item changes you can add all of its id's and it will use whatever one is avalible for the icon.\n" + "You also have the option to check the \"Cycle Icons\" box. When option is enabled and you have multiple icons it will cycle between the listed icons.";
+            case "relations":
+                return "Relations are not yet implemented but when they are they will allow you to link pages directly to in game contend. For example the page for Draconium Ore could be\n" + "linked to the Draconium Ore item. Then there would be an option in game perhaps via a key bind while you have your mouse over draconium ore in your inventory to go\n" + "directly to the documentation page linked to that item. This may also be applied to mobs and blocks in world.";
+        }
+
+        return "[Error]: This help button has no bound help info!\n" + topic;
+    }
+
     private void helpAction(ActionEvent evt) {
-        System.out.println(evt.getActionCommand());
-        reload();
+        String helpText = getHelpInfo(evt.getActionCommand());
+        JOptionPane.showMessageDialog(this, helpText, "Help Info", JOptionPane.INFORMATION_MESSAGE);
     }
 
     private void mdScroll(MouseWheelEvent evt) {
@@ -1948,9 +2047,15 @@ public class PIEditor extends javax.swing.JFrame {
 //        ProcessHandlerClient.syncTask(() -> TabManager.getActiveTab().updateScroll(scrollPos));
     }
 
-    //</editor-fold>
-
     //region Misc
+
+    private void openMDRef(ActionEvent evt) {
+        MDReference frame = new MDReference();
+        frame.setVisible(true);
+        frame.setAlwaysOnTop(alwaysOnTop.isSelected());
+        frame.jCheckBox1.setSelected(alwaysOnTop.isSelected());
+        PIHelpers.centerWindowOn(frame, this);
+    }
 
     public DocumentationPage getSelected() {
         return DocumentationManager.getPage(selectedPageURI);
@@ -1969,62 +2074,6 @@ public class PIEditor extends javax.swing.JFrame {
     public static Stream<Integer> streamTree(JTree tree, boolean backwards) {
         return StreamSupport.stream(new TreeIterator(tree, backwards).spliterator(), false);
     }
-
-//    public static class Icon {
-//
-//        public IconType type = IconType.STACK;
-//        public String iconString = "";
-//
-//        public Icon() {}
-//
-//        public Icon(IconType type, String iconString) {
-//            this.type = type;
-//            this.iconString = iconString;
-//        }
-//
-//        @Override
-//        public String toString() {
-//            return type + " | " + iconString;
-//        }
-//
-//        public static Icon load(JsonObject obj) {
-//            Icon icon = new Icon();
-//            if (JsonUtils.isString(obj, "type")) {
-//                icon.type = IconType.get(JsonUtils.getString(obj, "type"));
-//            }
-//            if (JsonUtils.isString(obj, "icon_string")) {
-//                icon.iconString = JsonUtils.getString(obj, "icon_string");
-//            }
-//            return icon;
-//        }
-//
-//        public JsonObject save() {
-//            JsonObject obj = new JsonObject();
-//            obj.addProperty("type", type.name().toLowerCase());
-//            obj.addProperty("icon_string", iconString);
-//            return obj;
-//        }
-//
-//        public enum IconType {
-//            STACK,
-//            ENTITY,
-//            PLAYER,
-//            IMAGE;
-//
-//            public static IconType get(String name) {
-//                if (name.toLowerCase().equals("entity")) {
-//                    return ENTITY;
-//                }
-//                else if (name.toLowerCase().equals("player")) {
-//                    return ENTITY;
-//                }
-//                else if (name.toLowerCase().equals("image")) {
-//                    return IMAGE;
-//                }
-//                return STACK;
-//            }
-//        }
-//    }
 
     public static class Singleton<E> {
         private E e;
@@ -2079,11 +2128,13 @@ public class PIEditor extends javax.swing.JFrame {
     public static class TreePageContainer {
 
         private String pageURI;
-        public boolean isRootPage;
+        public boolean isStructPage;
+        public boolean isPackDoc;
 
         public TreePageContainer(DocumentationPage page) {
             this.pageURI = page.getPageURI();
-            this.isRootPage = page instanceof ModStructurePage;
+            this.isStructPage = page instanceof ModStructurePage;
+            this.isPackDoc = page.isPackDoc();
         }
 
         private String getSelectedVersionRange() {
@@ -2091,6 +2142,10 @@ public class PIEditor extends javax.swing.JFrame {
             if (page == null) {
                 return "[Invalid-Entry]";
             }
+            if (isPackDoc) {
+                return "Local pack doc";
+            }
+
             LinkedList<String> versions = DocumentationManager.sortedModVersionMap.get(page.getModid());
             if (versions == null) {
                 return "[Version-Error]";
@@ -2109,10 +2164,14 @@ public class PIEditor extends javax.swing.JFrame {
             if (page == null) {
                 return "[Invalid-Entry]";
             }
-            if (isRootPage) {
-                return page.toString() + " (" + getSelectedVersionRange() + ")";
+            String name = pageURI;
+            if (LanguageManager.isPageLocalized(pageURI, LanguageManager.getUserLanguage())) {
+                name = page.toString();
             }
-            return page.toString();
+            if (isStructPage) {
+                name += " (" + getSelectedVersionRange() + ")";
+            }
+            return name;
         }
 
         public DocumentationPage getPage() {
@@ -2122,11 +2181,12 @@ public class PIEditor extends javax.swing.JFrame {
 
     //endregion
 
-    // <editor-fold defaultstate="collapsed" desc="=== Generated Variables ===">
+    //region Generated fields
     private JList<String> aliasList;
     private JCheckBoxMenuItem alwaysOnTop;
     private JMenuItem changeLangButton;
     private JCheckBox copyDocFromSelected;
+    private JButton createFromExistingModButton;
     private JCheckBox cycleIcons;
     private JSpinner enRevField;
     private JList<ContentInfo> iconList;
@@ -2142,16 +2202,13 @@ public class PIEditor extends javax.swing.JFrame {
     private JButton jButton3;
     private JButton jButton4;
     private JButton jButton5;
-    private JButton jButton6;
     private JButton jButton7;
     private JButton jButton8;
-    private JButton jButton9;
     private JLabel jLabel1;
     private JMenu jMenu1;
     private JMenu jMenu2;
     private JMenu jMenu3;
     private JMenuBar jMenuBar1;
-    private JMenuItem jMenuItem1;
     private JPanel jPanel3;
     private JScrollPane jScrollPane3;
     private JScrollPane jScrollPane4;
@@ -2164,6 +2221,7 @@ public class PIEditor extends javax.swing.JFrame {
     private JSplitPane jSplitPane1;
     private JToolBar jToolBar1;
     private JTextArea markdownWindow;
+    private JComboBox<String> matchLangBox;
     private JPopupMenu mdContextMenu;
     private JScrollPane mdScrollPane;
     private JTextField modIdField;
@@ -2186,10 +2244,12 @@ public class PIEditor extends javax.swing.JFrame {
     private JLabel revisionLabel;
     private JTabbedPane tabbedPain;
     private JLabel targetEnRev;
+    private JLabel targetEnRev1;
     private JCheckBox toggleHidden;
-    private JPopupMenu treePopup;
+    private JPopupMenu treeContextMenu;
     private JButton updateEnRev;
     private JSpinner weightField;
     private JLabel weightLabel;
-    //</editor-fold>
+    private JButton jButton6;
+    //endregion
 }

@@ -3,17 +3,9 @@ package com.brandon3055.projectintelligence.client.gui;
 import com.brandon3055.brandonscore.client.gui.modulargui.GuiElementManager;
 import com.brandon3055.brandonscore.client.gui.modulargui.MGuiElementBase;
 import com.brandon3055.brandonscore.client.gui.modulargui.ModularGuiScreen;
-import com.brandon3055.brandonscore.client.gui.modulargui.baseelements.GuiButton;
-import com.brandon3055.brandonscore.client.gui.modulargui.lib.GuiEvent;
-import com.brandon3055.brandonscore.client.gui.modulargui.lib.IGuiEventListener;
 import com.brandon3055.brandonscore.client.utils.GuiHelper;
 import com.brandon3055.projectintelligence.PIHelpers;
-import com.brandon3055.projectintelligence.client.gui.guielements.GuiErrorDialog;
-import com.brandon3055.projectintelligence.client.gui.guielements.GuiPartMDWindow;
-import com.brandon3055.projectintelligence.client.gui.guielements.GuiPartMenu;
-import com.brandon3055.projectintelligence.client.gui.guielements.GuiPartPageList;
-import com.brandon3055.projectintelligence.client.gui.moddata.guidoctree.GuiDocTree;
-import com.brandon3055.projectintelligence.docdata.DocumentationManager;
+import com.brandon3055.projectintelligence.client.gui.guielements.*;
 import com.brandon3055.projectintelligence.docdata.LanguageManager;
 
 import java.io.IOException;
@@ -21,18 +13,15 @@ import java.io.IOException;
 /**
  * Created by brandon3055 on 30/08/2016.
  */
-public class GuiProjectIntelligence extends ModularGuiScreen implements IGuiEventListener {
+public class GuiProjectIntelligence extends ModularGuiScreen {
     public static GuiProjectIntelligence activeInstance = null;
     public static volatile boolean requiresReload = false;
+    public static volatile boolean updateErrorDialog = false;
     public GuiPartContainer elementContainer;
     public GuiPartMenu guiMenu;
     public GuiPartPageList contentList;
     public GuiPartMDWindow contentWindow;
-    public static String activePath;
     private GuiErrorDialog errorDialog;
-
-    @Deprecated
-    public GuiDocTree wikiDataTree;
 
     /**
      * Enables certain functionality that is useful in dev.
@@ -53,7 +42,6 @@ public class GuiProjectIntelligence extends ModularGuiScreen implements IGuiEven
     @Override
     public void addElements(GuiElementManager manager) {
         requiresReload = false;
-        DocumentationManager.checkAndReloadDocFiles();
         updateScreenSize();
         elementContainer = new GuiPartContainer();
         guiMenu = new GuiPartMenu(this);
@@ -75,16 +63,7 @@ public class GuiProjectIntelligence extends ModularGuiScreen implements IGuiEven
         contentWindow.addAndFireReloadCallback(contentWindow -> contentWindow.setYPos(guiMenu.maxYPos()).setYSize(ySize() - guiMenu.ySize()));
         elementContainer.addChild(contentWindow);
 
-//        guiMenu.setYSize(20);
-//        guiMenu.addAndFireReloadCallback(guiPartMenu -> guiMenu.setXSize(xSize()).setPos((width - xSize()) / 2, (height - ySize()) / 2));
-//        manager.add(guiMenu);
-//
-//        contentList.addAndFireReloadCallback(contentList -> contentList.setYSize(ySize() - guiMenu.ySize()).setPos((width - xSize()) / 2, guiMenu.maxYPos()));
-//        manager.add(contentList);
-//
-//        contentWindow.setXPosMod((part, integer) -> contentList.maxXPos()).setXSizeMod((part, integer) -> xSize() - contentList.xSize());
-//        contentWindow.addAndFireReloadCallback(contentWindow -> contentWindow.setYPos(guiMenu.maxYPos()).setYSize(ySize() - guiMenu.ySize()));
-//        manager.add(contentWindow);
+        manager.add(new GuiActiveDownloads(this), 800);
     }
 
     @Override
@@ -109,64 +88,6 @@ public class GuiProjectIntelligence extends ModularGuiScreen implements IGuiEven
             xSize = (int) (width - (width * s));
             ySize = (int) (height - (height * s));
         }
-    }
-
-    //endregion
-
-    //############################################################################
-    //# Initialization & Reload
-    //region //############################################################################
-
-    @Override
-    public void onMGuiEvent(GuiEvent event, MGuiElementBase element) {
-        try {
-            if (element instanceof GuiButton && ((GuiButton) element).buttonName.equals("Reload")) {
-//            WikiDocManager.initFiles();
-//            WikiDocManager.loadDocsFromDisk();
-//            wikiDataTree.reloadData();
-//            contentList.reloadList();
-//            wikiDataTree.reOpenLast();
-//            PIConfig.load();
-//            WikiDownloadManager.downloadManifest();
-//            mc.displayGuiScreen(new GuiPIMainWindow());
-
-
-//                fullScreen = !fullScreen;
-//                reloadGui();
-
-//            PIConfig.editMode = false;
-//            DocumentationManager.checkAndReloadDocFiles();
-//            PIConfig.editMode = true;
-
-
-//                VersionRange targetFixed = VersionParser.parseRange("[3.6.1]");
-//                VersionRange targetOpen = VersionParser.parseRange("[3.6.1,)");
-//                VersionRange targetRange = VersionParser.parseRange("[0,3.7.0]");
-//                LogHelper.dev(targetRange.containsVersion(new DefaultArtifactVersion("0")));
-//
-//                LogHelper.dev("Versions: Fixed=" + targetFixed + ", Open=" + targetOpen + ", Range=" + targetRange);
-//
-//                ArtifactVersion test;
-
-//                test = new DefaultArtifactVersion("3.6.0");
-//                LogHelper.dev("Test: " + test + ", Fixed: " + targetFixed.containsVersion(test) + ", Open: " + targetOpen.containsVersion(test) + ", Range: " + targetRange.containsVersion(test));
-//
-//                test = new DefaultArtifactVersion("3.6.1");
-//                LogHelper.dev("Test: " + test + ", Fixed: " + targetFixed.containsVersion(test) + ", Open: " + targetOpen.containsVersion(test) + ", Range: " + targetRange.containsVersion(test));
-//
-//                test = new DefaultArtifactVersion("3.6.2");
-//                LogHelper.dev("Test: " + test + ", Fixed: " + targetFixed.containsVersion(test) + ", Open: " + targetOpen.containsVersion(test) + ", Range: " + targetRange.containsVersion(test));
-//
-//                test = new DefaultArtifactVersion("3.7.0");
-//                LogHelper.dev("Test: " + test + ", Fixed: " + targetFixed.containsVersion(test) + ", Open: " + targetOpen.containsVersion(test) + ", Range: " + targetRange.containsVersion(test));
-//
-//                test = new DefaultArtifactVersion("3.7.1");
-//                LogHelper.dev("Test: " + test + ", Fixed: " + targetFixed.containsVersion(test) + ", Open: " + targetOpen.containsVersion(test) + ", Range: " + targetRange.containsVersion(test));
-
-
-            }
-        }
-        catch (Throwable e) {e.printStackTrace();}
     }
 
     //endregion
@@ -198,12 +119,19 @@ public class GuiProjectIntelligence extends ModularGuiScreen implements IGuiEven
     public void updateScreen() {
         if (requiresReload) {
             requiresReload = false;
+            String open = TabManager.getActiveTab().pageURI;
             reloadGui();
+            TabManager.openPage(open, false);
             return;
         }
         if (!PIHelpers.errorCache.isEmpty() && !manager.getElements().contains(errorDialog)) {
             errorDialog.showCenter(700);
+            updateErrorDialog = false;
             return;
+        }
+        else if (updateErrorDialog) {
+            errorDialog.reloadElement();
+            updateErrorDialog = false;
         }
         super.updateScreen();
     }
@@ -212,8 +140,7 @@ public class GuiProjectIntelligence extends ModularGuiScreen implements IGuiEven
         this.mc.player.closeScreen();
         this.mc.displayGuiScreen(null);
 
-        if (this.mc.currentScreen == null)
-        {
+        if (this.mc.currentScreen == null) {
             this.mc.setIngameFocus();
         }
         this.mc.setIngameFocus();
