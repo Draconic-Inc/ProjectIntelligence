@@ -8,7 +8,7 @@ import net.minecraftforge.fml.common.event.FMLInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLPostInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
 
-@Mod(modid = ProjectIntelligence.MODID, name = ProjectIntelligence.MODNAME, version = ProjectIntelligence.VERSION, guiFactory = ProjectIntelligence.GUI_FACTORY, dependencies = ProjectIntelligence.DEPENDENCIES)
+@Mod(modid = ProjectIntelligence.MODID, name = ProjectIntelligence.MODNAME, version = ProjectIntelligence.VERSION, /*guiFactory = ProjectIntelligence.GUI_FACTORY,*/ dependencies = ProjectIntelligence.DEPENDENCIES)
 public class ProjectIntelligence {
     public static final String MODID = "projectintelligence";
     public static final String MODNAME = "Project Intelligence";
@@ -16,7 +16,7 @@ public class ProjectIntelligence {
     public static final String PROXY_CLIENT = "com.brandon3055.projectintelligence.client.ClientProxy";
     public static final String PROXY_SERVER = "com.brandon3055.projectintelligence.CommonProxy";
     public static final String DEPENDENCIES = "required-after:brandonscore@[" + BrandonsCore.VERSION + ",);";
-    public static final String GUI_FACTORY = "com.brandon3055.projectintelligence.PIGuiFactory";
+//    public static final String GUI_FACTORY = "com.brandon3055.projectintelligence.PIGuiFactory";
 
     //endregion
 
@@ -37,7 +37,6 @@ public class ProjectIntelligence {
 
     @Mod.EventHandler
     public void init(FMLInitializationEvent event) {
-        GuiHandler.initialize();
         proxy.init(event);
     }
 

@@ -1,4 +1,4 @@
-package com.brandon3055.projectintelligence.docdata;
+package com.brandon3055.projectintelligence.docmanagement;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
@@ -98,8 +98,11 @@ public class ModStructurePage extends DocumentationPage {
         if (JsonUtils.isJsonArray(jObj, "relations")) {
             relations.clear();
             for (JsonElement element : JsonUtils.getJsonArray(jObj, "relations")) {
-                if (JsonUtils.isString(element)) {
-                    relations.add(element.getAsJsonPrimitive().getAsString());
+                if (element.isJsonObject()) {
+                    ContentRelation relation = ContentRelation.fromJson(element.getAsJsonObject());
+                    if (relation != null) {
+                        relations.add(relation);
+                    }
                 }
             }
         }
@@ -138,8 +141,8 @@ public class ModStructurePage extends DocumentationPage {
 
         if (relations.size() > 0) {
             JsonArray array = new JsonArray();
-            for (String link : relations) {
-                array.add(new JsonPrimitive(link));
+            for (ContentRelation relation : relations) {
+                array.add(relation.toJson());
             }
             jObj.add("relations", array);
         }

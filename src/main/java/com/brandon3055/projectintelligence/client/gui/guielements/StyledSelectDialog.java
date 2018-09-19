@@ -7,7 +7,7 @@ import com.brandon3055.brandonscore.client.gui.modulargui.guielements.GuiSelectD
 import com.brandon3055.projectintelligence.client.PITextures;
 import com.brandon3055.projectintelligence.client.StyleHandler;
 import com.brandon3055.projectintelligence.client.StyleHandler.StyleType;
-import com.brandon3055.projectintelligence.docdata.LanguageManager;
+import com.brandon3055.projectintelligence.docmanagement.LanguageManager;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.GlStateManager;
 

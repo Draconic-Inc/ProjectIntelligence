@@ -3,6 +3,7 @@ package com.brandon3055.projectintelligence.client.gui;
 import codechicken.lib.colour.Colour;
 import codechicken.lib.util.ArrayUtils;
 import com.brandon3055.brandonscore.lib.StackReference;
+import com.brandon3055.projectintelligence.docmanagement.ContentRelation;
 import com.brandon3055.projectintelligence.utils.LogHelper;
 import com.google.gson.JsonObject;
 import net.minecraft.item.ItemStack;
@@ -10,6 +11,7 @@ import net.minecraft.util.JsonUtils;
 
 import java.util.function.Supplier;
 
+//I prefer to just pretend this class does not exist... Just dont look at it and its not a problem!
 public class ContentInfo {
     //General
     public ContentType type;
@@ -17,6 +19,9 @@ public class ContentInfo {
     //Stack
     public StackReference stack = new StackReference(ItemStack.EMPTY);
     public boolean drawHover = true;//draw_hover (Mainly for stacks, Draws normal stack tooltip) //Default True
+
+    //Fluid
+    public String fluid = "water";
 
     //Entity
     public String entity = "minecraft:pig";
@@ -50,6 +55,10 @@ public class ContentInfo {
     public boolean drawSlot = false; //Default False
     public String linkTarget = "";
 
+    //Relations
+    public boolean ignoreMeta = false;
+    public boolean includeNBT = false;
+
     public ContentInfo(ContentType type) {
         this.type = type;
         ArrayUtils.fill(entityInventory, ItemStack.EMPTY);
@@ -76,12 +85,18 @@ public class ContentInfo {
                 LogHelper.dev(entityInventory[0]);
 
                 JsonObject equip = new JsonObject();
-                if (!entityInventory[0].isEmpty()) equip.addProperty("main_hand", StackReference.stackString(entityInventory[0]));
-                if (!entityInventory[1].isEmpty()) equip.addProperty("off_hand", StackReference.stackString(entityInventory[1]));
-                if (!entityInventory[2].isEmpty()) equip.addProperty("head", StackReference.stackString(entityInventory[2]));
-                if (!entityInventory[3].isEmpty()) equip.addProperty("chest", StackReference.stackString(entityInventory[3]));
-                if (!entityInventory[4].isEmpty()) equip.addProperty("legs", StackReference.stackString(entityInventory[4]));
-                if (!entityInventory[5].isEmpty()) equip.addProperty("feet", StackReference.stackString(entityInventory[5]));
+                if (!entityInventory[0].isEmpty())
+                    equip.addProperty("main_hand", StackReference.stackString(entityInventory[0]));
+                if (!entityInventory[1].isEmpty())
+                    equip.addProperty("off_hand", StackReference.stackString(entityInventory[1]));
+                if (!entityInventory[2].isEmpty())
+                    equip.addProperty("head", StackReference.stackString(entityInventory[2]));
+                if (!entityInventory[3].isEmpty())
+                    equip.addProperty("chest", StackReference.stackString(entityInventory[3]));
+                if (!entityInventory[4].isEmpty())
+                    equip.addProperty("legs", StackReference.stackString(entityInventory[4]));
+                if (!entityInventory[5].isEmpty())
+                    equip.addProperty("feet", StackReference.stackString(entityInventory[5]));
 
                 if (!equip.entrySet().isEmpty()) {
                     object.add("equipment", equip);
@@ -114,12 +129,18 @@ public class ContentInfo {
                 if (JsonUtils.hasField(iconObj, "equipment") && iconObj.get("equipment").isJsonObject()) {
                     JsonObject equip = iconObj.get("equipment").getAsJsonObject();
 
-                    if (JsonUtils.hasField(equip, "main_hand")) ci.entityInventory[0] = getStack(JsonUtils.getString(equip, "main_hand", ""));
-                    if (JsonUtils.hasField(equip, "off_hand")) ci.entityInventory[1] = getStack(JsonUtils.getString(equip, "off_hand", ""));
-                    if (JsonUtils.hasField(equip, "head")) ci.entityInventory[2] = getStack(JsonUtils.getString(equip, "head", ""));
-                    if (JsonUtils.hasField(equip, "chest")) ci.entityInventory[3] = getStack(JsonUtils.getString(equip, "chest", ""));
-                    if (JsonUtils.hasField(equip, "legs")) ci.entityInventory[4] = getStack(JsonUtils.getString(equip, "legs", ""));
-                    if (JsonUtils.hasField(equip, "feet")) ci.entityInventory[5] = getStack(JsonUtils.getString(equip, "feet", ""));
+                    if (JsonUtils.hasField(equip, "main_hand"))
+                        ci.entityInventory[0] = getStack(JsonUtils.getString(equip, "main_hand", ""));
+                    if (JsonUtils.hasField(equip, "off_hand"))
+                        ci.entityInventory[1] = getStack(JsonUtils.getString(equip, "off_hand", ""));
+                    if (JsonUtils.hasField(equip, "head"))
+                        ci.entityInventory[2] = getStack(JsonUtils.getString(equip, "head", ""));
+                    if (JsonUtils.hasField(equip, "chest"))
+                        ci.entityInventory[3] = getStack(JsonUtils.getString(equip, "chest", ""));
+                    if (JsonUtils.hasField(equip, "legs"))
+                        ci.entityInventory[4] = getStack(JsonUtils.getString(equip, "legs", ""));
+                    if (JsonUtils.hasField(equip, "feet"))
+                        ci.entityInventory[5] = getStack(JsonUtils.getString(equip, "feet", ""));
                 }
 
                 if (JsonUtils.hasField(iconObj, "icon_string")) {
@@ -134,6 +155,49 @@ public class ContentInfo {
         }
 
         return ci;
+    }
+
+    public ContentRelation asRelation() {
+        String contentString = "";
+        switch (type) {
+            case ITEM_STACK:
+                if (!includeNBT) {
+                    stack.setNbt(null);
+                }
+                contentString = stack.toString();
+                break;
+            case ENTITY:
+                contentString = entity;
+                ignoreMeta = includeNBT = false;
+                break;
+            case FLUID:
+                contentString = fluid;
+                ignoreMeta = includeNBT = false;
+                break;
+        }
+
+        return new ContentRelation(ContentType.toRelationType(type), contentString, ignoreMeta, includeNBT);
+    }
+
+    public static ContentInfo fromRelation(ContentRelation relation) {
+        ContentInfo info = new ContentInfo(ContentType.fromRelationType(relation.type));
+        switch (relation.type) {
+            case STACK:
+                info.stack = StackReference.fromString(relation.contentString);
+                if (info.stack == null) {
+                    info.stack = new StackReference(ItemStack.EMPTY);
+                }
+                info.ignoreMeta = relation.ignoreMeta;
+                info.includeNBT = relation.includeNBT;
+                break;
+            case ENTITY:
+                info.entity = relation.contentString;
+                break;
+            case FLUID:
+                info.fluid = relation.contentString;
+                break;
+        }
+        return info;
     }
 
     public String toMDTag() {
@@ -241,7 +305,8 @@ public class ContentInfo {
     public enum ContentType {
         ITEM_STACK("stack"),
         ENTITY("entity"),
-        IMAGE("image");
+        IMAGE("image"),
+        FLUID("fluid");
 
         private final String name;
 
@@ -253,9 +318,34 @@ public class ContentInfo {
                     return ENTITY;
                 case "image":
                     return IMAGE;
+                case "fluid":
+                    return FLUID;
                 default:
                     return ITEM_STACK;
             }
+        }
+
+        public static ContentType fromRelationType(ContentRelation.Type type) {
+            switch (type) {
+                case ENTITY:
+                    return ENTITY;
+                case FLUID:
+                    return FLUID;
+                default:
+                    return ITEM_STACK;
+            }
+        }
+
+        public static ContentRelation.Type toRelationType(ContentType type) {
+            switch (type) {
+                case ITEM_STACK:
+                    return ContentRelation.Type.STACK;
+                case ENTITY:
+                    return ContentRelation.Type.ENTITY;
+                case FLUID:
+                    return ContentRelation.Type.FLUID;
+            }
+            return ContentRelation.Type.ENTITY;
         }
     }
 }

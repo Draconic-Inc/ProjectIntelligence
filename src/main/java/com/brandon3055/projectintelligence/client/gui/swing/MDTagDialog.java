@@ -1,6 +1,6 @@
 package com.brandon3055.projectintelligence.client.gui.swing;
 
-import com.brandon3055.projectintelligence.PIHelpers;
+import com.brandon3055.projectintelligence.client.PIGuiHelper;
 
 import javax.annotation.Nullable;
 import javax.swing.*;
@@ -107,7 +107,7 @@ public class MDTagDialog extends JDialog {
 
         pack();
         updateOutput();
-        PIHelpers.centerWindowOn(this, parent);
+        PIGuiHelper.centerWindowOn(this, parent);
     }
 
     public void setStack(String stack) {

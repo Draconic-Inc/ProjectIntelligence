@@ -1,11 +1,13 @@
-package com.brandon3055.projectintelligence.docdata;
+package com.brandon3055.projectintelligence.docmanagement;
 
 import codechicken.lib.reflect.ObfMapping;
 import com.brandon3055.brandonscore.handlers.FileHandler;
 import com.brandon3055.brandonscore.integration.ModHelperBC;
 import com.brandon3055.brandonscore.utils.DataUtils;
-import com.brandon3055.projectintelligence.PIHelpers;
+import com.brandon3055.projectintelligence.ProjectIntelligence;
+import com.brandon3055.projectintelligence.client.PIGuiHelper;
 import com.brandon3055.projectintelligence.client.gui.GuiProjectIntelligence;
+import com.brandon3055.projectintelligence.client.gui.GuiProjectIntelligence_old;
 import com.brandon3055.projectintelligence.client.gui.PIConfig;
 import com.brandon3055.projectintelligence.utils.LogHelper;
 import com.google.common.primitives.Ints;
@@ -15,14 +17,21 @@ import com.google.gson.JsonParser;
 import com.google.gson.internal.Streams;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
+import net.minecraft.item.ItemStack;
+import net.minecraftforge.common.crafting.CraftingHelper;
+import net.minecraftforge.fluids.Fluid;
+import net.minecraftforge.fml.common.Loader;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 
 import javax.annotation.Nullable;
 import java.io.*;
+import java.nio.file.Files;
 import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
+
+import static com.brandon3055.projectintelligence.docmanagement.ContentRelation.Type.*;
 
 /**
  * Created by brandon3055 on 4/08/2017.
@@ -75,6 +84,8 @@ public class DocumentationManager {
      */
     private static Map<String, File> packDocFileMap = Collections.synchronizedMap(new HashMap<>());
 
+    private static Map<ContentRelation.Type, Map<ContentRelation, DocumentationPage>> contentRelationsMap = new HashMap<>();
+
     //# Initialization
     //region //############################################################################
 
@@ -84,6 +95,42 @@ public class DocumentationManager {
         if (!piConfigDirectory.exists() && !piConfigDirectory.mkdirs()) {
             LogHelper.bigError("Failed to create config directory! Things are going to break! " + piConfigDirectory);
         }
+
+        CraftingHelper.findFiles(Loader.instance().getIndexedModList().get(ProjectIntelligence.MODID), "assets/" +ProjectIntelligence.MODID + "/default_styles", path -> true, (path2, file) -> {
+            if (file.toString().endsWith(".json")) {
+                try {
+                    Files.copy(file, file.getFileSystem().getPath(piConfigDirectory.getAbsolutePath(), "GuiStyle/DefaultPresets/" + file.getFileName()));
+                }
+                catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+            return true;
+        }, false, false);
+
+//        try {
+//            String[] defaults = new String[]{"darcula.json", "vanilla.json"};
+//
+//            CraftingHelper.findFiles(Loader.instance().getIndexedModList().get(ProjectIntelligence.MODID), "assets/" +ProjectIntelligence.MODID + "/default_styles", path -> true, (path2, file) -> {
+//                LogHelper.dev("File: " + file);
+//                return true;
+//            }, false, false);
+//
+//            for (String defStyle : defaults) {
+////                CraftingHelper.findFiles()
+//                IResource style = Minecraft.getMinecraft().getResourceManager().getResource(new ResourceLocation(ProjectIntelligence.MODID + ":default_styles/" + defStyle));
+//                File defDir = new File(piConfigDirectory, "GuiStyle/DefaultPresets");
+//                defDir.mkdirs();
+//                InputStream is = style.getInputStream();
+//                OutputStream os = new FileOutputStream(new File(defDir, defStyle));
+//                IOUtils.copy(is, os);
+//                IOUtils.closeQuietly(is, os);
+//                LogHelper.dev("Loaded Default Style: " + defStyle);
+//            }
+//        }
+//        catch (IOException e) {
+//            e.printStackTrace();
+//        }
 
         checkAndReloadDocFiles();
     }
@@ -120,6 +167,7 @@ public class DocumentationManager {
         uriPageMap.clear();
         structureFileMap.clear();
         installedModVersionFileMap.clear();
+        contentRelationsMap.clear();
         LanguageManager.clearTranslations();
 
         File docDir = getDocDirectory();
@@ -183,9 +231,10 @@ public class DocumentationManager {
         loadRootPage();
         LanguageManager.reloadLookupMap();
 
-        GuiProjectIntelligence.requiresReload = true;
-        if (PIHelpers.editor != null) {
-            PIHelpers.editor.reload();
+        GuiProjectIntelligence_old.requiresReload = true;
+        GuiProjectIntelligence.requiresEditReload = true;
+        if (PIGuiHelper.editor != null) {
+            PIGuiHelper.editor.reload();
         }
     }
 
@@ -222,7 +271,7 @@ public class DocumentationManager {
 
                 //Make sure the structure file was valid (If it is not the generate method will return null)
                 if (structurePage == null) {
-                    PIHelpers.displayError("Found invalid doc structure file: " + structureFile + " No modid or lang detected.");
+                    PIGuiHelper.displayError("Found invalid doc structure file: " + structureFile + " No modid or lang detected.");
                     return;
                 }
 
@@ -236,13 +285,13 @@ public class DocumentationManager {
 
                 //Make sure the this structure file is in the correct mod root folder
                 if (!versionFolder.getParentFile().getName().equals(structurePage.getModid())) {
-                    PIHelpers.displayError("Found a mod documentation structure file in the wrong rood mod folder!\n\nThe name of the mod folder must match the mod's mod id!\n\nFound file for modid: " + structurePage.modid + " In folder:" + versionFolder.getParentFile());
+                    PIGuiHelper.displayError("Found a mod documentation structure file in the wrong rood mod folder!\n\nThe name of the mod folder must match the mod's mod id!\n\nFound file for modid: " + structurePage.modid + " In folder:" + versionFolder.getParentFile());
                     return;
                 }
 
                 //Make sure the structure version matches the version folder name. This is important because this is used to find the correct path to the md files
                 if (!versionFolder.getName().equals(structurePage.modVersion)) {
-                    PIHelpers.displayError("Found a mod documentation structure file in the wrong version folder!\n\nThe name of the version folder must match the version!\n\nFound file for version: " + structurePage.modVersion + " In folder:" + versionFolder);
+                    PIGuiHelper.displayError("Found a mod documentation structure file in the wrong version folder!\n\nThe name of the version folder must match the version!\n\nFound file for version: " + structurePage.modVersion + " In folder:" + versionFolder);
                     return;
                 }
 
@@ -253,7 +302,7 @@ public class DocumentationManager {
             }
         }
         catch (Exception e) {
-            PIHelpers.displayError("Error reading mod descriptor file: " + e.getMessage() + "\n\nError occurred while reading file: " + structureFile);
+            PIGuiHelper.displayError("Error reading mod descriptor file: " + e.getMessage() + "\n\nError occurred while reading file: " + structureFile);
             LogHelper.error("Error reading mod descriptor file");
             e.printStackTrace();
         }
@@ -262,11 +311,11 @@ public class DocumentationManager {
 
     public static void saveDocToDisk(ModStructurePage modPage) {
         if (!PIConfig.editMode()) {
-            PIHelpers.displayError("Can not save documentation when not in edit mode!");
+            PIGuiHelper.displayError("Can not save documentation when not in edit mode!");
             return;
         }
         if (!structureFileMap.containsKey(modPage)) {
-            PIHelpers.displayError("Something went wrong... Attempted to save mod descriptor but could not find cached save file");
+            PIGuiHelper.displayError("Something went wrong... Attempted to save mod descriptor but could not find cached save file");
             return;
         }
 
@@ -282,7 +331,7 @@ public class DocumentationManager {
             IOUtils.closeQuietly(writer);
         }
         catch (Exception e) {
-            PIHelpers.displayError("Error saving mod Descriptor " + e.getMessage());
+            PIGuiHelper.displayError("Error saving mod Descriptor " + e.getMessage());
             LogHelper.error("Error saving mod Descriptor");
             e.printStackTrace();
         }
@@ -290,13 +339,13 @@ public class DocumentationManager {
 
     public static void parseFilesInDirectory(File directory, Predicate<File> fileValidator, Consumer<File> fileProcessor) {
         if (!directory.exists() || !directory.isDirectory()) {
-            PIHelpers.displayError("An error occurred while parsing documentation files.\nThe pacified file does not exist or is not a directory: " + directory);
+            PIGuiHelper.displayError("An error occurred while parsing documentation files.\nThe pacified file does not exist or is not a directory: " + directory);
             return;
         }
 
         File[] files = directory.listFiles();
         if (files == null) {
-            PIHelpers.displayError("An error occurred while parsing documentation files.\nAn error occurred while trying to read files ib the following directory: " + directory);
+            PIGuiHelper.displayError("An error occurred while parsing documentation files.\nAn error occurred while trying to read files ib the following directory: " + directory);
             return;
         }
 
@@ -309,7 +358,6 @@ public class DocumentationManager {
 
     //endregion
 
-    //############################################################################
     //# Documentation version handling
     //region //############################################################################
 
@@ -433,7 +481,7 @@ public class DocumentationManager {
 
                 //This should never be null at this point we should have already successfully generated a page using this same file but just in case...
                 if (structurePage == null) {
-                    PIHelpers.displayError("Found invalid mod structure file. No modid or lang detected.");
+                    PIGuiHelper.displayError("Found invalid mod structure file. No modid or lang detected.");
                     return false;
                 }
 
@@ -524,7 +572,6 @@ public class DocumentationManager {
 
     //endregion
 
-    //############################################################################
     //# Misc getters/setters/stuffs
     //region //############################################################################
 
@@ -545,11 +592,12 @@ public class DocumentationManager {
                 return docDirectoryCache;
             }
 
+
             PIConfig.setEditMode(false);
             PIConfig.save();
-            PIHelpers.displayError("Specified editing directory does not exist or is not a directory! Edit mode disabled.");
-            PIHelpers.displayError("Please clone or download the Project Intelligence documentation repo from https://github.com/brandon3055/Project-Intelligence-Docs then specify the location of the ModDocs repo.");
-            PIHelpers.displayError("e.g. C:\\Users\\<your-name>\\Desktop\\Project-Intelligence-Docs\\ModDocs");
+            PIGuiHelper.displayError("Specified editing directory does not exist or is not a directory! Edit mode disabled.");
+            PIGuiHelper.displayError("Please clone or download the Project Intelligence documentation repo from https://github.com/brandon3055/Project-Intelligence-Docs then specify the location of the ModDocs repo.");
+            PIGuiHelper.displayError("e.g. C:\\Users\\<your-name>\\Desktop\\Project-Intelligence-Docs\\ModDocs");
         }
 
         docDirectoryCache = new File(piConfigDirectory, "ModDocs");
@@ -558,6 +606,14 @@ public class DocumentationManager {
         }
 
         return docDirectoryCache;
+    }
+
+    public static File getDlDocDirectory() {
+        File dir = new File(piConfigDirectory, "ModDocs");
+        if (!dir.exists() && !dir.mkdirs()) {
+            LogHelper.bigError("Failed to create document directory! Things are going to break! " + dir);
+        }
+        return dir;
     }
 
     public static File getPackDocDirectory() {
@@ -593,12 +649,17 @@ public class DocumentationManager {
      * @param pageURI The uri of the page to retrieve or null to retrieve the root page.
      * @return the page
      */
+    @Nullable
     public static synchronized DocumentationPage getPage(@Nullable String pageURI) {
         return pageURI == null || pageURI.equals(RootPage.ROOT_URI) ? rootPage : uriPageMap.get(pageURI);
     }
 
     public static Collection<DocumentationPage> getAllPages() {
         return uriPageMap.values();
+    }
+
+    public static Collection<String> getAllPageURIs() {
+        return uriPageMap.keySet();
     }
 
     public static synchronized Map<String, ModStructurePage> getModStructureMap() {
@@ -627,7 +688,76 @@ public class DocumentationManager {
 
     //endregion
 
-    //############################################################################
+    //# Content Relations
+    //region //############################################################################
+
+    public static void clearRelationCache() {
+        contentRelationsMap.clear();
+    }
+
+    private static void checkInitRelationMap() {
+        if (contentRelationsMap.isEmpty()) {
+            for (DocumentationPage page : uriPageMap.values()) {
+                for (ContentRelation relation : page.relations) {
+                    contentRelationsMap.computeIfAbsent(relation.type, type -> new HashMap<>()).put(relation, page);
+                }
+            }
+        }
+    }
+
+    public static List<DocumentationPage> getRelatedPages(ItemStack stack) {
+        checkInitRelationMap();
+        List<DocumentationPage> results = new ArrayList<>();
+
+        Map<ContentRelation, DocumentationPage> candidates = contentRelationsMap.get(STACK);
+        if (candidates != null) {
+            for (ContentRelation relation : candidates.keySet()) {
+                DocumentationPage page = candidates.get(relation);
+                if (relation.isMatch(stack) && !results.contains(page)) {
+                    results.add(page);
+                }
+            }
+        }
+
+        return results;
+    }
+
+    public static List<DocumentationPage> getRelatedPages(Fluid stack) {
+        checkInitRelationMap();
+        List<DocumentationPage> results = new ArrayList<>();
+
+        Map<ContentRelation, DocumentationPage> candidates = contentRelationsMap.get(FLUID);
+        if (candidates != null) {
+            for (ContentRelation relation : candidates.keySet()) {
+                DocumentationPage page = candidates.get(relation);
+                if (relation.isMatch(stack) && !results.contains(page)) {
+                    results.add(page);
+                }
+            }
+        }
+
+        return results;
+    }
+
+    public static List<DocumentationPage> getRelatedPages(String entityRegName) {
+        checkInitRelationMap();
+        List<DocumentationPage> results = new ArrayList<>();
+
+        Map<ContentRelation, DocumentationPage> candidates = contentRelationsMap.get(ENTITY);
+        if (candidates != null) {
+            for (ContentRelation relation : candidates.keySet()) {
+                DocumentationPage page = candidates.get(relation);
+                if (relation.contentString.equals(entityRegName) && !results.contains(page)) {
+                    results.add(page);
+                }
+            }
+        }
+
+        return results;
+    }
+
+    //endregion
+
     //# Add / Remove Doc
     //region //############################################################################
 

@@ -1,11 +1,12 @@
-package com.brandon3055.projectintelligence.docdata;
+package com.brandon3055.projectintelligence.docmanagement;
 
 import com.brandon3055.brandonscore.handlers.FileHandler;
 import com.brandon3055.brandonscore.integration.ModHelperBC;
 import com.brandon3055.brandonscore.lib.FileDownloadManager;
 import com.brandon3055.brandonscore.lib.PairKV;
 import com.brandon3055.brandonscore.utils.Utils;
-import com.brandon3055.projectintelligence.PIHelpers;
+import com.brandon3055.projectintelligence.client.PIGuiHelper;
+import com.brandon3055.projectintelligence.client.gui.PIConfig;
 import com.brandon3055.projectintelligence.utils.LogHelper;
 import com.google.common.hash.Hashing;
 import com.google.gson.JsonArray;
@@ -18,7 +19,7 @@ import java.io.IOException;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-import static com.brandon3055.projectintelligence.docdata.PIUpdateManager.UpdateStage.*;
+import static com.brandon3055.projectintelligence.docmanagement.PIUpdateManager.UpdateStage.*;
 
 /**
  * Created by brandon3055 on 5/27/2018.
@@ -49,19 +50,28 @@ public class PIUpdateManager {
     private static Map<String, String> downloadingVersionMap = new LinkedHashMap<>();
 
     public static void performFullUpdateCheck() {
+        if (PIConfig.editMode()) {
+            LogHelper.warn("Canceling documentation update as edit mode is now enabled!");
+            return;
+        }
+
+        if (!PIConfig.downloadsAllowed) {
+            return;
+        }
+
         updateStage = DL_MASTER_MANIFEST;
         LogHelper.dev("### Performing full update check ###");
         downloadManager.reset();
 
         updaterFolder = new File(DocumentationManager.piConfigDirectory, "DocUpdater");
         if (!updaterFolder.exists() && !updaterFolder.mkdirs()) {
-            PIHelpers.displayError("Failed to create folder - " + updaterFolder + " Doc update check can not be completed!");
+            PIGuiHelper.displayError("Failed to create folder - " + updaterFolder + " Doc update check can not be completed!");
             updateStage = INACTIVE;
             return;
         }
         updaterModsFolder = new File(updaterFolder, "Mods");
         if (!updaterModsFolder.exists() && !updaterModsFolder.mkdirs()) {
-            PIHelpers.displayError("Failed to create folder - " + updaterModsFolder + " Doc update check can not be completed!");
+            PIGuiHelper.displayError("Failed to create folder - " + updaterModsFolder + " Doc update check can not be completed!");
             updateStage = INACTIVE;
             return;
         }
@@ -74,11 +84,15 @@ public class PIUpdateManager {
     }
 
     private static void downloadPerModManifests() {
+        if (PIConfig.editMode()) {
+            LogHelper.warn("Canceling documentation update as edit mode is now enabled!");
+            return;
+        }
         updateStage = DL_MOD_MANIFESTS;
         LogHelper.dev("### Downloading per mod manifests ###");
 
         if (downloadManager.failedFiles.containsValue(modManifest)) {
-            PIHelpers.displayError("Failed to download the PI mod manifest from " + modManifestURL);
+            PIGuiHelper.displayError("Failed to download the PI mod manifest from " + modManifestURL);
             DocumentationManager.loadDocumentationFromDisk();
             updateStage = INACTIVE;
             return;
@@ -93,7 +107,7 @@ public class PIUpdateManager {
         }
         catch (IOException e) {
             e.printStackTrace();
-            PIHelpers.displayError("Failed to read mod manifest! See console for stacktrace.");
+            PIGuiHelper.displayError("Failed to read mod manifest! See console for stacktrace.");
             updateStage = INACTIVE;
             return;
         }
@@ -112,11 +126,15 @@ public class PIUpdateManager {
     }
 
     private static void readPerModManifests() {
+        if (PIConfig.editMode()) {
+            LogHelper.warn("Canceling documentation update as edit mode is now enabled!");
+            return;
+        }
         updateStage = DL_MOD_DOCUMENTATION;
         LogHelper.dev("### Reading per mod manifests ###");
 
         if (downloadManager.failedFiles.size() > 0) {
-            PIHelpers.displayError("Failed to download one or more per-mod manifest files");
+            PIGuiHelper.displayError("Failed to download one or more per-mod manifest files");
         }
 
         downloadManager.reset();
@@ -130,7 +148,7 @@ public class PIUpdateManager {
                 }
                 catch (IOException e) {
                     e.printStackTrace();
-                    PIHelpers.displayError("Failed to read manifest jason for mod " + mod + " See console for stacktrace.");
+                    PIGuiHelper.displayError("Failed to read manifest jason for mod " + mod + " See console for stacktrace.");
                     continue;
                 }
 
@@ -170,7 +188,7 @@ public class PIUpdateManager {
                 }
             }
             catch (Exception e) {
-                PIHelpers.displayError("An error occurred while reading manifest for mod " + mod + " See console for stacktrace.");
+                PIGuiHelper.displayError("An error occurred while reading manifest for mod " + mod + " See console for stacktrace.");
                 e.printStackTrace();
             }
         }
@@ -186,11 +204,15 @@ public class PIUpdateManager {
      * This checks the the existing language files against the cached mod manifest files from the last full update check.
      */
     public static void performLocalUpdateCheck() {
+        if (PIConfig.editMode()) {
+            LogHelper.warn("Canceling documentation update as edit mode is now enabled!");
+            return;
+        }
         updateStage = DL_MOD_DOCUMENTATION;
         LogHelper.dev("### Performing local update check ###");
 
         if (downloadManager.failedFiles.size() > 0) {
-            PIHelpers.displayError("Failed to download one or more mod download manifests");
+            PIGuiHelper.displayError("Failed to download one or more mod download manifests");
         }
 
         downloadManager.reset();
@@ -204,7 +226,7 @@ public class PIUpdateManager {
                 }
                 catch (IOException e) {
                     e.printStackTrace();
-                    PIHelpers.displayError("Failed to read download manifest jason for mod " + mod + " See console for stacktrace.");
+                    PIGuiHelper.displayError("Failed to read download manifest jason for mod " + mod + " See console for stacktrace.");
                     continue;
                 }
 
@@ -213,7 +235,7 @@ public class PIUpdateManager {
 
                 for (JsonElement element : baseFiles) {
                     JsonObject obj = element.getAsJsonObject();
-                    File file = new File(DocumentationManager.getDocDirectory(), mod + "/" + downloadingVersionMap.get(mod) + "/" + obj.get("file_path").getAsString());
+                    File file = new File(DocumentationManager.getDlDocDirectory(), mod + "/" + downloadingVersionMap.get(mod) + "/" + obj.get("file_path").getAsString());
                     String hash = obj.get("sha1").getAsString();
 
                     if (file.exists() && getHash(file).equals(hash)) {
@@ -228,7 +250,7 @@ public class PIUpdateManager {
 
                 for (JsonElement element : langFiles) {
                     JsonObject obj = element.getAsJsonObject();
-                    File file = new File(DocumentationManager.getDocDirectory(), mod + "/" + downloadingVersionMap.get(mod) + "/" + obj.get("file_path").getAsString());
+                    File file = new File(DocumentationManager.getDlDocDirectory(), mod + "/" + downloadingVersionMap.get(mod) + "/" + obj.get("file_path").getAsString());
                     String hash = obj.get("sha1").getAsString();
                     String lang = obj.get("lang").getAsString();
 
@@ -247,7 +269,7 @@ public class PIUpdateManager {
                 }
             }
             catch (Exception e) {
-                PIHelpers.displayError("An error occurred while reading download list for mod " + mod + " See console for stacktrace.");
+                PIGuiHelper.displayError("An error occurred while reading download list for mod " + mod + " See console for stacktrace.");
                 e.printStackTrace();
             }
         }
@@ -259,7 +281,7 @@ public class PIUpdateManager {
         updateStage = RELOAD_DOCUMENTATION;
         LogHelper.dev("### Transferring downloaded files ###");
         if (downloadManager.failedFiles.size() > 0) {
-            PIHelpers.displayError("Failed to download one or more mod page files!");
+            PIGuiHelper.displayError("Failed to download one or more mod page files!");
             tempFileToFileMap.entrySet().removeIf(entry -> downloadManager.failedFiles.containsValue(entry.getKey()));
         }
 
@@ -274,11 +296,11 @@ public class PIUpdateManager {
                     FileUtils.moveFile(tempFile, hashFilePair.getValue());
                 }
                 else {
-                    PIHelpers.displayError("An error occurred while transferring downloaded file. The hash of the downloaded file does not match the expected hash. " + tempFile);
+                    PIGuiHelper.displayError("An error occurred while transferring downloaded file. The hash of the downloaded file does not match the expected hash. " + tempFile);
                 }
             }
             catch (Exception e) {
-                PIHelpers.displayError("An error occurred while transferring downloaded file to final location file: " + tempFile + " -> " + hashFilePair.getValue() + " See console for stacktrace.");
+                PIGuiHelper.displayError("An error occurred while transferring downloaded file to final location file: " + tempFile + " -> " + hashFilePair.getValue() + " See console for stacktrace.");
                 e.printStackTrace();
             }
         }

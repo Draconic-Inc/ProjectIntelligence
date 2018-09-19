@@ -1,9 +1,8 @@
 package com.brandon3055.projectintelligence.client.gui;
 
 import com.brandon3055.brandonscore.handlers.FileHandler;
-import com.brandon3055.projectintelligence.PIHelpers;
+import com.brandon3055.projectintelligence.client.PIGuiHelper;
 import com.brandon3055.projectintelligence.client.gui.guielements.GuiPartMenu;
-import com.brandon3055.projectintelligence.client.gui.guielements.GuiPartPageList.SearchMode;
 import com.brandon3055.projectintelligence.utils.LogHelper;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -36,10 +35,15 @@ public class PIConfig {
     public static int screenPosX = 0;
     public static int screenPosY = 0;
 
+    //Misc config
+    public static boolean etCheckFluid = true;
+
     //editor Config
     public static volatile boolean editorAlwaysOnTop = false;
     public static volatile boolean editorLineWrap = false;
     public static Map<String, String> modVersionOverrides = new HashMap<>();
+    public static int maxTabs = 16;
+    public static volatile String editorLAF = "";
 
     //language
     public static String userLanguage = "[MINECRAFT-LANG]";
@@ -48,6 +52,11 @@ public class PIConfig {
 
     //Search Config
     public static SearchMode searchMode = SearchMode.EVERYWHERE;
+
+    public static boolean tutorialDisplayed = false;
+    public static boolean downloadsAllowed = false;
+    public static boolean showTutorialLater = false;
+
 
     public static String homePage = "";
 
@@ -64,10 +73,15 @@ public class PIConfig {
     public static synchronized void save() {
         JsonObject jObj = new JsonObject();
 
+        jObj.addProperty("downloadsAllowed", downloadsAllowed);
+        jObj.addProperty("tutorialDisplayed", tutorialDisplayed);
         jObj.addProperty("editMode", editMode);
+        jObj.addProperty("etCheckFluid", etCheckFluid);
         jObj.addProperty("editingRepoLoc", editingRepoLoc);
         jObj.addProperty("editorAlwaysOnTop", editorAlwaysOnTop);
         jObj.addProperty("editorLineWrap", editorLineWrap);
+        jObj.addProperty("maxTabs", maxTabs);
+        jObj.addProperty("editorLAF", editorLAF);
 
         jObj.addProperty("screenMode", screenMode);
         jObj.addProperty("screenPosOverride", screenPosOverride);
@@ -101,7 +115,7 @@ public class PIConfig {
             IOUtils.closeQuietly(writer);
         }
         catch (Exception e) {
-            PIHelpers.displayError("Error saving gui config: " + e.getMessage());
+            PIGuiHelper.displayError("Error saving gui config: " + e.getMessage());
             LogHelper.error("Error saving gui config");
             e.printStackTrace();
         }
@@ -117,23 +131,28 @@ public class PIConfig {
             JsonElement element = parser.parse(reader);
             IOUtils.closeQuietly(reader);
             if (!element.isJsonObject()) {
-                PIHelpers.displayError("Failed to load gui config. Detected invalid config file.");
+                PIGuiHelper.displayError("Failed to load gui config. Detected invalid config file.");
                 return;
             }
             jObj = element.getAsJsonObject();
         }
         catch (Exception e) {
-            PIHelpers.displayError("Error loading gui config: " + e.getMessage());
+            PIGuiHelper.displayError("Error loading gui config: " + e.getMessage());
             LogHelper.error("Error loading gui config");
             e.printStackTrace();
             return;
         }
         //endregion
 
+        downloadsAllowed = JsonUtils.getBoolean(jObj, "downloadsAllowed", false);
+        tutorialDisplayed = JsonUtils.getBoolean(jObj, "tutorialDisplayed", false);
         editMode = JsonUtils.getBoolean(jObj, "editMode", false);
+        etCheckFluid = JsonUtils.getBoolean(jObj, "etCheckFluid", true);
         editingRepoLoc = JsonUtils.getString(jObj, "editingRepoLoc", "");
         editorAlwaysOnTop = JsonUtils.getBoolean(jObj, "editorAlwaysOnTop", false);
         editorLineWrap = JsonUtils.getBoolean(jObj, "editorLineWrap", true);
+        maxTabs = JsonUtils.getInt(jObj, "maxTabs", 16);
+        editorLAF = JsonUtils.getString(jObj, "editorLAF", "");
 
         screenMode = JsonUtils.getInt(jObj, "screenMode", screenMode);
         screenPosOverride = JsonUtils.getBoolean(jObj, "screenPosOverride", false);
@@ -174,7 +193,7 @@ public class PIConfig {
     public static void setHomePage(String homePage) {
         PIConfig.homePage = homePage;
         save();
-        GuiProjectIntelligence.requiresReload = true;
+        GuiProjectIntelligence_old.requiresReload = true;
     }
 
     public static void setEditMode(boolean editMode) {
@@ -190,13 +209,16 @@ public class PIConfig {
         return editMode;
     }
 
-    //Windows
-    public static volatile int NAV_WINDOW = 0xFF3c3f41;
-    public static volatile int CONTENT_WINDOW = 0xFF3c3f41;
-    public static volatile int MENU_BAR = 0xFF3c3f41;
-
-    //Text
-    public static volatile int NAV_TEXT = 0x00FFFF;
-    public static volatile int TEXT_COLOUR = 0x8c8c8c;
     //endregion
+
+    public enum SearchMode {
+        EVERYWHERE,
+        SELECTED_MOD,
+        PAGE_SUB_PAGES,
+        PAGE_ONLY;
+
+        public String getUnlocalizedName() {
+            return "pi.search.mode." + name().toLowerCase();
+        }
+    }
 }

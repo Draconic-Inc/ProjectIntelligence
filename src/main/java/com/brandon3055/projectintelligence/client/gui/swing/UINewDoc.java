@@ -6,7 +6,7 @@
 package com.brandon3055.projectintelligence.client.gui.swing;
 
 import com.brandon3055.brandonscore.handlers.FileHandler;
-import com.brandon3055.projectintelligence.PIHelpers;
+import com.brandon3055.projectintelligence.client.PIGuiHelper;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -164,7 +164,7 @@ public class UINewDoc extends javax.swing.JDialog {
     private void addAction(ActionEvent evt) {
         String error = null;
 
-        if (PIHelpers.getSupportedMods().contains(getDocID())) {
+        if (PIGuiHelper.getSupportedMods().contains(getDocID())) {
             error = "Mod already exists! Please update existing documentation for this mod instead.\n" +
                     "If you need to make major changes to a new version of the mod then simply create\n" +
                     "a new version of the documentation. See version help on the Mod tab for more info.";

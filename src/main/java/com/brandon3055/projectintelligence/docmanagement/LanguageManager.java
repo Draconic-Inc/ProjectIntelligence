@@ -1,6 +1,6 @@
-package com.brandon3055.projectintelligence.docdata;
+package com.brandon3055.projectintelligence.docmanagement;
 
-import com.brandon3055.projectintelligence.PIHelpers;
+import com.brandon3055.projectintelligence.client.PIGuiHelper;
 import com.brandon3055.projectintelligence.client.gui.PIConfig;
 import com.brandon3055.projectintelligence.utils.LogHelper;
 import com.google.gson.JsonArray;
@@ -99,7 +99,7 @@ public class LanguageManager {
         File[] files;
 
         if ((files = langFolder.listFiles((dir, name) -> dir.isDirectory())) == null) {
-            PIHelpers.displayError("Error loading documentation localization for mod: " + modid + ", No localization files found!");
+            PIGuiHelper.displayError("Error loading documentation localization for mod: " + modid + ", No localization files found!");
             return;
         }
 
@@ -108,7 +108,7 @@ public class LanguageManager {
             String lang = langFile.getName().replace(".json", "");
             if (langFile.getName().endsWith(".json") && ALL_LANGUAGES.contains(lang)) {
                 if (!langFile.exists()) {
-                    PIHelpers.displayError("En error occurred while loading localization for mod with id \"" + modid + "\" Found language folder but no lang file for language: " + LANG_NAME_MAP.get(lang));
+                    PIGuiHelper.displayError("En error occurred while loading localization for mod with id \"" + modid + "\" Found language folder but no lang file for language: " + LANG_NAME_MAP.get(lang));
                     continue;
                 }
                 loadLangFile(modid, langFile, lang);
@@ -127,14 +127,14 @@ public class LanguageManager {
             JsonElement element = parser.parse(reader);
             IOUtils.closeQuietly(reader);
             if (!element.isJsonArray()) {
-                PIHelpers.displayError("Failed to load lang file. Detected invalid json file: " + langFile);
+                PIGuiHelper.displayError("Failed to load lang file. Detected invalid json file: " + langFile);
                 return;
             }
             translations = element.getAsJsonArray();
         }
         catch (Exception e) {
-            PIHelpers.displayError("Error loading lang file: " + e.getMessage());
-            PIHelpers.displayError("File: " + langFile);
+            PIGuiHelper.displayError("Error loading lang file: " + e.getMessage());
+            PIGuiHelper.displayError("File: " + langFile);
             LogHelper.error("Error loading lang file: " + langFile);
             e.printStackTrace();
             return;
@@ -163,7 +163,7 @@ public class LanguageManager {
         ModStructurePage modPage = DocumentationManager.getModPage(modid);
         File langFolder = new File(modPage.getStructureDir(), "lang");
         if ((!langFolder.exists() && !langFolder.mkdirs()) || !langFolder.isDirectory()) {
-            PIHelpers.displayError("En error occurred while saving localization file for mod with id \"" + modid + "The lang folder could not be created or is invalid: " + langFolder);
+            PIGuiHelper.displayError("En error occurred while saving localization file for mod with id \"" + modid + "The lang folder could not be created or is invalid: " + langFolder);
             return;
         }
 
@@ -191,8 +191,8 @@ public class LanguageManager {
             IOUtils.closeQuietly(writer);
         }
         catch (Exception e) {
-            PIHelpers.displayError("Error saving lang file: " + e.getMessage());
-            PIHelpers.displayError("File: " + langFile);
+            PIGuiHelper.displayError("Error saving lang file: " + e.getMessage());
+            PIGuiHelper.displayError("File: " + langFile);
             LogHelper.error("Error saving lang file: " + langFile);
             e.printStackTrace();
         }

@@ -52,4 +52,54 @@ public class StyledGuiRect extends MGuiElementBase<StyledGuiRect> {
 
         super.renderElement(minecraft, mouseX, mouseY, partialTicks);
     }
+//
+//    //Version 2 styled rectangle. //TODO replace and remove V1 with V2
+//    public static class V2 extends MGuiElementBase<V2> {
+//
+//        private PropertyGroup props;
+//        private Supplier<Boolean> hoverStateSupplier = null;
+//
+//        public V2(PropertyGroup props) {
+//            this.props = props;
+//        }
+//
+//        public V2(PropertyGroup props, Supplier<Boolean> hoverStateSupplier) {
+//            this.props = props;
+//            this.hoverStateSupplier = hoverStateSupplier;
+//        }
+//
+//        @Override
+//        public void renderElement(Minecraft minecraft, int mouseX, int mouseY, float partialTicks) {
+//            boolean thickBorders = props.hasPropThickBorders() && props.thickBorders();
+//            boolean mouseOver = isMouseOver(mouseX, mouseY) || (hoverStateSupplier != null && hoverStateSupplier.get());
+//            int border = props.hasPropBorderHover() && mouseOver ? props.borderHover() : props.border();
+//
+//            if (props.hasPropVanillaTex() && props.vanillaTex()) {
+//                if (props.hasPropColourHover() && mouseOver) {
+//                    props.glColourHover();
+//                }
+//                else {
+//                    props.glColour();
+//                }
+//                ResourceHelperBC.bindTexture(PITextures.VANILLA_GUI);
+//                drawTiledTextureRectWithTrim(xPos(), yPos(), xSize(), ySize(), 4, 4, 4, 4, 0, thickBorders ? 0 : 128, 256, 128);
+//                GlStateManager.color(1, 1, 1, 1);
+//                drawBorderedRect(xPos(), yPos(), xSize(), ySize(), 1, 0, border);
+//            }
+//            else {
+//                int fill = props.hasPropColourHover() && mouseOver ? props.colourHover() : props.colour();
+//                if (props.hasPropShadeBorders() && props.shadeBorders()) {
+//                    int light = changeShade(border, 0.2);
+//                    int dark = changeShade(border, -0.2);
+//                    boolean invertShade = props.hasPropInvertShade() && props.invertShade();
+//                    drawShadedRect(xPos(), yPos(), xSize(), ySize(), thickBorders ? 2 : 1, fill, invertShade ? dark : light, invertShade ? light : dark, border);
+//                }
+//                else {
+//                    drawBorderedRect(xPos(), yPos(), xSize(), ySize(), thickBorders ? 2 : 1, fill, border);
+//                }
+//            }
+//
+//            super.renderElement(minecraft, mouseX, mouseY, partialTicks);
+//        }
+//    }
 }

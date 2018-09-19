@@ -2,6 +2,7 @@ package com.brandon3055.projectintelligence.client.gui.guielements;
 
 import codechicken.lib.colour.Colour;
 import codechicken.lib.math.MathHelper;
+import com.brandon3055.brandonscore.client.ResourceHelperBC;
 import com.brandon3055.brandonscore.client.gui.modulargui.MGuiElementBase;
 import com.brandon3055.brandonscore.client.gui.modulargui.baseelements.GuiButton;
 import com.brandon3055.brandonscore.client.gui.modulargui.baseelements.GuiPopUpDialogBase;
@@ -10,23 +11,23 @@ import com.brandon3055.brandonscore.client.gui.modulargui.baseelements.GuiSlideC
 import com.brandon3055.brandonscore.client.gui.modulargui.guielements.GuiTextField;
 import com.brandon3055.brandonscore.client.gui.modulargui.guielements.GuiTexture;
 import com.brandon3055.brandonscore.utils.DataUtils;
-import com.brandon3055.projectintelligence.client.DisplayController;
 import com.brandon3055.projectintelligence.client.PITextures;
 import com.brandon3055.projectintelligence.client.StyleHandler;
-import com.brandon3055.projectintelligence.client.StyleHandler.PropertyGroup;
+import com.brandon3055.projectintelligence.client.StyleHandler.*;
+import com.brandon3055.projectintelligence.client.gui.GuiProjectIntelligence_old;
 import com.brandon3055.projectintelligence.client.gui.PIConfig;
-import com.brandon3055.projectintelligence.client.gui.PIConfig.SearchMode;
-import com.brandon3055.projectintelligence.client.gui.PIGuiContainer;
-import com.brandon3055.projectintelligence.client.gui.PIPartRenderer;
+import com.brandon3055.projectintelligence.client.gui.TabManager;
 import com.brandon3055.projectintelligence.docmanagement.ContentRelation;
 import com.brandon3055.projectintelligence.docmanagement.DocumentationManager;
 import com.brandon3055.projectintelligence.docmanagement.DocumentationPage;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.resources.I18n;
 
-import javax.annotation.Nullable;
 import java.io.IOException;
-import java.util.*;
+import java.util.Comparator;
+import java.util.LinkedList;
+import java.util.List;
 
 import static com.brandon3055.brandonscore.client.gui.modulargui.baseelements.GuiScrollElement.ListMode.VERT_LOCK_POS;
 import static com.brandon3055.brandonscore.client.gui.modulargui.baseelements.GuiSlideControl.SliderRotation.VERTICAL;
@@ -37,26 +38,8 @@ import static com.brandon3055.brandonscore.client.gui.modulargui.lib.GuiAlign.Te
 /**
  * Created by brandon3055 on 10/07/2017.
  */
-public class GuiPartPageList extends MGuiElementBase<GuiPartPageList> {
-    public static PropertyGroup dirPathProps = new PropertyGroup("page_list.dir_path");
-    public static PropertyGroup dirButtonProps = new PropertyGroup("page_list.dir_path.dir_buttons");
-    public static PropertyGroup headerProps = new PropertyGroup("page_list.header");
-    public static PropertyGroup bodyProps = new PropertyGroup("page_list.body");
-    public static PropertyGroup footerProps = new PropertyGroup("page_list.footer");
-    public static PropertyGroup searchBoxProps = new PropertyGroup("page_list.search");
-    public static PropertyGroup searchSettingsProps = new PropertyGroup("page_list.search.settings_button");
-    public static PropertyGroup scrollProps = new PropertyGroup("page_list.scroll_bar");
-    public static PropertyGroup scrollSliderProps = new PropertyGroup("page_list.scroll_bar.scroll_slider");
-
-    public PIPartRenderer headerRender = new PIPartRenderer(headerProps).setSideTrims(true, true, false, true);
-    public PIPartRenderer dirPathRender = new PIPartRenderer(dirPathProps).setSideTrims(true, true, false, true);
-    public PIPartRenderer dirButtonRender = new PIPartRenderer(dirButtonProps);
-    public PIPartRenderer bodyRender = new PIPartRenderer(bodyProps).setSideTrims(true, false, false, true);
-    public PIPartRenderer footerRender = new PIPartRenderer(footerProps);
-    public PIPartRenderer scrollRenderer = new PIPartRenderer(scrollProps);
-    public PIPartRenderer scrollSlideRenderer = new PIPartRenderer(scrollSliderProps);
-
-    public final int HIDDEN_X_SIZE = 12;
+public class GuiPartPageList_old extends MGuiElementBase<GuiPartPageList_old> {
+    private final int HIDDEN_X_SIZE = 12;
 
     /**
      * Nav Bar Y Size
@@ -75,32 +58,27 @@ public class GuiPartPageList extends MGuiElementBase<GuiPartPageList> {
      */
     private final int FOOTER_SIZE = 16;
 
-    private DisplayController controller;
-    public boolean extended = true;
+    private int extendedXSize = 150;
+    private boolean extended = true;
     private GuiSlideControl scrollBar;
-    public GuiScrollElement scrollElement;
+    private GuiScrollElement scrollElement;
     private List<GuiButton> navButtons = new LinkedList<>();
-    private PIGuiContainer container;
+    private GuiProjectIntelligence_old mainWindow;
     private String buttonController = "";
-    public GuiTextField searchBox;
-    public GuiButton backButton;
-    public GuiButton forwardButton;
-    public GuiButton toggleView;
-    public GuiButton searchSettings;
+    private GuiTextField searchBox;
+    private GuiButton backButton;
+    private GuiButton forwardButton;
     private String currentPage = "";
 
-    public GuiPartPageList(PIGuiContainer container, DisplayController controller) {
-        this.container = container;
-        this.controller = controller;
-        controller.addChangeListener(this, this::reloadElement);
+    public GuiPartPageList_old(GuiProjectIntelligence_old mainWindow) {
+        this.mainWindow = mainWindow;
     }
 
     @Override
     public void addChildElements() {
         super.addChildElements();
 
-
-        toggleView = new GuiButton().setSize(10, 10).setHoverText(I18n.format("pi.button.toggle_nav_window.info"));
+        GuiButton toggleView = new GuiButton().setSize(10, 10).setHoverText(I18n.format("pi.button.toggle_nav_window.info"));
         GuiTexture tex = new GuiTexture(0, 16, 6, 7, PITextures.PI_PARTS);
         tex.setPreDrawCallback((minecraft, mouseX, mouseY, partialTicks, mouseOver) -> StyleHandler.getColour("page_list.hide_button." + (toggleView.isMouseOver(mouseX, mouseY) ? "hover" : "colour")).glColour());
         tex.setPostDrawCallback(IDrawCallback::resetColour);
@@ -113,7 +91,7 @@ public class GuiPartPageList extends MGuiElementBase<GuiPartPageList> {
         addChild(toggleView);
 
         backButton = new GuiButton().setSize(10, 12).setHoverText(I18n.format("pi.button.go_back"));
-        tex = new GuiTexture(17, 24, 6, 8, PITextures.PI_PARTS);
+        tex = new GuiTexture(0, 34, 7, 10, PITextures.PI_PARTS);
         tex.setPreDrawCallback((minecraft, mouseX, mouseY, partialTicks, mouseOver) -> {
             Colour c = StyleHandler.getColour("page_list.hide_button." + (backButton.isMouseOver(mouseX, mouseY) && !backButton.isDisabled() ? "hover" : "colour"));
             if (backButton.isDisabled()) {
@@ -122,19 +100,20 @@ public class GuiPartPageList extends MGuiElementBase<GuiPartPageList> {
             c.glColour();
         });
         tex.setPostDrawCallback(IDrawCallback::resetColour);
+        tex.setTexSizeOverride(8, 12);
         backButton.addChild(tex);
         backButton.addAndFireReloadCallback(guiButton -> guiButton.setYPos(yPos() + (NAV_BAR_SIZE - backButton.ySize()) / 2));
-        tex.setXPosMod(() -> maxXPos() - extendedXSize() + 6).translate(0, 2);
-        backButton.setXPosMod(() -> maxXPos() - extendedXSize() + 4);
+        tex.setXPosMod(() -> maxXPos() - extendedXSize + 5).translate(0, 1);
+        backButton.setXPosMod(() -> maxXPos() - extendedXSize + 4);
         addChild(backButton);
         backButton.setListener(() -> {
-            controller.goBack();
+            TabManager.goBack();
             reloadPageButtons(true);
         });
-        backButton.setEnabledCallback(() -> xSize() == extendedXSize());
+        backButton.setEnabledCallback(() -> xSize() == extendedXSize);
 
         forwardButton = new GuiButton().setSize(10, 12).setHoverText(I18n.format("pi.button.go_forward"));
-        tex = new GuiTexture(25, 24, 6, 8, PITextures.PI_PARTS);
+        tex = new GuiTexture(8, 34, 7, 10, PITextures.PI_PARTS);
         tex.setPreDrawCallback((minecraft, mouseX, mouseY, partialTicks, mouseOver) -> {
             Colour c = StyleHandler.getColour("page_list.hide_button." + (forwardButton.isMouseOver(mouseX, mouseY) && !forwardButton.isDisabled() ? "hover" : "colour"));
             if (forwardButton.isDisabled()) {
@@ -143,24 +122,35 @@ public class GuiPartPageList extends MGuiElementBase<GuiPartPageList> {
             c.glColour();
         });
         tex.setPostDrawCallback(IDrawCallback::resetColour);
+        tex.setTexSizeOverride(8, 12);
         forwardButton.addChild(tex);
         forwardButton.addAndFireReloadCallback(guiButton -> guiButton.setYPos(yPos() + (NAV_BAR_SIZE - forwardButton.ySize()) / 2));
-        tex.setXPosMod(() -> maxXPos() - extendedXSize() + 10 + 6).translate(0, 2);
-        forwardButton.setXPosMod(() -> maxXPos() - extendedXSize() + 10 + 4);
+        tex.setXPosMod(() -> maxXPos() - extendedXSize + 10 + 6).translate(0, 1);
+        forwardButton.setXPosMod(() -> maxXPos() - extendedXSize + 10 + 4);
         addChild(forwardButton);
         forwardButton.setListener(() -> {
-            controller.goForward();
+            TabManager.goForward();
             reloadPageButtons(true);
         });
-        forwardButton.setEnabledCallback(() -> xSize() == extendedXSize());
+        forwardButton.setEnabledCallback(() -> xSize() == extendedXSize);
 
         scrollBar = new GuiSlideControl(VERTICAL);
-        scrollBar.setXPosMod((guiSlideControl, integer) -> maxXPos() - scrollBar.xSize() - 2);
-        scrollBar.setYPosMod((guiSlideControl, integer) -> yPos() + NAV_BAR_SIZE + TITLE_BAR_SIZE + 2);
-        scrollBar.setXSize(8);
+        scrollBar.setXPosMod((guiSlideControl, integer) -> maxXPos() - (scrollBar.xSize() + (scrollBar.xSize() == 4 ? 2 : 2)));
+        scrollBar.setYPosMod((guiSlideControl, integer) -> yPos() + NAV_BAR_SIZE + TITLE_BAR_SIZE);
+        scrollBar.setSize(10, ySize() - (NAV_BAR_SIZE + TITLE_BAR_SIZE + FOOTER_SIZE));
 
-        scrollBar.setBackgroundElement(scrollRenderer.asElement().setHoverStateSupplier(() -> scrollBar.isDragging()));
-        scrollBar.setSliderElement(scrollSlideRenderer.asElement().setHoverStateSupplier(() -> scrollBar.isDragging()));
+        scrollBar.setBackgroundElement(new StyledGuiRect("page_list.scroll_bar") {
+            @Override
+            public boolean isMouseOver(int mouseX, int mouseY) {
+                return super.isMouseOver(mouseX, mouseY) || scrollBar.isDragging();
+            }
+        });
+        scrollBar.setSliderElement(new StyledGuiRect("page_list.scroll_bar.scroll_slider") {
+            @Override
+            public boolean isMouseOver(int mouseX, int mouseY) {
+                return super.isMouseOver(mouseX, mouseY) || scrollBar.isDragging();
+            }
+        });
         scrollBar.getBackgroundElement().setXPosMod((o, integer) -> scrollBar.xPos()).setYPosMod((o, integer) -> scrollBar.yPos());
         scrollBar.getSliderElement().setXPosMod((o, integer) -> scrollBar.getInsetRect().x);
         scrollBar.setEnabledCallback(() -> extended);
@@ -173,6 +163,8 @@ public class GuiPartPageList extends MGuiElementBase<GuiPartPageList> {
         scrollElement.setAllowedScrollAxes(true, false);
         addChild(scrollElement);
 
+        scrollElement.getVerticalScrollBar().setXSize(10).updateElements();
+
         addSearchBox();
     }
 
@@ -180,37 +172,34 @@ public class GuiPartPageList extends MGuiElementBase<GuiPartPageList> {
         int settingsSize = FOOTER_SIZE - 4;
 
         searchBox = new GuiTextField();
-        searchBox.setXPosMod(() -> maxXPos() - extendedXSize() + 2);
+        searchBox.setXPosMod(() -> maxXPos() - extendedXSize + 2);
         searchBox.addAndFireReloadCallback(field -> {
-            field.setSize(extendedXSize() - settingsSize - 5, FOOTER_SIZE - 4);
+            field.setSize(extendedXSize - settingsSize - 5, FOOTER_SIZE - 4);
             field.setYPos(maxYPos() - FOOTER_SIZE + 2);
         });
         searchBox.setChangeListener(() -> reloadPageButtons(false));
         searchBox.setFocusListener(focused -> {
-            if (focused) {
-                resetCustomFilter();
-                reloadPageButtons(false);
-            }
+            if (focused) reloadPageButtons(false);
         });
-        searchBox.setEnabledCallback(() -> xSize() == extendedXSize());
+        searchBox.setEnabledCallback(() -> xSize() == extendedXSize);
 
-        searchSettings = new GuiButton().setSize(settingsSize, settingsSize).setHoverText(I18n.format("pi.button.search_settings"));
+        GuiButton searchSettings = new GuiButton().setSize(16, 16).setHoverText(I18n.format("pi.button.search_settings"));
         GuiTexture settingsTex = new GuiTexture(16, 0, settingsSize, settingsSize, PITextures.PI_PARTS);
         settingsTex.setXPosMod(() -> searchBox.maxXPos() + 1);
         settingsTex.setTexSizeOverride(16, 16);
-        settingsTex.setPreDrawCallback((minecraft, mouseX, mouseY, partialTicks, mouseOver) -> searchSettingsProps.glColour(mouseOver));
+        settingsTex.setPreDrawCallback((minecraft, mouseX, mouseY, partialTicks, mouseOver) -> StyleHandler.getColour("page_list.search.settings_button." + (mouseOver ? "hover" : "colour")).glColour());
         settingsTex.setPostDrawCallback(IDrawCallback::resetColour);
         searchSettings.addChild(settingsTex);
         searchSettings.setXPosMod(() -> searchBox.maxXPos() + 2);
         searchSettings.addAndFireReloadCallback(guiButton -> guiButton.setYPos(searchBox.yPos()));
         searchSettings.setListener(() -> {
             GuiPopUpDialogBase dialog = new GuiPopUpDialogBase(this);
-            dialog.setSize(searchBox.xSize(), (SearchMode.values().length * 13) + 5);
+            dialog.setSize(searchBox.xSize(), (PIConfig.SearchMode.values().length * 13) + 5);
             dialog.addChild(new StyledGuiRect("user_dialogs").setPosAndSize(dialog));
             dialog.setPos(searchBox.xPos(), searchBox.yPos() - dialog.ySize());
 
             int y = dialog.yPos() + 3;
-            for (SearchMode mode : SearchMode.values()) {
+            for (PIConfig.SearchMode mode : PIConfig.SearchMode.values()) {
                 StyledGuiButton button = new StyledGuiButton("user_dialogs.button_style");
                 button.setTrim(false);
                 button.setText(I18n.format(mode.getUnlocalizedName()));
@@ -223,13 +212,13 @@ public class GuiPartPageList extends MGuiElementBase<GuiPartPageList> {
 
             dialog.show();
         });
-        searchSettings.setEnabledCallback(() -> xSize() == extendedXSize());
+        searchSettings.setEnabledCallback(() -> xSize() == extendedXSize);
+        addChild(searchSettings);
 
         addChild(searchBox);
-        addChild(searchSettings);
     }
 
-    private void changeSearchMode(SearchMode mode) {
+    private void changeSearchMode(PIConfig.SearchMode mode) {
         PIConfig.searchMode = mode;
         PIConfig.save();
         reloadPageButtons(false);
@@ -237,19 +226,21 @@ public class GuiPartPageList extends MGuiElementBase<GuiPartPageList> {
 
     @Override
     public void reloadElement() {
-        String newController = controller.getButtonController();
+        String newController = TabManager.getButtonController();
         double pos = scrollBar.getRawPos();
 
-        setXSize(extended ? extendedXSize() : HIDDEN_X_SIZE);
+        extendedXSize = Math.min(150, mainWindow.xSize() / 3);
+        setXSize(extended ? extendedXSize : HIDDEN_X_SIZE);
 
-        scrollBar.setYSize(ySize() - NAV_BAR_SIZE - TITLE_BAR_SIZE - FOOTER_SIZE - 3);
-        scrollBar.getBackgroundElement().setSize(scrollBar);
+        scrollBar.setYSize(ySize() - (NAV_BAR_SIZE + TITLE_BAR_SIZE + FOOTER_SIZE));
+        scrollBar.getBackgroundElement().setSize(10, ySize() - (NAV_BAR_SIZE + TITLE_BAR_SIZE + FOOTER_SIZE));
 
-        scrollElement.setPos(xPos() + DIR_BAR_SIZE, yPos() + TITLE_BAR_SIZE + NAV_BAR_SIZE + 2);
-        scrollElement.setSize(xSize() - 12, ySize() - TITLE_BAR_SIZE - NAV_BAR_SIZE - FOOTER_SIZE - 3);
+        scrollElement.setPos(xPos() + DIR_BAR_SIZE, yPos() + TITLE_BAR_SIZE + NAV_BAR_SIZE + 1);
+        scrollElement.setSize(xSize() - 12, ySize() - TITLE_BAR_SIZE - NAV_BAR_SIZE - FOOTER_SIZE - 2);
         scrollElement.setListSpacing(1);
 
         reloadPageButtons(true);
+//        updateStyles();
 
         super.reloadElement();
         if (buttonController.equals(newController)) {
@@ -258,35 +249,16 @@ public class GuiPartPageList extends MGuiElementBase<GuiPartPageList> {
         buttonController = newController;
     }
 
-    public void setPageFilter(List<String> pageURIs) {
-        reloadPageButtons(true, pageURIs);
-    }
-
     private void reloadPageButtons(boolean updateNav) {
-        if (searchBox.getText().equals("[Custom Filter]")) return;
-        reloadPageButtons(updateNav, null);
-    }
-
-    private void reloadPageButtons(boolean updateNav, @Nullable List<String> pageOverride) {
         scrollElement.clearElements();
-        List<DocumentationPage> pages;
+        LinkedList<DocumentationPage> pages;
         String search = searchBox.getText().toLowerCase();
 
-        if (pageOverride != null) {
-            pages = new ArrayList<>();
-            for (String page : pageOverride) {
-                DocumentationPage docPage = DocumentationManager.getPage(page);
-                if (page != null) {
-                    pages.add(docPage);
-                }
-            }
-            searchBox.setText("[Custom Filter]");
-        }
-        else if (!search.isEmpty() && !updateNav) {
+        if (!search.isEmpty() && !updateNav) {
             pages = searchPages(search, PIConfig.searchMode);
         }
         else {
-            pages = controller.getSubPages();
+            pages = TabManager.getSubPages();
         }
 
         pages.sort(Comparator.comparingInt(page -> (page.treeDepth * 5000) + page.getSortingWeight()));
@@ -297,10 +269,10 @@ public class GuiPartPageList extends MGuiElementBase<GuiPartPageList> {
         }
     }
 
-    private LinkedList<DocumentationPage> searchPages(String search, SearchMode mode) {
+    private LinkedList<DocumentationPage> searchPages(String search, PIConfig.SearchMode mode) {
         LinkedList<DocumentationPage> candidates = new LinkedList<>();
         LinkedList<DocumentationPage> results = new LinkedList<>();
-        DocumentationPage activePage = controller.getActiveTab().getDocPage();
+        DocumentationPage activePage = TabManager.getActiveTab().getDocPage();
 
         switch (mode) {
             case EVERYWHERE:
@@ -347,10 +319,9 @@ public class GuiPartPageList extends MGuiElementBase<GuiPartPageList> {
         return false;
     }
 
-    private void addPageButtons(List<DocumentationPage> buttons) {
+    private void addPageButtons(LinkedList<DocumentationPage> buttons) {
         for (DocumentationPage page : buttons) {
-            if (page.isHidden() && !PIConfig.editMode()) continue;
-            PageButton button = new PageButton(page, controller);
+            PageButton_old button = new PageButton_old(page);
             button.setXSize(scrollElement.xSize() - (scrollBar.xSize() + 4));
             button.setXPosMod((guiButton, integer) -> scrollElement.maxXPos() - guiButton.xSize() - (scrollBar.xSize() + 3));
             scrollElement.addElement(button);
@@ -359,16 +330,37 @@ public class GuiPartPageList extends MGuiElementBase<GuiPartPageList> {
 
     @Override
     public boolean onUpdate() {
-        int targetSize = extended ? extendedXSize() : HIDDEN_X_SIZE;
+        int targetSize = extended ? extendedXSize : HIDDEN_X_SIZE;
         int moveSpeed = 30;
 
         if (xSize() != targetSize) {
             addToXSize(MathHelper.clip(targetSize - xSize(), -moveSpeed, moveSpeed));
-            container.pageListMotionUpdate();
+            if (xSize() == targetSize) {
+                mainWindow.contentWindow.reloadElement();
+            }
+        }
+
+        if (StyleHandler.getBoolean("page_list.scroll_bar." + StyleType.COMPACT_BAR.getName())) {
+            if (scrollBar.xSize() != 4) {
+                scrollBar.setXSize(4);
+                scrollBar.getBackgroundElement().setXSize(4);
+                scrollBar.getSliderElement().setXSize(4);
+                scrollBar.setInsets(1, 0, 1, 0);
+                scrollElement.reloadElement();
+                reloadPageButtons(false);
+            }
+        }
+        else if (scrollBar.xSize() != 10) {
+            scrollBar.setXSize(10);
+            scrollBar.getBackgroundElement().setXSize(10);
+            scrollBar.getSliderElement().setXSize(8);
+            scrollBar.setInsets(1, 1, 1, 1);
+            scrollElement.reloadElement();
+            reloadPageButtons(false);
         }
 
         //Need to detect when the active page is changes externally e.g. via the API
-        String openPage = controller.getActiveTab().pageURI;
+        String openPage = TabManager.getActiveTab().pageURI;
         if (!currentPage.equals(openPage)) {
             currentPage = openPage;
             reloadPageButtons(true);
@@ -382,11 +374,11 @@ public class GuiPartPageList extends MGuiElementBase<GuiPartPageList> {
     }
 
     public void updateNavButtons() {
-        DisplayController.TabData activeTab = controller.getActiveTab();
+        TabManager.TabData activeTab = TabManager.getActiveTab();
         backButton.setDisabled(!activeTab.canGoBack());
         forwardButton.setDisabled(!activeTab.canGoForward());
 
-        DocumentationPage page = controller.getActiveTab().getDocPage();
+        DocumentationPage page = TabManager.getActiveTab().getDocPage();
         currentPage = page.getPageURI();
         page = page.getParent();
 
@@ -408,16 +400,16 @@ public class GuiPartPageList extends MGuiElementBase<GuiPartPageList> {
                 }
             }
 
-            GuiButton newButton = new StyledGuiButton(dirButtonRender).setText(name).setTrim(false).setShadow(false).setRotation(ROT_CC);
-            newButton.setSize(DIR_BAR_SIZE - 2, height);
+            GuiButton newButton = new StyledGuiButton("page_list.dir_buttons", true).setText(name).setTrim(false).setShadow(false).setRotation(ROT_CC);
+            newButton.setSize(DIR_BAR_SIZE - 1, height - 1);
             newButton.textXOffset = 1;
-            newButton.setYPos(yPos() + NAV_BAR_SIZE + 1);
-            newButton.setXPosMod((guiButton, integer) -> xPos() + 1);
+            newButton.setYPos(yPos() + NAV_BAR_SIZE);
+            newButton.setXPosMod((guiButton, integer) -> xPos());
             newButton.addToGroup("TREE_BUTTON_GROUP");
             DocumentationPage thisPage = page;
             newButton.setListener(() -> {
-                resetCustomFilter();
-                controller.openPage(thisPage.getPageURI(), false);
+                TabManager.openPage(thisPage.getPageURI(), false);
+                mainWindow.reloadGui();
             });
             addChild(newButton);
 
@@ -439,17 +431,127 @@ public class GuiPartPageList extends MGuiElementBase<GuiPartPageList> {
 
     @Override
     public void renderElement(Minecraft minecraft, int mouseX, int mouseY, float partialTicks) {
-        headerRender.render(this, xPos(), yPos(), xSize() + 1, NAV_BAR_SIZE);
-        dirPathRender.render(this, xPos(), yPos() + NAV_BAR_SIZE, DIR_BAR_SIZE, ySize() - NAV_BAR_SIZE - FOOTER_SIZE);
-        bodyRender.render(this, xPos() + DIR_BAR_SIZE, yPos() + NAV_BAR_SIZE + TITLE_BAR_SIZE, xSize() - DIR_BAR_SIZE + 1, ySize() - NAV_BAR_SIZE - FOOTER_SIZE - TITLE_BAR_SIZE);
-        footerRender.render(this, xPos(), yPos() + ySize() - FOOTER_SIZE, xSize() + 1, FOOTER_SIZE);
+
+        //Header
+        {
+            boolean shadedBorders = headerProps.shadeBorders();
+            boolean vanillaT = headerProps.vanillaTex();
+            int border = headerProps.border();
+            int colour = headerProps.colour();
+            boolean thickBorders = headerProps.thickBorders();
+
+            if (shadedBorders || !vanillaT) {
+                int light = changeShade(border, 0.2);
+                int dark = changeShade(border, -0.2);
+
+                if (shadedBorders) {
+                    double b = thickBorders ? 1 : 0.5;
+
+                    drawColouredRect(xPos(), yPos(), xSize(), NAV_BAR_SIZE, colour);                     //Bar
+                    drawColouredRect(xPos(), yPos(), xSize(), b, light);                       //Bar Top Accent
+                    drawColouredRect(xPos(), yPos() + NAV_BAR_SIZE - b, xSize(), b, dark);               //Bar Bottom Accent
+                }
+                else {
+                    drawColouredRect(xPos(), yPos(), xSize(), NAV_BAR_SIZE, border);
+                    drawColouredRect(xPos() + 1, yPos() + 1, xSize() - 2, NAV_BAR_SIZE - 1, colour);
+                }
+            }
+            else {
+                headerProps.glColour();
+                ResourceHelperBC.bindTexture(PITextures.VANILLA_GUI_SQ);
+                drawTiledTextureRectWithTrim(xPos(), yPos(), xSize(), NAV_BAR_SIZE, 4, 4, 0, 4, 0, 128, 256, 128);
+                GlStateManager.color(1, 1, 1, 1);
+            }
+        }
+
+        boolean thickBoarders = !bodyProps.shadeBorders() || bodyProps.thickBorders();
+        double raWidth = thickBoarders ? 1 : 0.5; //Right Accent Width
+        //Body
+        {
+            boolean shadedBorders = bodyProps.shadeBorders();
+            boolean vanillaT = bodyProps.vanillaTex();
+            int border = bodyProps.border();
+            int colour = bodyProps.colour();
+
+            if (shadedBorders || !vanillaT) {
+                int light = changeShade(border, 0.15);
+                int dark = changeShade(border, -0.15);
+
+                if (shadedBorders) {
+                    drawColouredRect(xPos(), yPos() + NAV_BAR_SIZE, xSize(), ySize() - NAV_BAR_SIZE, colour);           //Background
+                    drawColouredRect(xPos() + DIR_BAR_SIZE - raWidth, yPos() + NAV_BAR_SIZE, raWidth, ySize() - NAV_BAR_SIZE - FOOTER_SIZE, dark);            //Left Divider
+                    drawColouredRect(xPos() + DIR_BAR_SIZE, yPos() + NAV_BAR_SIZE, raWidth, ySize() - NAV_BAR_SIZE - FOOTER_SIZE, light);                     //Left Divider
+
+                    drawColouredRect(xPos() + xSize() - raWidth * 2, yPos(), raWidth, ySize(), light);                  //Right Accent
+                    drawColouredRect(xPos() + xSize() - raWidth, yPos(), raWidth, ySize(), dark);                       //Right Accent
+                    raWidth *= 2;
+                }
+                else {
+                    drawBorderedRect(xPos(), yPos() + NAV_BAR_SIZE, DIR_BAR_SIZE, ySize() - NAV_BAR_SIZE, 1, colour, border);
+
+                    drawColouredRect(xPos() + DIR_BAR_SIZE, yPos() + NAV_BAR_SIZE + TITLE_BAR_SIZE, xSize() - DIR_BAR_SIZE, 1, border);
+                    drawColouredRect(maxXPos() - 11, yPos() + NAV_BAR_SIZE + TITLE_BAR_SIZE + 1, 1, ySize() - NAV_BAR_SIZE - TITLE_BAR_SIZE - 1, border);
+                    drawColouredRect(xPos() + DIR_BAR_SIZE, yPos() + NAV_BAR_SIZE + TITLE_BAR_SIZE + 1, xSize() - DIR_BAR_SIZE - 1, ySize() - NAV_BAR_SIZE - TITLE_BAR_SIZE - 2, colour);
+
+                    drawColouredRect(xPos() + DIR_BAR_SIZE - raWidth, yPos() + NAV_BAR_SIZE, raWidth, ySize() - NAV_BAR_SIZE - FOOTER_SIZE, light);            //Left Divider
+                    drawColouredRect(xPos() + xSize() - raWidth, yPos(), raWidth, ySize(), dark);                  //Right Accent
+                }
+            }
+            else {
+                bodyProps.glColour();
+                ResourceHelperBC.bindTexture(PITextures.VANILLA_GUI_SQ);
+
+                drawTiledTextureRectWithTrim(xPos(), yPos() + NAV_BAR_SIZE + TITLE_BAR_SIZE, xSize(), ySize() - NAV_BAR_SIZE - TITLE_BAR_SIZE, 4, 4, 4, 4, 0, 128, 256, 128);
+                drawTiledTextureRectWithTrim(xPos(), yPos() + NAV_BAR_SIZE, DIR_BAR_SIZE, ySize() - NAV_BAR_SIZE - FOOTER_SIZE, 4, 4, 0, 4, 0, 128, 256, 124);
+
+                GlStateManager.color(1, 1, 1, 1);
+            }
+        }
+
+        //Footer
+        {
+            boolean shadedBorders = footerProps.shadeBorders();
+            boolean vanillaT = footerProps.vanillaTex();
+            int border = footerProps.border();
+            int colour = footerProps.colour();
+            boolean thickBorders = footerProps.thickBorders();
+
+            if (shadedBorders || !vanillaT) {
+                int light = changeShade(border, 0.15);
+                int dark = changeShade(border, -0.15);
+
+                if (shadedBorders) {
+                    double b = thickBorders ? 1 : 0.5;
+
+                    drawColouredRect(xPos(), yPos() + ySize() - FOOTER_SIZE, xSize() - raWidth, FOOTER_SIZE, colour);  //Background
+                    drawColouredRect(xPos(), yPos() + ySize() - FOOTER_SIZE, b, FOOTER_SIZE, light);                            //Left Accent
+
+                    drawColouredRect(xPos(), yPos() + ySize() - FOOTER_SIZE, xSize() - raWidth, b, light);            //Search Divider
+                    drawColouredRect(xPos(), yPos() + ySize() - b, xSize() - raWidth, b, dark);                      //Search Divider
+                }
+                else {
+                    drawColouredRect(xPos(), yPos() + ySize() - FOOTER_SIZE, xSize() - raWidth, FOOTER_SIZE, border);
+                    drawColouredRect(xPos(), yPos() + ySize() - FOOTER_SIZE + 1, xSize() - raWidth - 1, FOOTER_SIZE - 2, colour);
+                }
+
+            }
+            else {
+                footerProps.glColour();
+                ResourceHelperBC.bindTexture(PITextures.VANILLA_GUI_SQ);
+                drawTiledTextureRectWithTrim(xPos(), yPos() + ySize() - FOOTER_SIZE, xSize(), FOOTER_SIZE, 4, 4, 4, 4, 0, 128, 256, 128);
+
+                GlStateManager.color(1, 1, 1, 1);
+            }
+        }
 
 //        DocumentationPage selected = TabManager.getActiveTab().getDocPage();
 //        String page = "//" + (selected == null ? "null-Page" : selected.getDisplayName());
 //        drawCustomString(fontRenderer, page, xPos() + DIR_BAR_SIZE, yPos() + NAV_BAR_SIZE + TITLE_BAR_SIZE - fontRenderer.FONT_HEIGHT, xSize() - DIR_BAR_SIZE, 0xFFFFFF, CENTER, NORMAL, false, true, false); //Todo style and stuff
+
         String navTitle = I18n.format("pi.gui.navigation.title");
         int width = fontRenderer.getStringWidth(navTitle);
         drawCustomString(fontRenderer, navTitle, xPos() + xSize() / 2F - width / 2F, yPos() + NAV_BAR_SIZE - fontRenderer.FONT_HEIGHT - 1, xSize() - 20, 0xFFFFFF, LEFT, NORMAL, false, true, false); //Todo style and stuff
+
         super.renderElement(minecraft, mouseX, mouseY, partialTicks);
     }
 
@@ -461,19 +563,22 @@ public class GuiPartPageList extends MGuiElementBase<GuiPartPageList> {
         return super.mouseClicked(mouseX, mouseY, mouseButton);
     }
 
-    public void setFullyExtended() {
-        extended = true;
-        setXSize(extendedXSize());
-        container.pageListMotionUpdate();
-    }
+//    private static void updateStyles() {
+//        pageButtonProps.updateProps();
+//        searchBoxProps.updateProps();
+//        headerProps.updateProps();
+//        bodyProps.updateProps();
+//        footerProps.updateProps();
+//    }
 
-    private int extendedXSize() {
-        return container.getListMaxWidth().get();
-    }
+    public static PropertyGroup pageButtonProps = new PropertyGroup("page_list.page_buttons");
+    public static PropertyGroup searchBoxProps = new PropertyGroup("page_list.search");
+    public static PropertyGroup headerProps = new PropertyGroup("page_list.header");
+    public static PropertyGroup bodyProps = new PropertyGroup("page_list.body");
+    public static PropertyGroup footerProps = new PropertyGroup("page_list.footer");
 
-    private void resetCustomFilter() {
-        if (searchBox.getText().equals("[Custom Filter]")) {
-            searchBox.setText("");
-        }
-    }
+//    static {
+//        StyleHandler.addReloadListener(GuiPartPageList::updateStyles);
+//        updateStyles();
+//    }
 }

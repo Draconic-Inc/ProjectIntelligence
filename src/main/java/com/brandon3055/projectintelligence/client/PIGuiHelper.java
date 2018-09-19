@@ -1,32 +1,34 @@
-package com.brandon3055.projectintelligence;
+package com.brandon3055.projectintelligence.client;
 
 import com.brandon3055.brandonscore.client.ProcessHandlerClient;
+import com.brandon3055.brandonscore.client.gui.modulargui.MGuiElementBase;
+import com.brandon3055.brandonscore.client.gui.modulargui.baseelements.GuiButton;
+import com.brandon3055.brandonscore.client.gui.modulargui.baseelements.GuiPopUpDialogBase;
+import com.brandon3055.brandonscore.client.gui.modulargui.guielements.GuiLabel;
 import com.brandon3055.brandonscore.lib.StackReference;
 import com.brandon3055.brandonscore.utils.LogHelperBC;
+import com.brandon3055.brandonscore.utils.Utils;
 import com.brandon3055.projectintelligence.client.gui.ContentInfo;
 import com.brandon3055.projectintelligence.client.gui.ContentInfo.ContentType;
 import com.brandon3055.projectintelligence.client.gui.GuiContentSelect;
 import com.brandon3055.projectintelligence.client.gui.GuiContentSelect.SelectMode;
 import com.brandon3055.projectintelligence.client.gui.GuiProjectIntelligence;
-import com.brandon3055.projectintelligence.client.gui.guielements.GuiPartMDWindow;
-import com.brandon3055.projectintelligence.client.gui.guielements.GuiPartMenu;
-import com.brandon3055.projectintelligence.client.gui.guielements.GuiPartPageList;
+import com.brandon3055.projectintelligence.client.gui.GuiProjectIntelligence_old;
+import com.brandon3055.projectintelligence.client.gui.guielements.*;
 import com.brandon3055.projectintelligence.client.gui.swing.PIEditor;
-import com.brandon3055.projectintelligence.docdata.DocumentationManager;
+import com.brandon3055.projectintelligence.docmanagement.DocumentationManager;
 import com.google.common.collect.ImmutableList;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.resources.I18n;
 import net.minecraft.entity.EntityList;
 import net.minecraft.entity.player.EntityPlayer;
-import net.minecraftforge.fml.common.Loader;
-import net.minecraftforge.fml.common.ModContainer;
-import net.minecraftforge.fml.common.versioning.DefaultArtifactVersion;
-import net.minecraftforge.fml.common.versioning.VersionParser;
-import net.minecraftforge.fml.common.versioning.VersionRange;
 import org.lwjgl.opengl.Display;
 
 import javax.annotation.Nullable;
 import javax.swing.*;
 import java.awt.*;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
@@ -35,7 +37,7 @@ import java.util.function.Consumer;
 /**
  * Created by brandon3055 on 4/08/2017.
  */
-public class PIHelpers {
+public class PIGuiHelper {
 
     public static PIEditor editor = null;
     public static LinkedList<String> errorCache = new LinkedList<>();
@@ -66,40 +68,66 @@ public class PIHelpers {
         }
         LogHelperBC.error("[Pi Reported Error]: " + error);
         errorCache.add(error);
+        GuiProjectIntelligence_old.updateErrorDialog = true;
         GuiProjectIntelligence.updateErrorDialog = true;
     }
 
-    /**
-     * By default this will only return true if the specified mod is installed however the user has an option do override this
-     * functionality and force mods to be displayed even if they are not installed.
-     *
-     * @return true if documentation for the specifies mod should be downloaded and displayed.
-     */
-    public static boolean displayModDoc(String modid) {
-        if (Loader.isModLoaded(modid)) {
-            return true;
+    public static void displayLinkConfirmDialog(MGuiElementBase parent, String link) {
+        URI uri;
+        try {
+            uri = new URI(link);
         }
-
-        if (DocumentationManager.hasModPage(modid)) {
-            for (String mod : DocumentationManager.getModPage(modid).getModAliases()) {
-                if (Loader.isModLoaded(mod)) {
-                    return true;
-                }
-            }
+        catch (URISyntaxException e) {
+            e.printStackTrace();
+            PIGuiHelper.displayError("Failed to open link due to unknown error!\n"+e.getMessage());
+            return;
         }
+        GuiPopUpDialogBase dialog = new GuiPopUpDialogBase(parent);
+        dialog.setXSize(300);
+        dialog.setDragBar(12);
+        dialog.setCloseOnCapturedClick(true);
+        MGuiElementBase background;
+        dialog.addChild(background = new StyledGuiRect("user_dialogs"));
 
-        return false;//TODO or mod is forced to display regardless by user config
-    }
+        GuiLabel infoLabel = new GuiLabel(I18n.format("pi.md.link_confirmation.txt"));
+        infoLabel.setWrap(true).setShadow(false);
+        infoLabel.setTextColour(StyleHandler.getInt("user_dialogs." + StyleHandler.StyleType.TEXT_COLOUR.getName()));
+        infoLabel.setXSize(dialog.xSize() - 30);
+        infoLabel.setHeightForText();
+        infoLabel.setRelPos(15, 10);
+        dialog.addChild(infoLabel);
 
-    public static boolean doesModVersionMatch(String modid, String targetVersion) {
-        //If the mod is not loaded we return true because it means the default behavior of not showing a mod that is not installed has been overridden.
-        if (targetVersion.isEmpty() || !Loader.isModLoaded(modid)) return true;
+        GuiLabel urlLabel = new GuiLabel("\"" + link + "\"");
+        urlLabel.setWrap(true).setShadow(false);
+        urlLabel.setTextColour(StyleHandler.getInt("user_dialogs." + StyleHandler.StyleType.TEXT_COLOUR.getName()));
+        urlLabel.setXSize(dialog.xSize() - 30);
+        urlLabel.setHeightForText();
+        urlLabel.setPos(infoLabel.xPos(), infoLabel.maxYPos() + 10);
+        dialog.addChild(urlLabel);
 
-        VersionRange target = VersionParser.parseRange(targetVersion);
-        ModContainer mod = Loader.instance().getIndexedModList().get(modid);
-        DefaultArtifactVersion version = new DefaultArtifactVersion(modid, mod.getVersion());
+        GuiButton yesButton = new StyledGuiButton("user_dialogs." + StyleHandler.StyleType.BUTTON_STYLE.getName());
+        yesButton.setText(I18n.format("pi.button.yes"));
+        yesButton.setSize(80, 15);
+        yesButton.setPos(dialog.xPos() + 15, urlLabel.maxYPos() + 10);
+        yesButton.setListener(() -> Utils.openWebLink(uri));
+        dialog.addChild(yesButton);
 
-        return target.containsVersion(version);
+        GuiButton copyButton = new StyledGuiButton("user_dialogs." + StyleHandler.StyleType.BUTTON_STYLE.getName());
+        copyButton.setText(I18n.format("pi.button.copy_to_clipboard"));
+        copyButton.setSize(108, 15);
+        copyButton.setRelPos(yesButton, 81, 0);
+        copyButton.setListener(() -> Utils.setClipboardString(link));
+        dialog.addChild(copyButton);
+
+        GuiButton cancelButton = new StyledGuiButton("user_dialogs." + StyleHandler.StyleType.BUTTON_STYLE.getName());
+        cancelButton.setText(I18n.format("pi.button.cancel"));
+        cancelButton.setSize(80, 15);
+        cancelButton.setRelPos(copyButton, 109, 0);
+        dialog.addChild(cancelButton);
+
+        dialog.setYSize((cancelButton.maxYPos() + 10) - dialog.yPos());
+        background.setPosAndSize(dialog);
+        dialog.showCenter(parent.displayZLevel + 50);
     }
 
     /**
@@ -110,15 +138,15 @@ public class PIHelpers {
     }
 
     public static void reloadGui() {
-        if (GuiProjectIntelligence.activeInstance != null) {
-            GuiProjectIntelligence.activeInstance.reloadGui();
+        if (GuiProjectIntelligence_old.activeInstance != null) {
+            GuiProjectIntelligence_old.activeInstance.reloadGui();
         }
     }
 
     public static void reloadGuiParts(boolean pageList, boolean menu, boolean mdWindow) {
-        GuiPartPageList pagePart = GuiProjectIntelligence.getListPart();
-        GuiPartMenu menuPart = GuiProjectIntelligence.getMenuPart();
-        GuiPartMDWindow mdPart = GuiProjectIntelligence.getMDPart();
+        GuiPartPageList_old pagePart = GuiProjectIntelligence_old.getListPart();
+        GuiPartMenu_old menuPart = GuiProjectIntelligence_old.getMenuPart();
+        GuiPartMDWindow_old mdPart = GuiProjectIntelligence_old.getMDPart();
 
         if (pageList && pagePart != null) pagePart.reloadElement();
         if (menu && menuPart != null) menuPart.reloadElement();
@@ -140,15 +168,6 @@ public class PIHelpers {
     //region Editor Helpers
     public static void displayEditor() {
         if (editor == null) {
-            try {
-                UIManager.setLookAndFeel("com.bulenkov.darcula.DarculaLaf");
-            }
-            catch (Throwable ignored) {
-                try {
-                    UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-                }
-                catch (Throwable ignored2) {}
-            }
             editor = new PIEditor();
             editor.reload();
         }

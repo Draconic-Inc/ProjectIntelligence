@@ -1,27 +1,28 @@
 package com.brandon3055.projectintelligence.client.gui.guielements;
 
-import codechicken.lib.colour.Colour;
-import com.brandon3055.brandonscore.client.ResourceHelperBC;
+import codechicken.lib.math.MathHelper;
 import com.brandon3055.brandonscore.client.gui.modulargui.MGuiElementBase;
 import com.brandon3055.brandonscore.client.gui.modulargui.baseelements.GuiButton;
 import com.brandon3055.brandonscore.client.gui.modulargui.baseelements.GuiPopUpDialogBase;
 import com.brandon3055.brandonscore.client.gui.modulargui.baseelements.GuiScrollElement;
 import com.brandon3055.brandonscore.client.gui.modulargui.guielements.*;
 import com.brandon3055.brandonscore.client.gui.modulargui.lib.GuiAlign;
-import com.brandon3055.projectintelligence.PIHelpers;
+import com.brandon3055.brandonscore.utils.Utils;
+import com.brandon3055.projectintelligence.client.PIGuiHelper;
 import com.brandon3055.projectintelligence.client.PITextures;
 import com.brandon3055.projectintelligence.client.StyleHandler;
-import com.brandon3055.projectintelligence.client.gui.GuiProjectIntelligence;
+import com.brandon3055.projectintelligence.client.gui.GuiProjectIntelligence_old;
 import com.brandon3055.projectintelligence.client.gui.PIConfig;
-import com.brandon3055.projectintelligence.docdata.DocumentationManager;
-import com.brandon3055.projectintelligence.docdata.LanguageManager;
+import com.brandon3055.projectintelligence.client.gui.PIPartRenderer;
+import com.brandon3055.projectintelligence.docmanagement.DocumentationManager;
+import com.brandon3055.projectintelligence.docmanagement.LanguageManager;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.audio.PositionedSoundRecord;
-import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.resources.I18n;
 import net.minecraft.init.SoundEvents;
 import net.minecraft.util.text.TextFormatting;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.function.Supplier;
 
@@ -31,22 +32,14 @@ import static com.brandon3055.projectintelligence.client.StyleHandler.StyleType.
  * Created by brandon3055 on 12/08/2017.
  */
 public class GuiPIConfig extends GuiPopUpDialogBase<GuiPIConfig> {
-
+    public static StyleHandler.PropertyGroup buttonProps = new StyleHandler.PropertyGroup("user_dialogs.button_style");
     private GuiScrollElement configList;
+    private GuiStyleEditor styleEditor;
 
-    protected int colour;
-    protected int border;
-    protected int textColour;
-    protected int hoverBorder;
-    protected int hoverColour;
-    protected int textColourHover;
-    protected boolean vanilla;
-    private GuiPartMenu menu;
-
-    public GuiPIConfig(GuiPartMenu menu) {
-        super(menu);
-        this.menu = menu;
-        setSize(200, 250);
+    public GuiPIConfig(MGuiElementBase parent, GuiStyleEditor styleEditor) {
+        super(parent);
+        this.styleEditor = styleEditor;
+        setSize(200, 200);
         setDragBar(12);
         setCloseOnOutsideClick(false);
     }
@@ -57,8 +50,26 @@ public class GuiPIConfig extends GuiPopUpDialogBase<GuiPIConfig> {
         //Basic Settings
         configList.addElement(new GuiLabel(TextFormatting.UNDERLINE + I18n.format("pi.config.basic_config")).setYSize(12).setShadow(false).setTextColGetter(hovering -> StyleHandler.getInt("user_dialogs." + TEXT_COLOUR.getName())));
 
-        addConfig(new ConfigProperty(this, "pi.config.open_style_settings").setAction(() -> menu.styleEditor.toggleShown(true, 550)).setCloseOnClick(true));
+        addConfig(new ConfigProperty(this, "pi.config.open_style_settings").setAction(() -> styleEditor.toggleShown(true, 550)).setCloseOnClick(true));
+
         addConfig(new ConfigProperty(this, () -> "pi.config.set_pi_language", () -> (LanguageManager.isCustomUserLanguageSet() ? "" : I18n.format("pi.lang.mc_default") + " ") + LanguageManager.LANG_NAME_MAP.get(LanguageManager.getUserLanguage())).setHoverText(I18n.format("pi.config.set_pi_language.info"), TextFormatting.GRAY + I18n.format("pi.config.set_pi_language_note.info")).setAction(this::openLanguageSelector));
+
+        addConfig(new ConfigProperty(this, () -> "pi.config.max_tabs", () -> String.valueOf(PIConfig.maxTabs)).setHoverText(I18n.format("pi.config.max_tabs.info")).setAction(() -> {
+            GuiTextFieldDialog dialog = new GuiTextFieldDialog(this, I18n.format("pi.config.max_tabs.title"));
+            dialog.setXSize(200).setMaxLength(4096);
+            dialog.addChild(new StyledGuiRect("user_dialogs").setPosAndSize(dialog));
+            dialog.setTitleColour(StyleHandler.getInt("user_dialogs." + StyleHandler.StyleType.TEXT_COLOUR.getName()));
+            dialog.setText(String.valueOf(PIConfig.maxTabs));
+            dialog.setValidator(value -> value.isEmpty() || Utils.validInteger(value));
+            dialog.addTextConfirmCallback(s -> {
+                PIConfig.maxTabs = MathHelper.clip(Utils.parseInt(s, true), 1, 64);
+                PIConfig.save();
+            });
+            dialog.showCenter(displayZLevel + 50);
+        }));
+
+        addConfig(new ConfigProperty(this, () -> "pi.config.et_fluid", () -> PIConfig.etCheckFluid + "").setAction(() -> PIConfig.etCheckFluid = !PIConfig.etCheckFluid).setHoverText(I18n.format("pi.config.et_fluid.info")));
+
 
         //Advanced Settings
         configList.addElement(new GuiLabel(TextFormatting.UNDERLINE + I18n.format("pi.config.advanced_config")).setYSize(12).setShadow(false).setTextColGetter(hovering -> StyleHandler.getInt("user_dialogs." + TEXT_COLOUR.getName())));
@@ -68,36 +79,51 @@ public class GuiPIConfig extends GuiPopUpDialogBase<GuiPIConfig> {
         addConfig(new ConfigProperty(this, () -> "pi.config.edit_mode", () -> PIConfig.editMode() + "").setAction(() -> {
             PIConfig.setEditMode(!PIConfig.editMode());
             if (!PIConfig.editMode()) {
-                PIHelpers.closeEditor();
+                PIGuiHelper.closeEditor();
             }
             PIConfig.save();
-            DocumentationManager.checkAndReloadDocFiles();
+
+            if (PIConfig.editMode() && !new File(PIConfig.editingRepoLoc).exists()) {
+                reloadConfigProperties();
+                displayRepoSetDialog();
+            }
+            else {
+                DocumentationManager.checkAndReloadDocFiles();
+                if (getParent() != null) getParent().reloadElement();
+                reloadConfigProperties();
+            }
         }));
 
-        addConfig(new ConfigProperty(this, () -> "pi.config.edit_repo_loc", () -> PIConfig.editingRepoLoc.isEmpty() ? "[Not Set]" : PIConfig.editingRepoLoc).setHoverText(I18n.format("pi.config.edit_repo_loc.info")).setAction(() -> {
-            GuiTextFieldDialog dialog = new GuiTextFieldDialog(this, I18n.format("pi.config.edit_repo_select_title"));
-            dialog.setXSize(280).setMaxLength(4096);
-            dialog.addChild(new StyledGuiRect("user_dialogs").setPosAndSize(dialog));
-            dialog.setTitleColour(StyleHandler.getInt("user_dialogs." + StyleHandler.StyleType.TEXT_COLOUR.getName()));
-            dialog.setText(PIConfig.editingRepoLoc);
-            dialog.addTextConfirmCallback(s -> {
-                PIConfig.editingRepoLoc = s;
-                PIConfig.save();
-                if (PIConfig.editMode()) {
-                    DocumentationManager.checkAndReloadDocFiles();
-                }
-            });
-            dialog.showCenter(displayZLevel + 50);
-        }));
+        if (PIConfig.editMode()) {
+            addConfig(new ConfigProperty(this, () -> "pi.config.edit_repo_loc", () -> PIConfig.editingRepoLoc.isEmpty() ? "[Not Set]" : PIConfig.editingRepoLoc).setHoverText(I18n.format("pi.config.edit_repo_loc.info")).setAction(() -> {
+                displayRepoSetDialog();
+            }));
+        }
 
         addConfig(new ConfigProperty(this, () -> PIConfig.editMode() ? "pi.config.reload_from_disk" : "pi.config.reload_documentation").setHoverText(PIConfig.editMode() ? I18n.format("pi.config.reload_from_disk.info") : I18n.format("pi.config.reload_documentation.info")).setAction(DocumentationManager::checkAndReloadDocFiles));
 
         if (PIConfig.editMode()) {
-            addConfig(new ConfigProperty(this, "pi.config.open_editor").setAction(PIHelpers::displayEditor));
+            addConfig(new ConfigProperty(this, "pi.config.open_editor").setAction(PIGuiHelper::displayEditor));
         }
 
         //endregion
 
+    }
+
+    private void displayRepoSetDialog() {
+        GuiTextFieldDialog dialog = new GuiTextFieldDialog(this, I18n.format("pi.config.edit_repo_select_title"));
+        dialog.setXSize(280).setMaxLength(4096);
+        dialog.addChild(new StyledGuiRect("user_dialogs").setPosAndSize(dialog));
+        dialog.setTitleColour(StyleHandler.getInt("user_dialogs." + StyleHandler.StyleType.TEXT_COLOUR.getName()));
+        dialog.setText(PIConfig.editingRepoLoc);
+        dialog.addTextConfirmCallback(s -> {
+            PIConfig.editingRepoLoc = s;
+            PIConfig.save();
+            if (PIConfig.editMode()) {
+                DocumentationManager.checkAndReloadDocFiles();
+            }
+        });
+        dialog.showCenter(displayZLevel + 50);
     }
 
     public void addConfig(ConfigProperty configProperty) {
@@ -141,7 +167,7 @@ public class GuiPIConfig extends GuiPopUpDialogBase<GuiPIConfig> {
 
         addChild(configList);
 
-        if (!GuiProjectIntelligence.devMode) {
+        if (!GuiProjectIntelligence_old.devMode) {
             super.addChildElements();
         }
     }
@@ -149,19 +175,6 @@ public class GuiPIConfig extends GuiPopUpDialogBase<GuiPIConfig> {
     @Override
     public void reloadElement() {
         super.reloadElement();
-    }
-
-    @Override
-    public boolean onUpdate() {
-        vanilla = StyleHandler.getBoolean("user_dialogs.sub_elements.button_style." + StyleHandler.StyleType.VANILLA_TEXTURE.getName());
-        colour = StyleHandler.getInt("user_dialogs.sub_elements.button_style." + StyleHandler.StyleType.COLOUR.getName());
-        hoverColour = StyleHandler.getInt("user_dialogs.sub_elements.button_style." + StyleHandler.StyleType.HOVER.getName());
-        border = StyleHandler.getInt("user_dialogs.sub_elements.button_style." + StyleHandler.StyleType.BORDER.getName());
-        hoverBorder = StyleHandler.getInt("user_dialogs.sub_elements.button_style." + StyleHandler.StyleType.BORDER_HOVER.getName());
-        textColour = StyleHandler.getInt("user_dialogs.sub_elements.button_style." + StyleHandler.StyleType.TEXT_COLOUR.getName());
-        textColourHover = StyleHandler.getInt("user_dialogs.sub_elements.button_style." + StyleHandler.StyleType.TEXT_HOVER.getName());
-
-        return super.onUpdate();
     }
 
     @Override
@@ -174,7 +187,7 @@ public class GuiPIConfig extends GuiPopUpDialogBase<GuiPIConfig> {
     }
 
     public static class ConfigProperty extends MGuiElementBase<ConfigProperty> {
-
+        public PIPartRenderer buttonRenderer = new PIPartRenderer(buttonProps).setButtonRender(true);
         private boolean playSound = true;
         private boolean closeOnClick = false;
         private Supplier<String> unlocalizedNameSupplier = null;
@@ -254,23 +267,13 @@ public class GuiPIConfig extends GuiPopUpDialogBase<GuiPIConfig> {
         @Override
         public void renderElement(Minecraft minecraft, int mouseX, int mouseY, float partialTicks) {
             boolean mouseOver = isMouseOver(mouseX, mouseY);
-
-            if (gui.vanilla) {
-                Colour.glColourARGB(mouseOver ? gui.hoverColour : gui.colour);
-                ResourceHelperBC.bindTexture(PITextures.VANILLA_GUI_SQ);
-                drawTiledTextureRectWithTrim(xPos(), yPos(), xSize(), ySize(), 4, 4, 4, 4, 0, 128, 256, 128);
-                GlStateManager.color(1, 1, 1, 1);
-                drawBorderedRect(xPos(), yPos(), xSize(), ySize(), 1, 0, gui.border);
-            }
-            else {
-                drawBorderedRect(xPos(), yPos(), xSize(), ySize(), 1, mouseOver ? gui.hoverColour : gui.colour, mouseOver ? gui.hoverBorder : gui.border);
-            }
+            buttonRenderer.render(this, mouseOver);
 
             if (unlocalizedNameSupplier != null) {
-                drawString(fontRenderer, TextFormatting.UNDERLINE + I18n.format(unlocalizedNameSupplier.get()), xPos() + 4, yPos() + 3, gui.textColour);
+                drawString(fontRenderer, TextFormatting.UNDERLINE + I18n.format(unlocalizedNameSupplier.get()), xPos() + 4, yPos() + 3, buttonProps.textColour());
             }
             if (valueSupplier != null) {
-                drawString(fontRenderer, valueSupplier.get(), xPos() + 4, yPos() + 15, gui.textColourHover);
+                drawString(fontRenderer, valueSupplier.get(), xPos() + 4, yPos() + 15, buttonProps.textColourHover());
             }
 
             super.renderElement(minecraft, mouseX, mouseY, partialTicks);

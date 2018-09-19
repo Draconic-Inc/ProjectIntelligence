@@ -1,14 +1,13 @@
-package com.brandon3055.projectintelligence.docdata;
+package com.brandon3055.projectintelligence.docmanagement;
 
 import com.brandon3055.brandonscore.integration.ModHelperBC;
-import com.brandon3055.projectintelligence.PIHelpers;
-import com.brandon3055.projectintelligence.client.gui.TabManager;
-import com.brandon3055.projectintelligence.docdata.LanguageManager.PageLangData;
+import com.brandon3055.projectintelligence.client.DisplayController;
+import com.brandon3055.projectintelligence.client.PIGuiHelper;
+import com.brandon3055.projectintelligence.docmanagement.LanguageManager.PageLangData;
 import com.google.common.base.Charsets;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import com.google.gson.JsonPrimitive;
 import net.minecraft.util.JsonUtils;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
@@ -31,8 +30,7 @@ public class DocumentationPage {
 
     protected DocumentationPage parent = null;
     protected LinkedList<JsonObject> icons = new LinkedList<>();
-    //TODO Change to objects similar to icons
-    protected LinkedList<String> relations = new LinkedList<>();
+    protected LinkedList<ContentRelation> relations = new LinkedList<>();
 
     protected int sortingWeight;
 
@@ -78,7 +76,7 @@ public class DocumentationPage {
         pageURI = (parentURI.endsWith(":") ? parentURI : parentURI + "/") + pageId;
 
         if (URIPageMap.containsKey(pageURI)) {
-            PIHelpers.displayError("Detected duplicate page! " + modid + ":" + pageURI);
+            PIGuiHelper.displayError("Detected duplicate page! " + modid + ":" + pageURI);
             return;
         }
 
@@ -102,6 +100,7 @@ public class DocumentationPage {
         return LanguageManager.getPageName(getModid() + ":", getLocalizationLang());
     }
 
+    /**This is the page simple id e.g. "draconium_ore"*/
     public String getPageId() {
         return pageId;
     }
@@ -122,7 +121,7 @@ public class DocumentationPage {
         return cycle_icons;
     }
 
-    public LinkedList<String> getRelations() {
+    public LinkedList<ContentRelation> getRelations() {
         return relations;
     }
 
@@ -238,7 +237,7 @@ public class DocumentationPage {
             throw new MDException("An error occurred while saving markdown to disk. " + e.getMessage() + " See console for full stack trace");
         }
 
-        TabManager.getActiveTab().reloadTab();
+        DisplayController.MASTER_CONTROLLER.getActiveTab().reloadTab();
     }
 
     public void setPageId(String pageId) {
@@ -285,8 +284,11 @@ public class DocumentationPage {
         if (JsonUtils.isJsonArray(jObj, "relations")) {
             relations.clear();
             for (JsonElement element : JsonUtils.getJsonArray(jObj, "relations")) {
-                if (JsonUtils.isString(element)) {
-                    relations.add(element.getAsJsonPrimitive().getAsString());
+                if (element.isJsonObject()) {
+                    ContentRelation relation = ContentRelation.fromJson(element.getAsJsonObject());
+                    if (relation != null) {
+                        relations.add(relation);
+                    }
                 }
             }
         }
@@ -329,8 +331,8 @@ public class DocumentationPage {
 
         if (relations.size() > 0) {
             JsonArray array = new JsonArray();
-            for (String link : relations) {
-                array.add(new JsonPrimitive(link));
+            for (ContentRelation relation : relations) {
+                array.add(relation.toJson());
             }
             jObj.add("relations", array);
         }

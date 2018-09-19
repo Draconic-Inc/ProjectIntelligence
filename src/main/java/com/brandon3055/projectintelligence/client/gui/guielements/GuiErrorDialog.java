@@ -6,8 +6,8 @@ import com.brandon3055.brandonscore.client.gui.modulargui.baseelements.GuiPopUpD
 import com.brandon3055.brandonscore.client.gui.modulargui.baseelements.GuiScrollElement;
 import com.brandon3055.brandonscore.client.gui.modulargui.guielements.GuiBorderedRect;
 import com.brandon3055.brandonscore.client.gui.modulargui.guielements.GuiLabel;
-import com.brandon3055.projectintelligence.PIHelpers;
-import com.brandon3055.projectintelligence.client.gui.GuiProjectIntelligence;
+import com.brandon3055.projectintelligence.client.PIGuiHelper;
+import com.brandon3055.projectintelligence.client.gui.GuiProjectIntelligence_old;
 import net.minecraft.client.resources.I18n;
 
 import java.io.IOException;
@@ -41,7 +41,7 @@ public class GuiErrorDialog extends GuiPopUpDialogBase<GuiErrorDialog> {
 
         GuiButton close = new GuiButton("Close").setSize(50, 12).setFillColours(0xFF900000, 0xFFFF0000).setRelPos(xSize() - 51, 1);
         close.setListener(() -> {
-            PIHelpers.errorCache.clear();
+            PIGuiHelper.errorCache.clear();
             close();
         });
         addChild(close);
@@ -55,7 +55,7 @@ public class GuiErrorDialog extends GuiPopUpDialogBase<GuiErrorDialog> {
 
         addChild(errorList);
 
-        if (!GuiProjectIntelligence.devMode) {
+        if (!GuiProjectIntelligence_old.devMode) {
             super.addChildElements();
         }
     }
@@ -64,7 +64,7 @@ public class GuiErrorDialog extends GuiPopUpDialogBase<GuiErrorDialog> {
     public void reloadElement() {
         errorList.clearElements();
 
-        for (String error : PIHelpers.errorCache) {
+        for (String error : PIGuiHelper.errorCache) {
             GuiLabel label = new GuiLabel(error).setAlignment(LEFT);
             label.setTextColour(0xFF0000);
             label.setWrap(true).setShadow(false);

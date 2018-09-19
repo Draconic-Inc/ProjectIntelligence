@@ -4,6 +4,7 @@ import com.brandon3055.brandonscore.client.ResourceHelperBC;
 import com.brandon3055.brandonscore.client.gui.modulargui.baseelements.GuiButton;
 import com.brandon3055.projectintelligence.client.PITextures;
 import com.brandon3055.projectintelligence.client.StyleHandler;
+import com.brandon3055.projectintelligence.client.gui.PIPartRenderer;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.GlStateManager;
 
@@ -17,10 +18,16 @@ public class StyledGuiButton extends GuiButton {
     private String prop;
     protected boolean includeColour;
     protected boolean includeVanilla = true;
+    private PIPartRenderer renderer;
 
+    @Deprecated
     public StyledGuiButton(String prop, boolean includeColour) {
         this.prop = prop;
         this.includeColour = includeColour;
+    }
+
+    public StyledGuiButton(PIPartRenderer renderer) {
+        this.renderer = renderer;
     }
 
     public StyledGuiButton(String prop) {
@@ -34,6 +41,9 @@ public class StyledGuiButton extends GuiButton {
 
     @Override
     public int getTextColour(boolean hovered, boolean disabled) {
+        if (renderer != null && renderer.props.hasPropTextColour()) {
+            return hovered && renderer.props.hasPropTextColourHover() ? renderer.props.textColourHover() : renderer.props.textColour();
+        }
         if (includeColour) {
             return StyleHandler.getColour(prop + "." + (hovered ? TEXT_HOVER : TEXT_COLOUR).getName()).rgb();
         }
@@ -43,6 +53,11 @@ public class StyledGuiButton extends GuiButton {
     @Override
     public void renderElement(Minecraft mc, int mouseX, int mouseY, float partialTicks) {
         boolean mouseOver = isMouseOver(mouseX, mouseY) || (getToggleMode() && getToggleState());
+        if (renderer != null) {
+            renderer.render(this, mouseOver);
+            super.renderElement(mc, mouseX, mouseY, partialTicks);
+            return;
+        }
 
         int border = StyleHandler.getInt(prop + "." + BORDER.getName());
         int borderHover = StyleHandler.getInt(prop + "." + BORDER_HOVER.getName());

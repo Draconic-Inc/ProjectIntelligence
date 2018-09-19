@@ -1,4 +1,4 @@
-package com.brandon3055.projectintelligence.docdata;
+package com.brandon3055.projectintelligence.docmanagement;
 
 import com.brandon3055.projectintelligence.client.gui.PIConfig;
 import com.google.common.collect.Lists;

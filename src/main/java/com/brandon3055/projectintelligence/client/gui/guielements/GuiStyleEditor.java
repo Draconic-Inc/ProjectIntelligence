@@ -10,14 +10,14 @@ import com.brandon3055.brandonscore.client.gui.modulargui.lib.GuiAlign;
 import com.brandon3055.brandonscore.client.utils.GuiHelper;
 import com.brandon3055.brandonscore.handlers.FileHandler;
 import com.brandon3055.brandonscore.utils.Utils;
-import com.brandon3055.projectintelligence.PIHelpers;
+import com.brandon3055.projectintelligence.client.PIGuiHelper;
 import com.brandon3055.projectintelligence.client.PITextures;
 import com.brandon3055.projectintelligence.client.StyleHandler;
 import com.brandon3055.projectintelligence.client.StyleHandler.BooleanProperty;
 import com.brandon3055.projectintelligence.client.StyleHandler.ColourProperty;
 import com.brandon3055.projectintelligence.client.StyleHandler.IntegerProperty;
 import com.brandon3055.projectintelligence.client.StyleHandler.StyleProperty;
-import com.brandon3055.projectintelligence.client.gui.GuiProjectIntelligence;
+import com.brandon3055.projectintelligence.client.gui.GuiProjectIntelligence_old;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.audio.PositionedSoundRecord;
 import net.minecraft.client.gui.GuiScreen;
@@ -25,6 +25,7 @@ import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.resources.I18n;
 import net.minecraft.init.SoundEvents;
 import net.minecraft.util.text.TextFormatting;
+import org.lwjgl.input.Mouse;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -42,6 +43,7 @@ public class GuiStyleEditor extends GuiPopUpDialogBase<GuiStyleEditor> {
 
     private GuiScrollElement editTree;
     private GuiScrollElement presetList;
+    private String highlight = "";
 
     public GuiStyleEditor(MGuiElementBase parent) {
         super(parent);
@@ -91,7 +93,7 @@ public class GuiStyleEditor extends GuiPopUpDialogBase<GuiStyleEditor> {
         savePreset.setHoverText(I18n.format("pi.style.save_preset.info"));
         savePreset.setListener(() -> {
             if (saveName.getText().isEmpty()) {
-                GuiPopupDialogs.createDialog(this, GuiPopupDialogs.DialogType.OK_OPTION, I18n.format("pi.style.save_no_name.txt"), "").showCenter();
+                GuiPopupDialogs.createDialog(this, GuiPopupDialogs.DialogType.OK_OPTION, I18n.format("pi.style.save_no_name.txt"), "").showCenter(displayZLevel + 50);
                 return;
             }
             if (StyleHandler.getCustomPresets().contains(saveName.getText())) {
@@ -99,7 +101,7 @@ public class GuiStyleEditor extends GuiPopUpDialogBase<GuiStyleEditor> {
                     StyleHandler.savePreset(saveName.getText());
                     saveName.forceSetText("");
                     reloadElement();
-                }).showCenter();
+                }).showCenter(displayZLevel + 50);
                 return;
             }
             StyleHandler.savePreset(saveName.getText());
@@ -145,7 +147,7 @@ public class GuiStyleEditor extends GuiPopUpDialogBase<GuiStyleEditor> {
         addChild(closeEditor);
 
         setChildGroupEnabled("EDITOR_TREE", false);
-        if (!GuiProjectIntelligence.devMode) {
+        if (!GuiProjectIntelligence_old.devMode) {
             super.addChildElements();
         }
     }
@@ -159,43 +161,50 @@ public class GuiStyleEditor extends GuiPopUpDialogBase<GuiStyleEditor> {
             button.setListener(() -> {
                 if (StyleHandler.unsavedChanges) {
                     GuiPopupDialogs.createDialog(this, GuiPopupDialogs.DialogType.OK_CANCEL_OPTION, I18n.format("pi.style.confirm_load_unsaved.txt") + "\n" + preset, "")//
-                            .setOkListener((event1, eventSource1) -> StyleHandler.loadPreset(preset, true)).showCenter();
+                            .setOkListener((event1, eventSource1) -> StyleHandler.loadPreset(preset, true)).showCenter(displayZLevel + 50);
                 }
                 else {
                     StyleHandler.loadPreset(preset, true);
                 }
             });
 
-            GuiButton delete = new StyledGuiButton("style_editor.button_style").setSize(9, 9);
+            GuiButton delete = new StyledGuiButton("user_dialogs.button_style").setSize(9, 9);
             delete.setListener(() -> GuiPopupDialogs.createDialog(this, GuiPopupDialogs.DialogType.YES_NO_OPTION, I18n.format("pi.style.delete_preset_confirm.txt") + "\n" + preset, I18n.format("pi.style.confirm_delete.txt"))//
                     .setYesListener((event1, eventSource1) -> {
                         StyleHandler.deletePreset(preset);
                         reloadElement();
-                    }).showCenter());
+                    }).showCenter(displayZLevel + 50));
             delete.setHoverText(I18n.format("pi.button.delete"));
             delete.addChild(new GuiTexture(64, 16, 5, 5, PITextures.PI_PARTS).setRelPos(2, 2));
+            button.addChild(delete);
 
             presetList.addElement(button);
             delete.setPos(button.maxXPos() - 11, button.yPos() + 1);
-//            button.addChild(delete);
-
         }
 
         for (String preset : StyleHandler.getDefaultPresets()) {
             GuiButton button = new StyledGuiButton("user_dialogs.sub_elements.button_style").setShadow(false).setText(I18n.format("pi.style.default." + preset)).setYSize(12).setAlignment(GuiAlign.LEFT);
+            button.addChild(new GuiLabel(I18n.format("pi.style.builtin")).setShadow(false).setYSize(12).bindSize(button, false).setAlignment(GuiAlign.RIGHT).setTextColGetter(hovering -> StyleHandler.getInt("user_dialogs.sub_elements.button_style.text_colour")));
             button.setListener(() -> {
                 if (StyleHandler.unsavedChanges) {
                     GuiPopupDialogs.createDialog(this, GuiPopupDialogs.DialogType.OK_CANCEL_OPTION, I18n.format("pi.style.confirm_load_unsaved.txt") + "\n" + preset, "")//
-                            .setOkListener((event1, eventSource1) -> StyleHandler.loadPreset(preset, true)).showCenter();
+                            .setOkListener((event1, eventSource1) -> StyleHandler.loadPreset(preset, true)).showCenter(displayZLevel + 50);
                 }
                 else {
-                    StyleHandler.loadPreset(preset, true);
+                    StyleHandler.loadPreset(preset, false);
                 }
             });
             presetList.addElement(button);
         }
 
         super.reloadElement();
+    }
+
+    @Override
+    public boolean onUpdate() {
+        StyleHandler.setHighlight(highlight);
+        highlight = "";
+        return super.onUpdate();
     }
 
     @Override
@@ -232,7 +241,6 @@ public class GuiStyleEditor extends GuiPopUpDialogBase<GuiStyleEditor> {
 
         @Override
         public boolean isMouseOver(int mouseX, int mouseY) {
-//            LogHelper.dev(getParent());
             return GuiHelper.isInRect(xPos(), yPos(), xSize(), propSize, mouseX, mouseY) && super.isMouseOver(mouseX, mouseY);//(getParent() == null || getParent().isMouseOver(mouseX, mouseY));
         }
 
@@ -313,28 +321,29 @@ public class GuiStyleEditor extends GuiPopUpDialogBase<GuiStyleEditor> {
             boolean mouseOver = GuiHelper.isInRect(xPos(), yPos(), xSize(), propSize, mouseX, mouseY);
             if (mouseOver && mouseButton == 0) {
                 if (property.isColour()) {
+                    StyleHandler.setHighlight("");
                     GuiPickColourDialog pickColour = new GuiPickColourDialog(this);
                     pickColour.setColour(((ColourProperty) property).getColour());
                     pickColour.setIncludeAlpha(((ColourProperty) property).alpha);
-                    pickColour.setColourChangeListener(integer -> ((ColourProperty) property).setColour(pickColour.getColour()));
-                    pickColour.showCenter(600);
+                    pickColour.setColourChangeListener(integer -> ((ColourProperty) property).set(pickColour.getColour()));
+                    pickColour.showCenter(displayZLevel + 100);
                     mc.getSoundHandler().playSound(PositionedSoundRecord.getMasterRecord(SoundEvents.UI_BUTTON_CLICK, 1.0F));
                 }
                 else if (property.isInteger()) {
                     GuiTextFieldDialog textDialog = new GuiTextFieldDialog(this);
                     textDialog.setYSize(25);
                     textDialog.setDragBar(5);
-                    textDialog.setText(String.valueOf(((IntegerProperty) property).getValue()));
+                    textDialog.setText(String.valueOf(((IntegerProperty) property).get()));
                     textDialog.setValidator(s -> s.isEmpty() || s.equals("-") || Utils.validInteger(s));
-                    textDialog.addTextChangeCallback(s -> ((IntegerProperty) property).setValue(s.isEmpty() || s.equals("-") ? 0 : Utils.parseInt(s)));
+                    textDialog.addTextChangeCallback(s -> ((IntegerProperty) property).set(s.isEmpty() || s.equals("-") ? 0 : Utils.parseInt(s)));
                     textDialog.addChild(new GuiBorderedRect().setPosAndSize(textDialog).setFillColour(0xFF000000));
-                    textDialog.showCenter(600);
+                    textDialog.showCenter(displayZLevel + 100);
                     textDialog.textField.setYSize(20).translate(0, 5);
                     textDialog.okButton.setYSize(20).translate(0, 5);
                     mc.getSoundHandler().playSound(PositionedSoundRecord.getMasterRecord(SoundEvents.UI_BUTTON_CLICK, 1.0F));
                 }
                 else if (property.isBoolean()) {
-                    ((BooleanProperty) property).setValue(!((BooleanProperty) property).getValue());
+                    ((BooleanProperty) property).set(!((BooleanProperty) property).get());
                     mc.getSoundHandler().playSound(PositionedSoundRecord.getMasterRecord(SoundEvents.UI_BUTTON_CLICK, 1.0F));
                 }
                 else if (showHide != null) {
@@ -350,7 +359,7 @@ public class GuiStyleEditor extends GuiPopUpDialogBase<GuiStyleEditor> {
                 int rely = 0;
                 GuiButton copy = new GuiButton(I18n.format("pi.button.copy_value")).setAlignment(GuiAlign.LEFT).setRelPos(1, rely += 1).setSize(98, 12).setBorderColours(0, 0xFF707070);
                 copy.setListener(() -> {
-                    GuiScreen.setClipboardString(String.valueOf(((IntegerProperty) property).getValue()));
+                    GuiScreen.setClipboardString(String.valueOf(((IntegerProperty) property).get()));
                     context.close();
                 });
                 context.addChild(copy);
@@ -359,10 +368,10 @@ public class GuiStyleEditor extends GuiPopUpDialogBase<GuiStyleEditor> {
                 paste.setListener(() -> {
                     try {
                         long value = Long.decode(GuiScreen.getClipboardString());
-                        ((IntegerProperty) property).setValue((int) value);
+                        ((IntegerProperty) property).set((int) value);
                     }
                     catch (NumberFormatException e) {
-                        PIHelpers.displayError("Invalid value found in clipboard! " + GuiScreen.getClipboardString() + " Must be an integer");
+                        PIGuiHelper.displayError("Invalid value found in clipboard! " + GuiScreen.getClipboardString() + " Must be an integer");
                     }
                     context.close();
                 });
@@ -371,7 +380,7 @@ public class GuiStyleEditor extends GuiPopUpDialogBase<GuiStyleEditor> {
                 if (property.isColour()) {
                     GuiButton copyHex = new GuiButton(I18n.format("pi.button.copy_hex_value")).setAlignment(GuiAlign.LEFT).setRelPos(1, rely += 13).setSize(98, 12).setBorderColours(0, 0xFF707070);
                     copyHex.setListener(() -> {
-                        int value = ((IntegerProperty) property).getValue();
+                        int value = ((IntegerProperty) property).get();
                         GuiScreen.setClipboardString(Integer.toHexString(value));
                         context.close();
                     });
@@ -382,14 +391,14 @@ public class GuiStyleEditor extends GuiPopUpDialogBase<GuiStyleEditor> {
                         try {
                             String value = GuiScreen.getClipboardString();
                             if (value.startsWith("#") || value.toLowerCase().startsWith("0x")) {
-                                ((IntegerProperty) property).setValue((int) (long) Long.decode(value));
+                                ((IntegerProperty) property).set((int) (long) Long.decode(value));
                             }
                             else {
-                                ((IntegerProperty) property).setValue((int) Long.parseLong(value, 16));
+                                ((IntegerProperty) property).set((int) Long.parseLong(value, 16));
                             }
                         }
                         catch (NumberFormatException e) {
-                            PIHelpers.displayError("Invalid value found in clipboard! " + GuiScreen.getClipboardString() + " Must be a hex value");
+                            PIGuiHelper.displayError("Invalid value found in clipboard! " + GuiScreen.getClipboardString() + " Must be a hex value");
                         }
                         context.close();
                     });
@@ -398,18 +407,18 @@ public class GuiStyleEditor extends GuiPopUpDialogBase<GuiStyleEditor> {
                     GuiButton lighten = new GuiButton(I18n.format("pi.button.lighten")).setAlignment(GuiAlign.LEFT).setRelPos(1, rely += 13).setSize(98, 12).setBorderColours(0, 0xFF707070);
                     lighten.setListener(() -> {
                         Colour colour = ((ColourProperty) property).getColour();
-                        ((ColourProperty) property).setValue(changeShade(colour.argb(), 0.05));
+                        ((ColourProperty) property).set(changeShade(colour.argb(), 0.05));
                     });
                     context.addChild(lighten);
                     GuiButton darken = new GuiButton(I18n.format("pi.button.darken")).setAlignment(GuiAlign.LEFT).setRelPos(1, rely + 13).setSize(98, 12).setBorderColours(0, 0xFF707070);
                     darken.setListener(() -> {
                         Colour colour = ((ColourProperty) property).getColour();
-                        ((ColourProperty) property).setValue(changeShade(colour.argb(), -0.05));
+                        ((ColourProperty) property).set(changeShade(colour.argb(), -0.05));
                     });
                     context.addChild(darken);
                 }
 
-                context.show(600);
+                context.show(displayZLevel + 100);
             }
 
             return false;
@@ -449,10 +458,10 @@ public class GuiStyleEditor extends GuiPopUpDialogBase<GuiStyleEditor> {
                 zOffset -= 10;
             }
             else if (property.isInteger()) {
-                drawCustomString(fontRenderer, String.valueOf(((IntegerProperty) property).getValue()), maxXPos() - 45, yPos() + 2.5F, 33, 0xFFAA00, GuiAlign.RIGHT, GuiAlign.TextRotation.NORMAL, false, true, true);
+                drawCustomString(fontRenderer, String.valueOf(((IntegerProperty) property).get()), maxXPos() - 45, yPos() + 2.5F, 33, 0xFFAA00, GuiAlign.RIGHT, GuiAlign.TextRotation.NORMAL, false, true, true);
             }
             else if (property.isBoolean()) {
-                drawString(fontRenderer, String.valueOf(((BooleanProperty) property).getValue()), maxXPos() - 38, yPos() + 2.5F, ((BooleanProperty) property).getValue() ? 0x00FF00 : 0xFF0000, ((BooleanProperty) property).getValue());
+                drawString(fontRenderer, String.valueOf(((BooleanProperty) property).get()), maxXPos() - 38, yPos() + 2.5F, ((BooleanProperty) property).get() ? 0x00FF00 : 0xFF0000, ((BooleanProperty) property).get());
             }
 
             GlStateManager.color(1, 1, 1, 1);
@@ -472,7 +481,7 @@ public class GuiStyleEditor extends GuiPopUpDialogBase<GuiStyleEditor> {
             }
             else if ((property.isInteger() && !property.isColour()) && GuiHelper.isInRect(maxXPos() - 45, yPos() + 1, 33, 10, mouseX, mouseY)) {
                 tt.add(I18n.format("pi.style.integer_value.txt"));
-                tt.add(((IntegerProperty) property).getValue() + "");
+                tt.add(((IntegerProperty) property).get() + "");
             }
 
             if (!tt.isEmpty()) {
@@ -481,6 +490,22 @@ public class GuiStyleEditor extends GuiPopUpDialogBase<GuiStyleEditor> {
             }
 
             return super.renderOverlayLayer(minecraft, mouseX, mouseY, partialTicks);
+        }
+
+        @Override
+        public boolean onUpdate() {
+            if (editTree.isEnabled() && GuiHelper.isInRect(xPos(), yPos(), xSize() / 2, propSize, getMouseX(), getMouseY())) {
+                highlight = property.getPath();
+            }
+            return super.onUpdate();
+        }
+
+        private int getMouseX() {
+            return Mouse.getEventX() * screenWidth / mc.displayWidth;
+        }
+
+        private int getMouseY() {
+            return screenHeight - Mouse.getEventY() * screenHeight / mc.displayHeight - 1;
         }
     }
 }

@@ -1,41 +1,44 @@
-package com.brandon3055.projectintelligence.client.gui;
+package com.brandon3055.projectintelligence.client;
 
-import com.brandon3055.projectintelligence.client.PIGuiHelper;
+import com.brandon3055.projectintelligence.client.gui.GuiProjectIntelligence_old;
+import com.brandon3055.projectintelligence.client.gui.PIConfig;
 import com.brandon3055.projectintelligence.client.gui.guielements.GuiPartMDWindow_old;
-import com.brandon3055.projectintelligence.client.gui.guielements.GuiPartPageList_old;
 import com.brandon3055.projectintelligence.docmanagement.DocumentationManager;
 import com.brandon3055.projectintelligence.docmanagement.DocumentationPage;
+import com.brandon3055.projectintelligence.docmanagement.PIUpdateManager;
 import com.brandon3055.projectintelligence.docmanagement.RootPage;
 
 import javax.annotation.Nullable;
 import java.util.LinkedList;
+import java.util.WeakHashMap;
 
 /**
  * Created by brandon3055 on 10/11/2017.
- * This class is used to manage all active pages (tabs) and everything related to them.
- * Including saving and loading the active tabs from disc.
  * <p>
- * Everything in this class will be static and the page list and MD window will be driven by this class.
- * Page list will load its pages from this based on the active tab which will also be stored in this class.
+ * The display controller is is the underlying object that controls what is displayed in the page list as well as in the MD window including managing open tabs.
+ * All control of the PI GUI can be controlled through this controller.
  * <p>
- * This will also handle filtering in the page list.
+ * There is a primary static controller instance used to control the main PI UI. For non persistent UI's such as the ones i am
+ * thinking of attaching mod ui's via the API controllers can be created as needed.
  * <p>
- * TLDR this handles everything related to pages displayed in the page list and the MD window.
+ * For use cases where a single specific page or group of pages are to be shown the display controller can be used in a restricted mode.
+ * This will restrict the controller to a specific group of pages. Following links to other pages will just open that page in the main PI UI.
  */
-public class TabManager {
+public class DisplayController {
 
-    //There must always be ablest 1 open page and the active page must always be one of the open page.
-    //This is enforced by the getter methods for open/active pages
+    public static DisplayController MASTER_CONTROLLER = new DisplayController();
+
     /**
      * This is a list of all open pages (tabs)
      */
-    private static LinkedList<TabData> openTabs = new LinkedList<>();
+    private LinkedList<TabData> openTabs = new LinkedList<>();
     /**
      * This is the current active page (tab) if null will default to the default page next time the active page is requested.
      */
-    private static TabData activeTab = null;
+    private TabData activeTab = null;
+    private WeakHashMap<Object, Runnable> pageChangeListeners = new WeakHashMap<>();
 
-    public static LinkedList<TabData> getOpenTabs() {
+    public LinkedList<TabData> getOpenTabs() {
         openTabs.removeIf(tabData -> !DocumentationManager.doesPageExist(tabData.pageURI));
 
         if (openTabs.isEmpty()) {
@@ -45,29 +48,36 @@ public class TabManager {
         return openTabs;
     }
 
-    public static TabData getActiveTab() {
+    public TabData getActiveTab() {
         if (activeTab == null || !getOpenTabs().contains(activeTab)) {
             activeTab = getOpenTabs().getFirst();
         }
         return activeTab;
     }
 
-    public static void openPage(@Nullable String pageURI, boolean newTab) {
+    public boolean openPage(@Nullable String pageURI, boolean newTab) {
         if (pageURI == null) {
             pageURI = RootPage.ROOT_URI;
         }
 
+        //Ensures active tab is not null.
         getActiveTab();
 
         if (newTab) {
-            activeTab = new TabData(pageURI);
-            openTabs.add(activeTab);
+            if (openTabs.size() < PIConfig.maxTabs) {
+                activeTab = new TabData(pageURI);
+                openTabs.add(activeTab);
+            }
+            else {
+                return false;
+            }
         }
         else {
             activeTab.changePage(pageURI);
         }
 
-        reloadGuiForTabChange();
+        onActivePageChange();
+        return true;
     }
 
     /**
@@ -76,7 +86,7 @@ public class TabManager {
      * @param page the page who's tab is being dragged.
      * @param dir  the direction the page is being dragged -1 = left 1 = right
      */
-    public static void dragTab(TabData page, int dir) {
+    public void dragTab(TabData page, int dir) {
         if (!openTabs.contains(page)) {
             return;
         }
@@ -96,7 +106,7 @@ public class TabManager {
     /**
      * @return a list of sub pages for the current active page.
      */
-    public static LinkedList<DocumentationPage> getSubPages() {
+    public LinkedList<DocumentationPage> getSubPages() {
         LinkedList<DocumentationPage> list = new LinkedList<>();
         DocumentationPage page = getActiveTab().getDocPage();
 
@@ -105,7 +115,9 @@ public class TabManager {
                 list.addAll(page.getParent().getSubPages());
             }
             else {
-                PIGuiHelper.displayError("No documentation pages were found! This most likely means the documentation failed to download for some reason.", true);
+                if (PIConfig.downloadsAllowed && !PIUpdateManager.downloadManager.running){
+                    PIGuiHelper.displayError("No documentation pages were found! This most likely means the documentation failed to download for some reason.", true);
+                }
             }
         }
         else {
@@ -115,7 +127,7 @@ public class TabManager {
         return list;
     }
 
-    public static String getButtonController() {
+    public String getButtonController() {
         DocumentationPage page = getActiveTab().getDocPage();
         if (page instanceof RootPage) {
             return page.getPageURI();
@@ -130,20 +142,16 @@ public class TabManager {
         }
     }
 
-    public static void switchTab(TabData tab) {
+    public void switchTab(TabData tab) {
         if (!getOpenTabs().contains(tab)) {
             PIGuiHelper.displayError("Attempted to open an un-tracked/invalid tab. This should not be possible! Try re opening the gui.");
             return;
         }
         activeTab = tab;
-//        reloadGuiForTabChange();
-        GuiPartPageList_old pageList = GuiProjectIntelligence_old.getListPart();
-        if (pageList != null) {
-            pageList.reloadElement();
-        }
+        onActivePageChange();
     }
 
-    public static void closeTab(TabData tab) {
+    public void closeTab(TabData tab) {
         if (getOpenTabs().size() == 1 || !openTabs.contains(tab)) {
             return;
         }
@@ -161,28 +169,27 @@ public class TabManager {
         }
 
         openTabs.remove(tab);
-        reloadGuiForTabChange();
+        onActivePageChange();
     }
 
-    public static void reloadGuiForTabChange() {
-        GuiPartMDWindow_old mdWindow = GuiProjectIntelligence_old.getMDPart();
-        GuiPartPageList_old pageList = GuiProjectIntelligence_old.getListPart();
-        if (mdWindow != null && pageList != null) {
-            pageList.reloadElement();
-            mdWindow.reloadElement();
-        }
+    public void onActivePageChange() {
+        pageChangeListeners.values().forEach(Runnable::run);
     }
 
-    public static void clear() {
+    public void clear() {
         openTabs.clear();
     }
 
-    public static void goBack() {
+    public void goBack() {
         getActiveTab().back();
     }
 
-    public static void goForward() {
+    public void goForward() {
         getActiveTab().forward();
+    }
+
+    public void addChangeListener(Object listenerObject, Runnable changeCallback) {
+        pageChangeListeners.put(listenerObject, changeCallback);
     }
 
     public static class TabData {
@@ -190,6 +197,7 @@ public class TabManager {
         public double scrollPosition = 0;
         private LinkedList<String> pageHistory = new LinkedList<>();
         private LinkedList<String> forwardHistory = new LinkedList<>();
+        public boolean requiresEditReload = false;
 
         public TabData(String pageURI) {
             this.pageURI = pageURI;
@@ -224,7 +232,6 @@ public class TabManager {
             }
         }
 
-
         /**
          * After pressing the back button to go to a previous page this can be ued to go forward again if a new page was not opened after going back.
          * Similar to the forward button in a web browser.
@@ -250,6 +257,7 @@ public class TabManager {
         }
 
         public void reloadTab() {
+            requiresEditReload = true;
             GuiPartMDWindow_old mdWindow = GuiProjectIntelligence_old.getMDPart();
             if (mdWindow != null) {
                 mdWindow.reloadElement();

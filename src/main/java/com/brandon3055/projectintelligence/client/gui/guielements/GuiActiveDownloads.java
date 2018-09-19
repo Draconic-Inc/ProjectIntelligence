@@ -6,15 +6,15 @@ import com.brandon3055.brandonscore.lib.FileDownloadManager;
 import com.brandon3055.brandonscore.lib.PairKV;
 import com.brandon3055.brandonscore.utils.Utils;
 import com.brandon3055.projectintelligence.client.StyleHandler;
-import com.brandon3055.projectintelligence.docdata.PIUpdateManager;
+import com.brandon3055.projectintelligence.docmanagement.PIUpdateManager;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.resources.I18n;
 
 import java.io.File;
 import java.util.*;
 
-import static com.brandon3055.projectintelligence.docdata.PIUpdateManager.UpdateStage.INACTIVE;
-import static com.brandon3055.projectintelligence.docdata.PIUpdateManager.UpdateStage.RELOAD_DOCUMENTATION;
+import static com.brandon3055.projectintelligence.docmanagement.PIUpdateManager.UpdateStage.INACTIVE;
+import static com.brandon3055.projectintelligence.docmanagement.PIUpdateManager.UpdateStage.RELOAD_DOCUMENTATION;
 
 /**
  * Created by brandon3055 on 7/21/2018.

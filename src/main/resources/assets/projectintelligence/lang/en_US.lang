@@ -25,7 +25,7 @@ pi.style.save_overwrite.txt=There is already a preset with the specified name. W
 pi.style.delete_preset_confirm.txt=Are you sure you want to delete this style preset?
 pi.style.confirm_delete.txt=Confirm Delete
 pi.style.confirm_load_unsaved.txt=It looks like you have made changes to the current style. If you load a preset before saving your changes will be lost.
-pi.style.shade_borders.info=Not compatible with vanilla texture, Border colour should be the same as Primary Colour.
+pi.style.shade_borders.info=Not compatible with vanilla texture, Applies shading to the borders to give a raised look.
 
 pi.style.show_subs.txt=Show Sub Items
 pi.style.hide_subs.txt=Hide Sub Items
@@ -45,10 +45,16 @@ pi.style.page_list.prop=Page List
 pi.style.page_buttons.prop=Page Buttons
 pi.style.page_icon.prop=Page Icon
 pi.style.hide_button.prop=Nav Buttons
+pi.style.dir_path.prop=Directory Path
+pi.style.dir_path.info=This is the vertical bar to the left of the page list that shows the path to the current page.
 pi.style.dir_buttons.prop=Directory Buttons
 
 //Markdown Window
 pi.style.md_window.prop=Content Window
+
+
+pi.style.gui_docs.prop=Gui Docs
+pi.style.gui_docs.info=This can be used to customize the style of the documentation displayed in supported GUI's
 
 //Colour
 pi.style.colour.prop=Primary Colour
@@ -65,6 +71,8 @@ pi.style.button_style.prop=Button Style
 pi.style.vanilla_tex.prop=Vanilla Texture
 pi.style.thick_borders.prop=Thick Borders
 pi.style.shaded_borders.prop=Shaded Borders
+pi.style.invert_shade.prop=Invert Shade
+pi.style.invert_shade.info=Inverts the shade colours to instead give a sunken look.
 pi.style.header.prop=Header
 pi.style.body.prop=Body
 pi.style.footer.prop=Footer
@@ -76,6 +84,10 @@ pi.style.sub_elements.info=Used by windows such as the style editor and configur
 pi.style.sub_elements.prop=Sub Elements
 pi.style.small_bar.prop=Compact
 
+//default presets
+pi.style.builtin=(Builtin)
+pi.style.default.vanilla=Vanilla
+pi.style.default.darcula=Darcula
 
 //########### Misc ###########
 
@@ -97,7 +109,14 @@ pi.button.copy_to_clipboard=Copy to Clipboard
 pi.button.search_settings=Search Mode
 pi.button.go_back=Go Back
 pi.button.go_forward=Go Forward
-
+pi.button.prev_page=Previous Page
+pi.button.next_page=Next Page
+pi.button.previous=Previous
+pi.button.next=Next
+pi.button.skip=Skip
+pi.button.show_me_later=Show me next time
+pi.button.more_information=More Info
+pi.button.deny_access=Deny Access
 
 //Config
 pi.config.basic_config=Basic Configuration
@@ -118,6 +137,12 @@ pi.config.set_pi_language=Set PI Language
 pi.config.set_pi_language.info=By default PI uses whatever language minecraft is using but this option allows you to override that and set a custom language.
 pi.config.set_pi_language_note.info=Please note. Many languages will most likely not be supported by some mods. If you would like to help with translations learn how you can help by checking out the PI main page.
 pi.lang.mc_default=MC:
+pi.config.max_tabs.title=Set max tab count.
+pi.config.max_tabs.info=This setting allows you to set the maximum number of tabs that can be opened simultaneously.
+pi.config.max_tabs=Max Tab Count
+pi.config.et_fluid=ET Search fluid
+pi.config.et_fluid.info=If false the "Explain This" function will ignore fluids unless there are no other blocks within reaching distance.
+
 
 //Button Hover Text
 pi.button.close.info=Close Gui
@@ -133,6 +158,8 @@ pi.button.language_override_enabled.info=Language override is currently enabled 
 pi.error.page_lang_outdated=This page translation was written for a previous %s revision. This page may be outdated.
 pi.md.no_recipe_for_item.txt=No recipe could be found for this item!
 pi.md.link_confirmation.txt=Are you sure you want to open the following link in your browser?
+
+pi.notification.show_tutorial_later.txt=PI Intro screen will be displayed the next time you launch the game.
 
 //Misc UI Text
 pi.popup.select_language=Select Language
@@ -158,3 +185,48 @@ pi.search.mode.everywhere=Everywhere
 pi.search.mode.selected_mod=Current Mod
 pi.search.mode.page_sub_pages=This Page + Sub Pages
 pi.search.mode.page_only=This Page Only
+
+//Gui in Gui
+pi.gui_in_gui.display_doc=PI
+pi.gui_in_gui.display_doc.info=Display Project Intelligence documentation linked to this GUI.
+
+//Chat Messages
+pi.msg.no_doc_found_for=Did not find any documentation related to %s
+pi.msg.et_miss=No target found. Try looking at something interesting!
+
+//Keybindings
+pi.key.open_pi=Open Project Intelligence
+pi.key.et_gui=View Doc for stack in slot
+pi.key.et_world=ET (Explain This)
+
+//PI Introduction Screen
+pi.info_screen.welcome.title=Welcome to Project Intelligence!
+pi.info_screen.welcome.text=This is an open source project created by brandon3055. The goal of this project is to create a truly universal documentation mod by leveraging the power of the minecraft community.  So how will this work? well for starters any mod developer can add documentation for their mods to PI. The problem is mod devs are busy people so most of them wont have time to deal with something like this and that in my opinion is a major issue with most of the current documentation mods.  PI aims to solve this problem by making it possible for anyone in the community to contribute by writing documentation for various mods using the relatively simple built in editor. They can then submit their documentation via PR and if it passes review it will be added to the online repository.
+
+pi.info_screen.guide_intro.title=What is this?
+pi.info_screen.guide_intro.text=This is the first launch introduction. It will walk you through some of the main features in project intelligence. If this is not your first time here then feel free to skip this intro.  Most features in PI are pretty self explanatory but there are a few less obvious features you may find useful.
+
+pi.info_screen.basic_overview.title=Overview
+pi.info_screen.basic_overview.text=Everything here should be pretty self explanatory. Hover your mouse over any of the arrows to view info about that item.
+
+pi.info_screen.ui_style.title=UI Style
+pi.info_screen.ui_style.text=This gui is extremely customizable! You can find the style settings by pressing the options button in the top right corner of PI. There you will find some builtin style presets and an option to edit the current preset which you can then save as your own custom preset!
+
+pi.info_screen.contributing.title=Contributing
+pi.info_screen.contributing.text=If you would like to contribute by writing documentation for a mod then please check out then please check out the "Contribute" page in the PI documentation which you can find in... well.. PI!
+
+pi.intro.arrow_info.back_forward.txt=Forward/Back buttons. These work like that back/forward buttons in a web browser allowing you to go back to previously visited pages then forward from there.
+pi.intro.arrow_info.toggle_nav.txt=Allows you to hide/show the navigation window.
+pi.intro.arrow_info.button_list.txt=This is a simple tree based navigation system where the root branch contains a list of mod pages. When you select a page from this list that page's sub pages will be displayed here if it has any. Otherwise the page will simply be highlighted.
+pi.intro.arrow_info.current_directory.txt=This shows a truncated view of the path to the current page. e.g. Home/Draconic Evolution/Draconium Chest. It can be used to navigate to a previous page.
+pi.intro.arrow_info.search_box.txt=This is a search box. Pretty self explanatory. It allows you to search for pages.
+pi.intro.arrow_info.search_settings.txt=The search settings allow you to change the scope of the search.
+pi.intro.arrow_info.settings.txt=Here you can find all of the settings for PI. It should be noted that all settings for PI are in game and there is no user editable config file.
+pi.intro.arrow_info.minimize.txt=Minimize/Maximize allow you to change the size of this UI.
+pi.intro.arrow_info.content_tabs.txt=TABS! Yes PI has tabs. When opening a page simply middle click or right click > Open in new tab.
+pi.intro.arrow_info.content_window.txt=This is the content window. Its where the content is!
+
+//Internet Disclaimer
+pi.internet_access_info.txt=Please be aware as all project intelligence documentation is stored online the mod requires internet access to function correctly.
+pi.internet_access_more_info.txt=On first launch PI will download and cache all available documentation pages for the installed mods. Any images are downloaded and cached on an as-needed basis to reduce internet usage.
+pi.internet_access_denied.txt=Please be aware PI does not currently support running in "Offline Mode" If you want to use PI in the future you need to allow internet access.

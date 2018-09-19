@@ -1,5 +1,6 @@
 package com.brandon3055.projectintelligence.client.gui.guielements;
 
+import com.brandon3055.brandonscore.client.ResourceHelperBC;
 import com.brandon3055.brandonscore.client.gui.modulargui.MGuiElementBase;
 import com.brandon3055.brandonscore.client.gui.modulargui.baseelements.GuiButton;
 import com.brandon3055.brandonscore.client.gui.modulargui.guielements.*;
@@ -7,12 +8,10 @@ import com.brandon3055.brandonscore.client.gui.modulargui.lib.GuiAlign;
 import com.brandon3055.brandonscore.lib.DLRSCache;
 import com.brandon3055.brandonscore.lib.StackReference;
 import com.brandon3055.brandonscore.utils.Utils;
-import com.brandon3055.projectintelligence.client.DisplayController;
 import com.brandon3055.projectintelligence.client.PITextures;
-import com.brandon3055.projectintelligence.client.StyleHandler;
 import com.brandon3055.projectintelligence.client.gui.ContentInfo;
 import com.brandon3055.projectintelligence.client.gui.PIConfig;
-import com.brandon3055.projectintelligence.client.gui.PIPartRenderer;
+import com.brandon3055.projectintelligence.client.gui.TabManager;
 import com.brandon3055.projectintelligence.docmanagement.DocumentationManager;
 import com.brandon3055.projectintelligence.docmanagement.DocumentationPage;
 import com.brandon3055.projectintelligence.docmanagement.LanguageManager;
@@ -33,15 +32,13 @@ import net.minecraft.util.text.TextFormatting;
 
 import java.util.LinkedList;
 
+import static com.brandon3055.projectintelligence.client.gui.guielements.PageButton.pageButtonProps;
+
 /**
  * Created by brandon3055 on 21/08/2017.
  */
-public class PageButton extends GuiButton {
-    public static StyleHandler.PropertyGroup pageButtonProps = new StyleHandler.PropertyGroup("page_list.page_buttons");
-    public PIPartRenderer buttonRender = new PIPartRenderer(pageButtonProps).setButtonRender(true);
-
+public class PageButton_old extends GuiButton {
     private DocumentationPage page;
-    private DisplayController controller;
     private LinkedList<MGuiElementBase> icons = new LinkedList<>();
     private GuiLabel label;
     private GuiTexture versMissMatch;
@@ -50,11 +47,11 @@ public class PageButton extends GuiButton {
     private boolean invalidIcons = false;
     private int iconIndex = 0;
 
-    public PageButton(DocumentationPage page, DisplayController controller) {
+    public PageButton_old(DocumentationPage page) {
         this.page = page;
-        this.controller = controller;
     }
 
+    //############################################################################
     //# Initialization
     //region //############################################################################
 
@@ -244,7 +241,7 @@ public class PageButton extends GuiButton {
             context.setSelectionListener(ContextMenuItem::onClicked);
 
             ContextMenuItem menuItem = new ContextMenuItem(I18n.format("pi.page.cm.open_new_tab"));
-            menuItem.setAction(() -> controller.openPage(page.getPageURI(), true));
+            menuItem.setAction(() -> TabManager.openPage(page.getPageURI(), true));
             context.addItem(menuItem);
 
             menuItem = new ContextMenuItem(I18n.format("pi.page.cm.override_lang"));
@@ -256,10 +253,7 @@ public class PageButton extends GuiButton {
             context.addItem(menuItem);
 
             menuItem = new ContextMenuItem(I18n.format("pi.page.cm.set_home_page"));
-            menuItem.setAction(() -> {
-                PIConfig.setHomePage(page.getPageURI());
-                controller.onActivePageChange();
-            });
+            menuItem.setAction(() -> PIConfig.setHomePage(page.getPageURI()));
             context.addItem(menuItem);
 
             if (PIConfig.editMode()) {
@@ -276,53 +270,59 @@ public class PageButton extends GuiButton {
         else {
             boolean newTab = mouseButton == 2;
 
-            if (!newTab && controller.getActiveTab().pageURI.equals(page.getPageURI())) {
+            if (!newTab && TabManager.getActiveTab().pageURI.equals(page.getPageURI())) {
                 //Go back if the page is already selected
-                controller.openPage(page.getParent().getPageURI(), false);
+                TabManager.openPage(page.getParent().getPageURI(), false);
             }
             else {
                 //Open Page
-                controller.openPage(page.getPageURI(), newTab);
+                TabManager.openPage(page.getPageURI(), newTab);
             }
         }
 
         super.onPressed(mouseX, mouseY, mouseButton);
     }
 
+    //############################################################################
     //# Render
     //region //############################################################################
 
     @Override
     public void renderElement(Minecraft mc, int mouseX, int mouseY, float partialTicks) {
-        boolean highlighted = isMouseOver(mouseX, mouseY) || controller.getActiveTab().pageURI.equals(page.getPageURI());
+        boolean highlighted = isMouseOver(mouseX, mouseY) || TabManager.getActiveTab().pageURI.equals(page.getPageURI());
 
-        buttonRender.render(this, highlighted);
+        if (pageButtonProps.shadeBorders()) {
+            int back = pageButtonProps.colour(highlighted);//highlighted ? GuiPartPageList.btnColourHover.argb() : GuiPartPageList.btnColour.argb();
+            int border = pageButtonProps.border(highlighted);//highlighted ? GuiPartPageList.btnBorderHover.argb() : GuiPartPageList.btnBorder.argb();
+            int pos = changeShade(border, 0.2);
+            int neg = changeShade(border, -0.1);
+            double b = pageButtonProps.thickBorders() || highlighted ? 1 : 0.5;
 
-//        if (pageButtonProps.shadeBorders()) {
-//            int back = pageButtonProps.colour(highlighted);
-//            int border = pageButtonProps.border(highlighted);
-//            int pos = changeShade(border, 0.2);
-//            int neg = changeShade(border, -0.1);
-//            double b = pageButtonProps.thickBorders() || highlighted ? 1 : 0.5;
-//
-//            drawColouredRect(xPos(), yPos(), xSize(), ySize(), back);
-//            drawColouredRect(xPos(), yPos(), xSize(), b, pos);
-//            drawColouredRect(xPos(), yPos(), b, ySize(), pos);
-//            drawColouredRect(xPos(), yPos() + ySize() - b, xSize(), b, neg);
-//            drawColouredRect(xPos() + xSize() - b, yPos(), b, ySize(), neg);
-//        }
-//        else if (pageButtonProps.vanillaTex()) {
+            drawColouredRect(xPos(), yPos(), xSize(), ySize(), back);
+            drawColouredRect(xPos(), yPos(), xSize(), b, pos);
+            drawColouredRect(xPos(), yPos(), b, ySize(), pos);
+            drawColouredRect(xPos(), yPos() + ySize() - b, xSize(), b, neg);
+            drawColouredRect(xPos() + xSize() - b, yPos(), b, ySize(), neg);
+        }
+        else if (pageButtonProps.vanillaTex()) {
             int texV = 48 + (getRenderState(highlighted) * 20);
-//
-//            pageButtonProps.glColour(highlighted);
-//            ResourceHelperBC.bindTexture(PITextures.PI_PARTS);
-//            drawTiledTextureRectWithTrim(xPos(), yPos(), xSize(), ySize(), 2, 2, 2, 2, 0, texV, 200, 20);
-//            GlStateManager.color(1, 1, 1, 1);
-//            drawBorderedRect(xPos(), yPos(), xSize(), ySize(), 1, 0, pageButtonProps.border(highlighted)/*highlighted ? GuiPartPageList.btnBorderHover.argb() : GuiPartPageList.btnBorder.argb()*/);
-//        }
-//        else {
-//            drawBorderedRect(xPos(), yPos(), xSize(), ySize(), 1, pageButtonProps.colour(highlighted), pageButtonProps.border(highlighted));
-//        }
+
+            pageButtonProps.glColour(highlighted);
+//            if (highlighted) {
+//                GuiPartPageList.btnColourHover.glColour();
+//            }
+//            else {
+//                GuiPartPageList.btnColour.glColour();
+//            }
+
+            ResourceHelperBC.bindTexture(PITextures.PI_PARTS);
+            drawTiledTextureRectWithTrim(xPos(), yPos(), xSize(), ySize(), 2, 2, 2, 2, 0, texV, 200, 20);
+            GlStateManager.color(1, 1, 1, 1);
+            drawBorderedRect(xPos(), yPos(), xSize(), ySize(), 1, 0, pageButtonProps.border(highlighted)/*highlighted ? GuiPartPageList.btnBorderHover.argb() : GuiPartPageList.btnBorder.argb()*/);
+        }
+        else {
+            drawBorderedRect(xPos(), yPos(), xSize(), ySize(), 1, pageButtonProps.colour(highlighted), pageButtonProps.border(highlighted));
+        }
 
         if (page.isHidden() && PIConfig.editMode()) {
             drawColouredRect(xPos() + 1, yPos() + 1, xSize() - 2, ySize() - 2, 0xA0000000);

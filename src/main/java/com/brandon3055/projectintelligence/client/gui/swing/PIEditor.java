@@ -11,10 +11,14 @@ import com.brandon3055.brandonscore.handlers.FileHandler;
 import com.brandon3055.brandonscore.integration.ModHelperBC;
 import com.brandon3055.brandonscore.utils.DataUtils;
 import com.brandon3055.brandonscore.utils.Utils;
-import com.brandon3055.projectintelligence.PIHelpers;
-import com.brandon3055.projectintelligence.client.gui.*;
-import com.brandon3055.projectintelligence.docdata.*;
-import com.brandon3055.projectintelligence.docdata.LanguageManager.PageLangData;
+import com.brandon3055.projectintelligence.client.DisplayController;
+import com.brandon3055.projectintelligence.client.PIGuiHelper;
+import com.brandon3055.projectintelligence.client.gui.ContentInfo;
+import com.brandon3055.projectintelligence.client.gui.GuiContentSelect;
+import com.brandon3055.projectintelligence.client.gui.GuiProjectIntelligence;
+import com.brandon3055.projectintelligence.client.gui.PIConfig;
+import com.brandon3055.projectintelligence.docmanagement.*;
+import com.brandon3055.projectintelligence.docmanagement.LanguageManager.PageLangData;
 import com.brandon3055.projectintelligence.utils.LogHelper;
 import com.google.common.base.Charsets;
 import com.google.common.collect.Maps;
@@ -24,6 +28,7 @@ import org.apache.commons.io.FileUtils;
 
 import javax.annotation.Nullable;
 import javax.swing.*;
+import javax.swing.UIManager.LookAndFeelInfo;
 import javax.swing.event.*;
 import javax.swing.tree.*;
 import javax.swing.undo.CannotUndoException;
@@ -43,24 +48,23 @@ import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 import static com.brandon3055.projectintelligence.client.gui.ContentInfo.ContentType.*;
-import static com.brandon3055.projectintelligence.client.gui.GuiContentSelect.SelectMode.ICON;
-import static com.brandon3055.projectintelligence.client.gui.GuiContentSelect.SelectMode.MD_CONTENT;
+import static com.brandon3055.projectintelligence.client.gui.GuiContentSelect.SelectMode.*;
 
 /**
  * @author brand
  */
 public class PIEditor extends javax.swing.JFrame {
 
+    private static String os = System.getProperty("os.name");
     private static Pattern versionValidator = Pattern.compile("^[\\d\\.]+$");
     private String selectedPageURI = "";
     private DefaultTreeModel treeModel;
     private DefaultListModel<ContentInfo> iconListModel = new DefaultListModel<>();
-    private DefaultListModel<String> relationListModel = new DefaultListModel<>();
+    private DefaultListModel<ContentRelation> relationListModel = new DefaultListModel<>();
     private DefaultListModel<String> aliasListModel = new DefaultListModel<>();
     private boolean reloading = false;
     private UndoManager undo = new UndoManager();
     private static Map<String, Integer> caretPositions = new HashMap<>();
-
 
     /**
      * Creates new form PIEditor
@@ -115,7 +119,51 @@ public class PIEditor extends javax.swing.JFrame {
         });
         jMenu3.add(item);
 
+        loadLAFOps();
+
         reload();
+    }
+
+    private void loadLAFOps() {
+        loadLAF(PIConfig.editorLAF, false);
+        JMenu lafs = new JMenu("Editor Style");
+        for (LookAndFeelInfo info : UIManager.getInstalledLookAndFeels()) {
+            JMenuItem item = new JMenuItem(info.getName());
+            item.addActionListener(e -> loadLAF(info.getClassName(), true));
+            lafs.add(item);
+        }
+
+        try {
+            Class.forName("com.bulenkov.darcula.DarculaLaf");
+            JMenuItem item = new JMenuItem("Darcula");
+            item.addActionListener(e -> loadLAF("com.bulenkov.darcula.DarculaLaf", true));
+            lafs.add(item);
+        }
+        catch (ClassNotFoundException ignored) {}
+
+
+        jMenu3.add(lafs);
+    }
+
+    private void loadLAF(String lafClass, boolean save) {
+        try {
+            if (lafClass.isEmpty()) {
+                UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+                return;
+            }
+            UIManager.setLookAndFeel(lafClass);
+            SwingUtilities.updateComponentTreeUI(this);
+        }
+        catch (Throwable e) {
+            LogHelper.error("Failed to load look and feel: " + lafClass);
+            e.printStackTrace();
+            return;
+        }
+
+        if (save) {
+            PIConfig.editorLAF = lafClass;
+            ProcessHandlerClient.syncTask(PIConfig::save);
+        }
     }
 
     private void undo() {
@@ -134,6 +182,12 @@ public class PIEditor extends javax.swing.JFrame {
             }
         }
         catch (CannotUndoException ignored) {}
+    }
+
+    @Override
+    public void toBack() {
+        if (os.equals("Linux")) return;
+        super.toBack();
     }
 
     private void generateLineNumbers() {
@@ -929,10 +983,13 @@ public class PIEditor extends javax.swing.JFrame {
             });
         }
         streamTree(pageTree, true).forEachOrdered(row -> {
-            String node = pageTree.getPathForRow(row).getLastPathComponent().toString();
-            if (!expanded.contains(node) && !node.equals("Root Page")) {
-                pageTree.collapseRow(row);
+            try {
+                String node = pageTree.getPathForRow(row).getLastPathComponent().toString();
+                if (!expanded.contains(node) && !node.equals("Root Page")) {
+                    pageTree.collapseRow(row);
+                }
             }
+            catch (Throwable ignored) {}
         });
 
         if (selectedPage != null && keepSelection.get()) {
@@ -1122,7 +1179,10 @@ public class PIEditor extends javax.swing.JFrame {
 
     //Page Fields
 
+    private boolean ignoreWeightChange = false;
     private void weightChanged(ChangeEvent evt) {
+        if (ignoreWeightChange) return;
+        long t = System.currentTimeMillis();
         DocumentationPage page = getSelected();
         if (page != null) {
             int weight = MathHelper.clip((Integer) weightField.getValue(), -2048, 2048);
@@ -1131,6 +1191,7 @@ public class PIEditor extends javax.swing.JFrame {
             updateTree();
             setSelectedPage(page);
         }
+        LogHelper.dev((System.currentTimeMillis() - t) + "ms");
     }
 
     private void nameChange(KeyEvent evt) {
@@ -1224,8 +1285,8 @@ public class PIEditor extends javax.swing.JFrame {
     }
 
     private void newModAction(ActionEvent evt) {
-        UINewDoc ui = new UINewDoc(this, Maps.filterEntries(ModHelperBC.getModNameMap(), input -> input != null && !PIHelpers.getSupportedMods().contains(input.getKey())), false);
-        PIHelpers.centerWindowOnMC(ui);
+        UINewDoc ui = new UINewDoc(this, Maps.filterEntries(ModHelperBC.getModNameMap(), input -> input != null && !PIGuiHelper.getSupportedMods().contains(input.getKey())), false);
+        PIGuiHelper.centerWindowOnMC(ui);
         ui.setVisible(true);
 
         if (!ui.isCanceled()) {
@@ -1241,7 +1302,7 @@ public class PIEditor extends javax.swing.JFrame {
 
     private void newLocalDoc(ActionEvent evt) {
         UINewDoc ui = new UINewDoc(this, Collections.emptyMap(), true);
-        PIHelpers.centerWindowOnMC(ui);
+        PIGuiHelper.centerWindowOnMC(ui);
         ui.setVisible(true);
 
         if (!ui.isCanceled()) {
@@ -1291,17 +1352,17 @@ public class PIEditor extends javax.swing.JFrame {
             @Override
             public void accept(ContentInfo contentInfo) {
                 DocumentationPage iconPage = DocumentationManager.getPage(page.getPageURI());
-                toFront();
                 if (contentInfo != null && !(iconPage instanceof RootPage)) {
                     iconPage.getIcons().add(contentInfo.getAsIconObj());
                     iconPage.saveToDisk();
-                    PIHelpers.reloadPageList();
+                    PIGuiHelper.reloadPageList();
                     setSelectedPage(DocumentationManager.getPage(selectedPageURI));
                 }
+                SwingUtilities.invokeLater(() -> toFront());
             }
         };
 
-        PIHelpers.openContentChooser(null, ICON, addIconAction, ITEM_STACK, ENTITY, IMAGE);
+        PIGuiHelper.openContentChooser(null, ICON, addIconAction, ITEM_STACK, ENTITY, IMAGE);
         toBack();  //TODO override always on top and only do this if the py window is on top of the mc window.
     }
 
@@ -1320,7 +1381,7 @@ public class PIEditor extends javax.swing.JFrame {
 
         JsonObject selectedObj = selected.getAsIconObj();
 
-        Consumer<ContentInfo> addIconAction = new Consumer<ContentInfo>() {
+        Consumer<ContentInfo> editIconAction = new Consumer<ContentInfo>() {
             @Override
             public void accept(ContentInfo contentInfo) {
                 DocumentationPage iconPage = DocumentationManager.getPage(page.getPageURI());
@@ -1329,13 +1390,13 @@ public class PIEditor extends javax.swing.JFrame {
                     iconPage.getIcons().remove(selectedObj);
                     iconPage.getIcons().add(contentInfo.getAsIconObj());
                     iconPage.saveToDisk();
-                    PIHelpers.reloadPageList();
+                    PIGuiHelper.reloadPageList();
                     setSelectedPage(DocumentationManager.getPage(selectedPageURI));
                 }
             }
         };
 
-        PIHelpers.openContentChooser(selected, ICON, addIconAction, ITEM_STACK, ENTITY, IMAGE);
+        PIGuiHelper.openContentChooser(selected, ICON, editIconAction, ITEM_STACK, ENTITY, IMAGE);
         toBack();  //TODO override always on top and only do this if the py window is on top of the mc window.
     }
 
@@ -1355,7 +1416,7 @@ public class PIEditor extends javax.swing.JFrame {
         ProcessHandlerClient.syncTask(() -> {
             page.getIcons().remove(selectedIndex);
             page.saveToDisk();
-            PIHelpers.reloadPageList();
+            PIGuiHelper.reloadPageList();
             setSelectedPage(DocumentationManager.getPage(selectedPageURI));
         });
     }
@@ -1365,38 +1426,85 @@ public class PIEditor extends javax.swing.JFrame {
     //region Relations / Match Version
 
     private void addRelation(ActionEvent evt) {
-//        DocumentationPage page = getSelected();
-        JOptionPane.showMessageDialog(this, "Relations are not yet implemented!", "NYI", JOptionPane.ERROR_MESSAGE);
-//        if (page == null || true) {
-//            return;
-//        }
-//
-//        String message = "This dialog allows you to add a relation for this page.\n" +
-//                "Relations are stacks or entities that are related to this page in some way.\n" +
-//                "This is used to link eo a page by pressing the info button while hovering over an item in inventory.\n" +
-//                "Required format is\n" +
-//                "stack|minecraft:stone\n" +
-//                "stack|minecraft:stone,<count>,<meta>,{<nbt>}\n" +
-//                "entity|minecraft:zombie";
-//
-//        Map<String, java.util.List<String>> map = new HashMap<>();
-//        SelectIcon selector = createSelectDialog(map, message, "stack", "");
-//        selector.setVisible(true);
-//        if (selector.canceled || selector.getIconString().isEmpty()) {
-//            return;
-//        }
-//
-//        page.getLinked().add(selector.getIconType()+":"+selector.getIconString());
-//        String selected = selectedPageURI;
-//        page.saveToDisk();
-//        DocumentationManager.checkAndReloadDocFiles();
-//        setSelectedPage(DocumentationManager.getPage(selected));
+        DocumentationPage page = getSelected();
+        if (page == null) {
+            return;
+        }
+
+        Consumer<ContentInfo> addRelationAction = new Consumer<ContentInfo>() {
+            @Override
+            public void accept(ContentInfo contentInfo) {
+                DocumentationPage docPage = DocumentationManager.getPage(page.getPageURI());
+                toFront();
+                if (contentInfo != null && !(docPage instanceof RootPage)) {
+                    docPage.getRelations().add(contentInfo.asRelation());
+                    docPage.saveToDisk();
+                    PIGuiHelper.reloadPageList();
+                    DocumentationManager.clearRelationCache();
+                    setSelectedPage(DocumentationManager.getPage(selectedPageURI));
+                }
+            }
+        };
+
+        PIGuiHelper.openContentChooser(null, RELATION, addRelationAction, ITEM_STACK, ENTITY, FLUID);
+        toBack();
     }
 
     private void editRelation(ActionEvent evt) {
+        DocumentationPage page = getSelected();
+        if (page == null) {
+            return;
+        }
+
+        ContentRelation selected = relationList.getSelectedValue();
+
+        if (selected == null) {
+            JOptionPane.showMessageDialog(this, "Please select a relation to edit!", "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        ContentInfo selectedInfo = ContentInfo.fromRelation(selected);
+
+        Consumer<ContentInfo> editRelationAction = new Consumer<ContentInfo>() {
+            @Override
+            public void accept(ContentInfo contentInfo) {
+                DocumentationPage docPage = DocumentationManager.getPage(page.getPageURI());
+                toFront();
+                if (contentInfo != null && !(docPage instanceof RootPage)) {
+                    docPage.getRelations().remove(selected);
+                    docPage.getRelations().add(contentInfo.asRelation());
+                    docPage.saveToDisk();
+                    PIGuiHelper.reloadPageList();
+                    DocumentationManager.clearRelationCache();
+                    setSelectedPage(DocumentationManager.getPage(selectedPageURI));
+                }
+            }
+        };
+
+        PIGuiHelper.openContentChooser(selectedInfo, RELATION, editRelationAction, ITEM_STACK, ENTITY, FLUID);
+        toBack();
     }
 
     private void removeRelation(ActionEvent evt) {
+        DocumentationPage page = getSelected();
+        if (page == null) {
+            return;
+        }
+
+        ContentRelation selected = relationList.getSelectedValue();
+//        int selectedIndex = relationList.getSelectedIndex();
+        if (selected == null) {
+            JOptionPane.showMessageDialog(this, "Please select an icon to delete!", "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        ProcessHandlerClient.syncTask(() -> {
+            page.getRelations().remove(selected);
+            page.saveToDisk();
+            PIGuiHelper.reloadPageList();
+            DocumentationManager.clearRelationCache();
+            setSelectedPage(DocumentationManager.getPage(selectedPageURI));
+        });
     }
 
     //TODO this code to set language matching is a bit of a mess and needs to be re written.
@@ -1444,13 +1552,6 @@ public class PIEditor extends javax.swing.JFrame {
         Object item = matchLangBox.getSelectedItem();
         data.setMatchLang(item == null || item.equals("disabled") ? null : "" + item, (int) enRevField.getValue());
     }
-
-//    private SelectIcon createSelectDialog(Map<String, java.util.List<String>> map, String message, String startType, String startContent) {
-//        if (!map.containsKey("stack")) map.put("stack", PIHelpers.getPlayerInventory());
-//        if (!map.containsKey("entity")) map.put("entity", PIHelpers.getEntitySelectionList());
-//        map.put("player", new ArrayList<>());
-//        return new SelectIcon(this, message, map, startType, startContent);
-//    }
 
     //endregion
 
@@ -1512,7 +1613,9 @@ public class PIEditor extends javax.swing.JFrame {
             //Page Fields
             nameField.setText(isModPage ? "" : LanguageManager.getPageLangName(page));
             idField.setText(isModPage ? "" : page.getPageId());
+            ignoreWeightChange = true;
             weightField.setValue(page.getSortingWeight());
+            ignoreWeightChange = false;
             cycleIcons.setSelected(page.cycle_icons());
             toggleHidden.setSelected(page.isHidden());
 
@@ -1550,11 +1653,11 @@ public class PIEditor extends javax.swing.JFrame {
         reloadLists();
         reloading = false;
 
-        BoundedRangeModel model = mdScrollPane.getVerticalScrollBar().getModel();
+//        BoundedRangeModel model = mdScrollPane.getVerticalScrollBar().getModel();
 //        double scrollPos = (double) model.getValue() / (double) (model.getMaximum() - model.getMinimum());
         if (page != null){
             //This is a mess... The entire tree loading system in the editor needs a proper overhaul.
-            ProcessHandlerClient.syncTask(() -> TabManager.openPage(getSelectedPageURI(), false));
+            ProcessHandlerClient.syncTask(() -> DisplayController.MASTER_CONTROLLER.openPage(getSelectedPageURI(), false));
         }
 //        ProcessHandlerClient.syncTask(() -> TabManager.getActiveTab().updateScroll(scrollPos));
     }
@@ -1632,7 +1735,7 @@ public class PIEditor extends javax.swing.JFrame {
         if (page != null && !(page instanceof ModStructurePage) && JOptionPane.showConfirmDialog(this, "Are you sure you want to delete this page and its sub pages? \"" + page.getDisplayName() + "\" This can not be undone!", "Confirm Delete", JOptionPane.YES_NO_OPTION) == 0) {
             page.deletePage();
             reload();
-            GuiProjectIntelligence.requiresReload = true;
+            GuiProjectIntelligence.requiresEditReload = true;
         }
     }
 
@@ -1775,11 +1878,11 @@ public class PIEditor extends javax.swing.JFrame {
         switch (action) {
             case "stack":
                 toBack();
-                PIHelpers.openContentChooser(null, MD_CONTENT, applyContentTag, ITEM_STACK);
+                PIGuiHelper.openContentChooser(null, MD_CONTENT, applyContentTag, ITEM_STACK);
                 break;
             case "recipe": {
                 toBack();
-                PIHelpers.openContentChooser(null, GuiContentSelect.SelectMode.PICK_STACK, contentInfo -> SwingUtilities.invokeLater(() -> {
+                PIGuiHelper.openContentChooser(null, GuiContentSelect.SelectMode.PICK_STACK, contentInfo -> SwingUtilities.invokeLater(() -> {
                     toFront();
                     if (contentInfo == null) return;
                     MDTagDialog tagD = new MDTagDialog(this, MDTagDialog.TagType.RECIPE);
@@ -1792,7 +1895,7 @@ public class PIEditor extends javax.swing.JFrame {
             }
             case "image":
                 toBack();
-                PIHelpers.openContentChooser(null, MD_CONTENT, applyContentTag, IMAGE);
+                PIGuiHelper.openContentChooser(null, MD_CONTENT, applyContentTag, IMAGE);
                 break;
             case "link": {
                 MDTagDialog tagD = new MDTagDialog(this, MDTagDialog.TagType.LINK);
@@ -1802,7 +1905,7 @@ public class PIEditor extends javax.swing.JFrame {
             }
             case "entity":
                 toBack();
-                PIHelpers.openContentChooser(null, MD_CONTENT, applyContentTag, ENTITY);
+                PIGuiHelper.openContentChooser(null, MD_CONTENT, applyContentTag, ENTITY);
                 break;
             case "rule": {
                 MDTagDialog tagD = new MDTagDialog(this, MDTagDialog.TagType.RULE);
@@ -2054,7 +2157,7 @@ public class PIEditor extends javax.swing.JFrame {
         frame.setVisible(true);
         frame.setAlwaysOnTop(alwaysOnTop.isSelected());
         frame.jCheckBox1.setSelected(alwaysOnTop.isSelected());
-        PIHelpers.centerWindowOn(frame, this);
+        PIGuiHelper.centerWindowOn(frame, this);
     }
 
     public DocumentationPage getSelected() {
@@ -2237,7 +2340,7 @@ public class PIEditor extends javax.swing.JFrame {
     private JButton newPageButton;
     private JPanel pagePanel;
     private JTree pageTree;
-    private JList<String> relationList;
+    private JList<ContentRelation> relationList;
     private JLabel relationsLabel;
     private JLabel relationsLabel1;
     private JSpinner revisionField;
