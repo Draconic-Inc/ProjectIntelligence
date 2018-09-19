@@ -193,7 +193,6 @@ public class PIConfig {
     public static void setHomePage(String homePage) {
         PIConfig.homePage = homePage;
         save();
-        GuiProjectIntelligence_old.requiresReload = true;
     }
 
     public static void setEditMode(boolean editMode) {

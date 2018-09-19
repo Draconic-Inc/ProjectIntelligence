@@ -1355,7 +1355,7 @@ public class PIEditor extends javax.swing.JFrame {
                 if (contentInfo != null && !(iconPage instanceof RootPage)) {
                     iconPage.getIcons().add(contentInfo.getAsIconObj());
                     iconPage.saveToDisk();
-                    PIGuiHelper.reloadPageList();
+//                    PIGuiHelper.reloadPageList();
                     setSelectedPage(DocumentationManager.getPage(selectedPageURI));
                 }
                 SwingUtilities.invokeLater(() -> toFront());
@@ -1390,7 +1390,7 @@ public class PIEditor extends javax.swing.JFrame {
                     iconPage.getIcons().remove(selectedObj);
                     iconPage.getIcons().add(contentInfo.getAsIconObj());
                     iconPage.saveToDisk();
-                    PIGuiHelper.reloadPageList();
+//                    PIGuiHelper.reloadPageList();
                     setSelectedPage(DocumentationManager.getPage(selectedPageURI));
                 }
             }
@@ -1416,7 +1416,7 @@ public class PIEditor extends javax.swing.JFrame {
         ProcessHandlerClient.syncTask(() -> {
             page.getIcons().remove(selectedIndex);
             page.saveToDisk();
-            PIGuiHelper.reloadPageList();
+//            PIGuiHelper.reloadPageList();
             setSelectedPage(DocumentationManager.getPage(selectedPageURI));
         });
     }
@@ -1439,7 +1439,7 @@ public class PIEditor extends javax.swing.JFrame {
                 if (contentInfo != null && !(docPage instanceof RootPage)) {
                     docPage.getRelations().add(contentInfo.asRelation());
                     docPage.saveToDisk();
-                    PIGuiHelper.reloadPageList();
+//                    PIGuiHelper.reloadPageList();
                     DocumentationManager.clearRelationCache();
                     setSelectedPage(DocumentationManager.getPage(selectedPageURI));
                 }
@@ -1474,7 +1474,7 @@ public class PIEditor extends javax.swing.JFrame {
                     docPage.getRelations().remove(selected);
                     docPage.getRelations().add(contentInfo.asRelation());
                     docPage.saveToDisk();
-                    PIGuiHelper.reloadPageList();
+//                    PIGuiHelper.reloadPageList();
                     DocumentationManager.clearRelationCache();
                     setSelectedPage(DocumentationManager.getPage(selectedPageURI));
                 }
@@ -1501,7 +1501,7 @@ public class PIEditor extends javax.swing.JFrame {
         ProcessHandlerClient.syncTask(() -> {
             page.getRelations().remove(selected);
             page.saveToDisk();
-            PIGuiHelper.reloadPageList();
+//            PIGuiHelper.reloadPageList();
             DocumentationManager.clearRelationCache();
             setSelectedPage(DocumentationManager.getPage(selectedPageURI));
         });

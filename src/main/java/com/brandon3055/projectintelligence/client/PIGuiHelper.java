@@ -13,7 +13,7 @@ import com.brandon3055.projectintelligence.client.gui.ContentInfo.ContentType;
 import com.brandon3055.projectintelligence.client.gui.GuiContentSelect;
 import com.brandon3055.projectintelligence.client.gui.GuiContentSelect.SelectMode;
 import com.brandon3055.projectintelligence.client.gui.GuiProjectIntelligence;
-import com.brandon3055.projectintelligence.client.gui.GuiProjectIntelligence_old;
+
 import com.brandon3055.projectintelligence.client.gui.guielements.*;
 import com.brandon3055.projectintelligence.client.gui.swing.PIEditor;
 import com.brandon3055.projectintelligence.docmanagement.DocumentationManager;
@@ -68,7 +68,6 @@ public class PIGuiHelper {
         }
         LogHelperBC.error("[Pi Reported Error]: " + error);
         errorCache.add(error);
-        GuiProjectIntelligence_old.updateErrorDialog = true;
         GuiProjectIntelligence.updateErrorDialog = true;
     }
 
@@ -135,34 +134,6 @@ public class PIGuiHelper {
      */
     public static synchronized List<String> getSupportedMods() {
         return ImmutableList.copyOf(DocumentationManager.getDocumentedMods());
-    }
-
-    public static void reloadGui() {
-        if (GuiProjectIntelligence_old.activeInstance != null) {
-            GuiProjectIntelligence_old.activeInstance.reloadGui();
-        }
-    }
-
-    public static void reloadGuiParts(boolean pageList, boolean menu, boolean mdWindow) {
-        GuiPartPageList_old pagePart = GuiProjectIntelligence_old.getListPart();
-        GuiPartMenu_old menuPart = GuiProjectIntelligence_old.getMenuPart();
-        GuiPartMDWindow_old mdPart = GuiProjectIntelligence_old.getMDPart();
-
-        if (pageList && pagePart != null) pagePart.reloadElement();
-        if (menu && menuPart != null) menuPart.reloadElement();
-        if (mdWindow && mdPart != null) mdPart.reloadElement();
-    }
-
-    public static void reloadPageList() {
-        reloadGuiParts(true, false, false);
-    }
-
-    public static void reloagMenu() {
-        reloadGuiParts(false, true, false);
-    }
-
-    public static void reloagMDWindoe() {
-        reloadGuiParts(false, false, true);
     }
 
     //region Editor Helpers

@@ -7,7 +7,6 @@ import com.brandon3055.brandonscore.client.gui.modulargui.baseelements.GuiScroll
 import com.brandon3055.brandonscore.client.gui.modulargui.guielements.GuiBorderedRect;
 import com.brandon3055.brandonscore.client.gui.modulargui.guielements.GuiLabel;
 import com.brandon3055.projectintelligence.client.PIGuiHelper;
-import com.brandon3055.projectintelligence.client.gui.GuiProjectIntelligence_old;
 import net.minecraft.client.resources.I18n;
 
 import java.io.IOException;
@@ -55,9 +54,7 @@ public class GuiErrorDialog extends GuiPopUpDialogBase<GuiErrorDialog> {
 
         addChild(errorList);
 
-        if (!GuiProjectIntelligence_old.devMode) {
-            super.addChildElements();
-        }
+        super.addChildElements();
     }
 
     @Override

@@ -7,7 +7,6 @@ import com.brandon3055.brandonscore.utils.DataUtils;
 import com.brandon3055.projectintelligence.ProjectIntelligence;
 import com.brandon3055.projectintelligence.client.PIGuiHelper;
 import com.brandon3055.projectintelligence.client.gui.GuiProjectIntelligence;
-import com.brandon3055.projectintelligence.client.gui.GuiProjectIntelligence_old;
 import com.brandon3055.projectintelligence.client.gui.PIConfig;
 import com.brandon3055.projectintelligence.utils.LogHelper;
 import com.google.common.primitives.Ints;
@@ -231,7 +230,6 @@ public class DocumentationManager {
         loadRootPage();
         LanguageManager.reloadLookupMap();
 
-        GuiProjectIntelligence_old.requiresReload = true;
         GuiProjectIntelligence.requiresEditReload = true;
         if (PIGuiHelper.editor != null) {
             PIGuiHelper.editor.reload();

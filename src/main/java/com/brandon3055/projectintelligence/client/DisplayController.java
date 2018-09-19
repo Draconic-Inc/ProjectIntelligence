@@ -1,8 +1,6 @@
 package com.brandon3055.projectintelligence.client;
 
-import com.brandon3055.projectintelligence.client.gui.GuiProjectIntelligence_old;
 import com.brandon3055.projectintelligence.client.gui.PIConfig;
-import com.brandon3055.projectintelligence.client.gui.guielements.GuiPartMDWindow_old;
 import com.brandon3055.projectintelligence.docmanagement.DocumentationManager;
 import com.brandon3055.projectintelligence.docmanagement.DocumentationPage;
 import com.brandon3055.projectintelligence.docmanagement.PIUpdateManager;
@@ -258,10 +256,6 @@ public class DisplayController {
 
         public void reloadTab() {
             requiresEditReload = true;
-            GuiPartMDWindow_old mdWindow = GuiProjectIntelligence_old.getMDPart();
-            if (mdWindow != null) {
-                mdWindow.reloadElement();
-            }
         }
 
         public void updateScroll(double scrollPosition) {

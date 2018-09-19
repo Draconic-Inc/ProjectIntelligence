@@ -17,7 +17,6 @@ import com.brandon3055.projectintelligence.client.StyleHandler.BooleanProperty;
 import com.brandon3055.projectintelligence.client.StyleHandler.ColourProperty;
 import com.brandon3055.projectintelligence.client.StyleHandler.IntegerProperty;
 import com.brandon3055.projectintelligence.client.StyleHandler.StyleProperty;
-import com.brandon3055.projectintelligence.client.gui.GuiProjectIntelligence_old;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.audio.PositionedSoundRecord;
 import net.minecraft.client.gui.GuiScreen;
@@ -32,9 +31,7 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
-import static com.brandon3055.projectintelligence.client.StyleHandler.StyleType.BORDER;
-import static com.brandon3055.projectintelligence.client.StyleHandler.StyleType.COLOUR;
-import static com.brandon3055.projectintelligence.client.StyleHandler.StyleType.TEXT_COLOUR;
+import static com.brandon3055.projectintelligence.client.StyleHandler.StyleType.*;
 
 /**
  * Created by brandon3055 on 12/08/2017.
@@ -147,9 +144,7 @@ public class GuiStyleEditor extends GuiPopUpDialogBase<GuiStyleEditor> {
         addChild(closeEditor);
 
         setChildGroupEnabled("EDITOR_TREE", false);
-        if (!GuiProjectIntelligence_old.devMode) {
-            super.addChildElements();
-        }
+        super.addChildElements();
     }
 
     @Override

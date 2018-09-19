@@ -11,7 +11,6 @@ import com.brandon3055.brandonscore.utils.Utils;
 import com.brandon3055.projectintelligence.client.PIGuiHelper;
 import com.brandon3055.projectintelligence.client.PITextures;
 import com.brandon3055.projectintelligence.client.StyleHandler;
-import com.brandon3055.projectintelligence.client.gui.GuiProjectIntelligence_old;
 import com.brandon3055.projectintelligence.client.gui.PIConfig;
 import com.brandon3055.projectintelligence.client.gui.PIPartRenderer;
 import com.brandon3055.projectintelligence.docmanagement.DocumentationManager;
@@ -167,9 +166,7 @@ public class GuiPIConfig extends GuiPopUpDialogBase<GuiPIConfig> {
 
         addChild(configList);
 
-        if (!GuiProjectIntelligence_old.devMode) {
-            super.addChildElements();
-        }
+        super.addChildElements();
     }
 
     @Override
