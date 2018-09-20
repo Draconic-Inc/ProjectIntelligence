@@ -117,6 +117,7 @@ pi.button.skip=Skip
 pi.button.show_me_later=Show me next time
 pi.button.more_information=More Info
 pi.button.deny_access=Deny Access
+pi.button.open_in_pi_main=Open in main Project Intelligence GUI
 
 //Config
 pi.config.basic_config=Basic Configuration

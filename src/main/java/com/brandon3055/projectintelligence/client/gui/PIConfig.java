@@ -58,7 +58,7 @@ public class PIConfig {
     public static boolean showTutorialLater = false;
 
 
-    public static String homePage = "";
+    public static String homePage = "projectintelligence:";
 
     public static void initialize() {
         File piFolder = new File(FileHandler.brandon3055Folder, "ProjectIntelligence");

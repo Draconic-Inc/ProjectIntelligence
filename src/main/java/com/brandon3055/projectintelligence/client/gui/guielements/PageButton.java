@@ -1,5 +1,6 @@
 package com.brandon3055.projectintelligence.client.gui.guielements;
 
+import codechicken.lib.reflect.ObfMapping;
 import com.brandon3055.brandonscore.client.gui.modulargui.MGuiElementBase;
 import com.brandon3055.brandonscore.client.gui.modulargui.baseelements.GuiButton;
 import com.brandon3055.brandonscore.client.gui.modulargui.guielements.*;
@@ -212,9 +213,6 @@ public class PageButton extends GuiButton {
             langButtonTexture.setTexturePos(overridden ? 82 : 66, 0);
             langButton.setEnabled(!PIConfig.editMode() && (overridden || !LanguageManager.isPageLocalized(page.getPageURI(), LanguageManager.getPageLanguage(page.getPageURI()))));
         }
-        else {
-            LogHelper.bigDev("WHY IS THIS NULL!?!?!?!?!");//todo
-        }
 
         PageLangData data = LanguageManager.getLangData(page.getPageURI(), LanguageManager.getPageLanguage(page.getPageURI()));
         if (data != null && data.matchLang != null) {
@@ -262,7 +260,7 @@ public class PageButton extends GuiButton {
             });
             context.addItem(menuItem);
 
-            if (PIConfig.editMode()) {
+            if (PIConfig.editMode() || !ObfMapping.obfuscated) {
                 menuItem = new ContextMenuItem(I18n.format("Copy page URI"));
                 menuItem.setAction(() -> Utils.setClipboardString(page.getPageURI()));
                 context.addItem(menuItem);

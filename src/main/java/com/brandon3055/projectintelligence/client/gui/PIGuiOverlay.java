@@ -169,6 +169,7 @@ public class PIGuiOverlay implements IModularGui<GuiScreen> {
         private GuiButton heading;
         private GuiButton prevPage;
         private GuiButton nextPage;
+        private GuiButton openInPI;
         private GuiSlideControl scrollBar;
         private GuiScrollElement scrollElement;
         private MDElementContainer markdownContainer;
@@ -217,6 +218,14 @@ public class PIGuiOverlay implements IModularGui<GuiScreen> {
             nextPage.addChild(tex);
             addChild(nextPage);
             nextPage.setListener(() -> changePage(false));
+
+            openInPI = new GuiButton().setSize(10, 10).setHoverText(I18n.format("pi.button.open_in_pi_main"));
+            tex = new GuiTexture(32, 25, 7, 7, PITextures.PI_PARTS).setPos(2, 1);
+            tex.setPreDrawCallback((minecraft, mouseX, mouseY, partialTicks, mouseOver) -> headerProps.glTextColour(mouseOver));
+            tex.setPostDrawCallback(IDrawCallback::resetColour);
+            openInPI.addChild(tex);
+            addChild(openInPI);
+            openInPI.setListener(() -> PiAPI.openGui(overlay.gui, guiDocHelper.getPages()));
 
             settings = new GuiButton().setSize(8, 8).setHoverText(I18n.format("pi.config.open_style_settings"));
             GuiTexture settingsTex = new GuiTexture(16, 0, 8, 8, PITextures.PI_PARTS);
@@ -287,6 +296,7 @@ public class PIGuiOverlay implements IModularGui<GuiScreen> {
             heading.setPos(xPos() + 27, yPos() + 4).setSize(xSize() - (27 * 2) - 10, 8);
             prevPage.setPos(xPos() + 15, yPos() + 3);
             nextPage.setPos(maxXPos() - 35, yPos() + 3);
+            openInPI.setPos(maxXPos() - 25, yPos() + 3);
 
             scrollElement.setPos(xPos(), yPos() + topGap);
             scrollElement.setSize(xSize() - 10, ySize() - topGap);
@@ -341,7 +351,7 @@ public class PIGuiOverlay implements IModularGui<GuiScreen> {
         public void renderElement(Minecraft minecraft, int mouseX, int mouseY, float partialTicks) {
             Rectangle animRect = getRect();
             double d = animState * 4D;
-            if (d < 1) {
+            if (d < 1 && guiDocHelper.enableButton()) {
                 renderBook();
                 GlStateManager.pushMatrix();
                 GlStateManager.translate(xPos() + (animRect.width / 2D) * (1D - d), yPos() + (animRect.height / 2D) * (1D - d), 0);
@@ -349,6 +359,7 @@ public class PIGuiOverlay implements IModularGui<GuiScreen> {
                 GlStateManager.translate(-xPos(), -yPos(), 0);
                 zOffset += 500;
             }
+
             windowRenderer.render(this, xPos(), yPos(), xSize(), ySize(), false);
             drawColouredRect(xPos() + 4, yPos() + 3, xSize() - 16, 10, headerProps.background());
             drawColouredRect(xPos() + 4, maxYPos() - 6, xSize() - 16, 2, headerProps.background());
@@ -394,7 +405,7 @@ public class PIGuiOverlay implements IModularGui<GuiScreen> {
         @Override
         public boolean mouseClicked(int mouseX, int mouseY, int mouseButton) throws IOException {
             if (isMouseOver(mouseX, mouseY)) {
-                if (!guiDocHelper.isDocVisible()) {
+                if (!guiDocHelper.isDocVisible() && guiDocHelper.enableButton()) {
                     GuiButton.playGenericClick(mc);
                     guiDocHelper.setDocVisible(true);
                 }
@@ -452,10 +463,16 @@ public class PIGuiOverlay implements IModularGui<GuiScreen> {
             visible = guiDocHelper.isDocVisible();
             if (visible && animState < 1) {
                 animState = Math.min(1, animState + 0.1);
+                if (!guiDocHelper.enableAnimation()) {
+                    animState = 1;
+                }
                 updateBounds();
             }
             else if (!visible && animState > 0) {
                 animState = Math.max(0, animState - 0.1);
+                if (!guiDocHelper.enableAnimation()) {
+                    animState = 0;
+                }
                 updateBounds();
             }
 

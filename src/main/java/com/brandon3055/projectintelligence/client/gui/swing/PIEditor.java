@@ -1763,18 +1763,23 @@ public class PIEditor extends javax.swing.JFrame {
         item.addActionListener(e -> Utils.setClipboardString(container.pageURI));
         menuItems.add(item);
 
+        long t = System.currentTimeMillis();
+
         if (!(container.getPage() instanceof RootPage)) {
             item = new JMenuItem("New Page");
             item.addActionListener(e -> addPage(container.getPage()));
             menuItems.add(item);
         }
 
+//        LogHelper.dev("T1 " + (System.currentTimeMillis() - t));
+
         if (!container.isStructPage) {
-            LogHelper.dev("Add Delete " + container.getPage().getClass() + " " + container.isStructPage);
             item = new JMenuItem("Delete Page");
             item.addActionListener(e -> deletePage(container.getPage()));
             menuItems.add(item);
         }
+
+//        LogHelper.dev("T2 " + (System.currentTimeMillis() - t));
 
         if (!(container.getPage() instanceof RootPage)) {
             menuItems.add(new JPopupMenu.Separator());
@@ -1802,6 +1807,8 @@ public class PIEditor extends javax.swing.JFrame {
             menuItems.add(menu);
         }
 
+//        LogHelper.dev("T3 " + (System.currentTimeMillis() - t));
+
         String clipboard = Utils.getClipboardString();
         if (!clipboard.isEmpty()) {
             item = new JMenuItem("Add page to templates");
@@ -1825,6 +1832,8 @@ public class PIEditor extends javax.swing.JFrame {
             });
             menuItems.add(item);
         }
+
+//        LogHelper.dev("T4 " + (System.currentTimeMillis() - t));
 
 
         return menuItems;

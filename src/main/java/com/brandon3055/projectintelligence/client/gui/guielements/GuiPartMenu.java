@@ -143,8 +143,6 @@ public class GuiPartMenu extends MGuiElementBase<GuiPartMenu> {
         PIConfig.screenPosOverride = false;
         PIConfig.save();
         resizeHandler.run();
-//        guiMain.reloadGui();
-//        guiMain.reloadGui();//TODO Figure out why this is needed. Im guessing there is an issue with reload order that results in the page list scrolling element not getting updated properly.
     }
 
     //region Render

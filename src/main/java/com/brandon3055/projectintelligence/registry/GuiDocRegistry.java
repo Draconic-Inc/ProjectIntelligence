@@ -3,6 +3,7 @@ package com.brandon3055.projectintelligence.registry;
 import codechicken.lib.math.MathHelper;
 import com.brandon3055.brandonscore.utils.DataUtils;
 import com.brandon3055.projectintelligence.api.IGuiDocHandler;
+import com.brandon3055.projectintelligence.api.IGuiDocRegistry;
 import com.brandon3055.projectintelligence.api.IPageSupplier;
 import com.brandon3055.projectintelligence.utils.LogHelper;
 import net.minecraft.client.gui.GuiScreen;
@@ -16,7 +17,7 @@ import java.util.function.Supplier;
 /**
  * Created by brandon3055 on 7/26/2018.
  */
-public class GuiDocRegistry {
+public class GuiDocRegistry implements IGuiDocRegistry {
 
     public static final GuiDocRegistry INSTANCE = new GuiDocRegistry();
 
@@ -24,6 +25,11 @@ public class GuiDocRegistry {
     private Map<Class<? extends GuiScreen>, IGuiDocHandler> guiHandlerMap = new HashMap<>();
     private Map<Class<? extends GuiScreen>, List<IPageSupplier>> pageSupplierMap = new HashMap<>();
 
+//    //todo remove
+//    public static void clear() {
+//        INSTANCE.guiHandlerMap.clear();
+//        INSTANCE.pageSupplierMap.clear();
+//    }
 
     //Public registry methods exposed via the API
 
@@ -35,6 +41,7 @@ public class GuiDocRegistry {
      * @return true if there is a gui handler assigned to this class.
      * @since PI 1.0.0
      */
+    @Override
     public boolean hasGuiHandler(Class<? extends GuiScreen> guiClass) {
         return guiHandlerMap.containsKey(guiClass);
     }
@@ -47,6 +54,7 @@ public class GuiDocRegistry {
      * @param handler The handler for this gui class.
      * @since PI 1.0.0
      */
+    @Override
     public <T extends GuiScreen> void registerGuiHandler(Class<T> guiClass, IGuiDocHandler<T> handler) {
         if (guiClass == GuiContainer.class || guiClass == GuiScreen.class) {
             throw new UnsupportedOperationException("You can not assign a gui handler to any of the base gui classes!");
@@ -67,8 +75,9 @@ public class GuiDocRegistry {
      * @param pageURI the page uri to assign to the target class.
      * @since PI 1.0.0
      */
-    public <T extends GuiScreen> void registerGuiDocPage(Class<T> guiClass, String pageURI) {
-        registerGuiDocPages(guiClass, Collections.singleton(pageURI));
+    @Override
+    public <T extends GuiScreen> void registerGuiDocPages(Class<T> guiClass, String... pageURI) {
+        registerGuiDocPages(guiClass, Arrays.asList(pageURI));
     }
 
     /**
@@ -79,6 +88,7 @@ public class GuiDocRegistry {
      * @param pageURIs the page uri's to assign to the target class.
      * @since PI 1.0.0
      */
+    @Override
     public <T extends GuiScreen> void registerGuiDocPages(Class<T> guiClass, Collection<String> pageURIs) {
         registerGuiDocPages(guiClass, new StrictPageSupplier<>(guiClass, pageURIs));
     }
@@ -94,6 +104,7 @@ public class GuiDocRegistry {
      * @param pageSupplier A page supplier for the GUI.
      * @since PI 1.0.0
      */
+    @Override
     public <T extends GuiScreen> void registerGuiDocPages(Class<T> guiClass, IPageSupplier<T> pageSupplier) {
         pageSupplierMap.computeIfAbsent(guiClass, c -> new ArrayList<>()).add(pageSupplier);
     }

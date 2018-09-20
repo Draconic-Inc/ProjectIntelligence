@@ -158,8 +158,8 @@ public class UINewDoc extends javax.swing.JDialog {
 
 
     private void versionFieldActionPerformed(ActionEvent evt) {                                             
-        // TODO add your handling code here:
-    }                                            
+
+    }
 
     private void addAction(ActionEvent evt) {
         String error = null;
