@@ -508,6 +508,7 @@ public class PIGuiOverlay implements IModularGui<GuiScreen> {
             scrollBar.setEnabled(animState == 1);
             settings.setEnabled(animState == 1);
             close.setEnabled(animState == 1);
+            openInPI.setEnabled(animState == 1);
             updatePageButtons();
             reloadElement();
         }
