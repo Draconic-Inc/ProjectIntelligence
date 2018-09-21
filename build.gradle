@@ -22,17 +22,21 @@ configurations {
 }
 
 repositories {
-//    maven {
-//        name 'CB Maven'
-//        url "http://chickenbones.net/maven/"
-//    }
+    maven {
+        name = "CoFH Maven"
+        url = "http://maven.covers1624.net"
+    }
+    maven {
+        name 'CB Maven'
+        url "http://chickenbones.net/maven/"
+    }
+    maven {
+        name 'OC Maven'
+        url "http://maven.cil.li/"
+    }
     maven {
         name "JEI Maven."
         url "http://dvs1.progwml6.com/files/maven"
-    }
-    ivy {
-        name = "Darkula"
-        artifactPattern "http://maven.covers1624.net/com/bulenkov/darkula/[module].[ext]"
     }
 }
 
@@ -70,9 +74,8 @@ version = version + ".${buildNo}"
 
 dependencies {
     pack name: 'darcula', ext: 'jar'
-
     compile "com.brandon3055.brandonscore:BrandonsCore:${config.mc_version}-${config.bcore_version}:deobf"
-//    compile "codechicken:CodeChickenLib:${config.mc_version}-${config.ccl_version}:deobf"
+    compile "codechicken:CodeChickenLib:${config.mc_version}-${config.ccl_version}:deobf"
     compile "mezz.jei:jei_${config.mc_version}:${config.jei_version}"
 }
 
@@ -103,7 +106,7 @@ def commonManifest = {
 }
 
 jar {
-    from (configurations.pack)
+    from(configurations.pack)
     classifier = 'universal'
     manifest commonManifest
 }
@@ -114,7 +117,7 @@ task srcJar(type: Jar) {
 }
 
 task deobfJar(type: Jar) {
-    from (configurations.pack)
+    from(configurations.pack)
     from sourceSets.main.output
     classifier = 'deobf'
     manifest commonManifest
