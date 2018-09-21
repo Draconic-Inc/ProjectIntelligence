@@ -7,19 +7,12 @@ buildscript {
         }
     }
     dependencies {
-        classpath 'net.minecraftforge.gradle:ForgeGradle:2.2-SNAPSHOT'
+        classpath 'net.minecraftforge.gradle:ForgeGradle:2.3-SNAPSHOT'
     }
 }
 apply plugin: 'net.minecraftforge.gradle.forge'
 apply plugin: 'maven'
 apply plugin: 'maven-publish'
-
-configurations {
-    pack
-    compile {
-        extendsFrom(pack)
-    }
-}
 
 repositories {
     maven {
@@ -69,7 +62,6 @@ if (System.getenv("BUILD_NUMBER") != null) {
 version = version + ".${buildNo}"
 
 dependencies {
-    pack name: 'darcula', ext: 'jar'
     compile "com.brandon3055.brandonscore:BrandonsCore:${config.mc_version}-${config.bcore_version}:deobf"
     compile "codechicken:CodeChickenLib:${config.mc_version}-${config.ccl_version}:deobf"
     compile "mezz.jei:jei_${config.mc_version}:${config.jei_version}"
@@ -102,7 +94,6 @@ def commonManifest = {
 }
 
 jar {
-    from(configurations.pack)
     classifier = 'universal'
     manifest commonManifest
 }
@@ -113,7 +104,6 @@ task srcJar(type: Jar) {
 }
 
 task deobfJar(type: Jar) {
-    from(configurations.pack)
     from sourceSets.main.output
     classifier = 'deobf'
     manifest commonManifest

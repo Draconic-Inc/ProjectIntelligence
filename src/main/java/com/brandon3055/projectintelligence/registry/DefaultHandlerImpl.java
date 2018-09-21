@@ -28,12 +28,12 @@ public class DefaultHandlerImpl implements IGuiDocHandler<GuiScreen> {
             GuiContainer guiC = (GuiContainer) gui;
             int availWidth = guiC.getGuiLeft();
             if (availWidth < 160) {
-                int width = Math.max(200, guiC.xSize);
-                int height = Math.max(200, guiC.ySize);
+                int width = Math.max(200, guiC.getXSize());
+                int height = Math.max(200, guiC.getYSize());
                 return new Rectangle(guiC.width / 2 - width / 2, guiC.height / 2 - height / 2, width, height);
             }
             int width = Math.max(availWidth - 25, Math.min(200, availWidth));
-            int height = Math.max(guiC.ySize, 200);
+            int height = Math.max(guiC.getYSize(), 200);
             return new Rectangle(availWidth - width, guiC.height / 2 - height / 2, width, height);
         }
         return new Rectangle(gui.width / 2 - 100, gui.height / 2 - 100, 200, 200); //Again without knowing the bounds of the gui i can not put this next to the ui so i just put it on top of the ui in the middle of the screen.
