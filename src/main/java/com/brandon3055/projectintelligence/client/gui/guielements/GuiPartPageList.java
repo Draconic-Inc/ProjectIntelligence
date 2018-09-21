@@ -26,7 +26,10 @@ import net.minecraft.client.resources.I18n;
 
 import javax.annotation.Nullable;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.LinkedList;
+import java.util.List;
 
 import static com.brandon3055.brandonscore.client.gui.modulargui.baseelements.GuiScrollElement.ListMode.VERT_LOCK_POS;
 import static com.brandon3055.brandonscore.client.gui.modulargui.baseelements.GuiSlideControl.SliderRotation.VERTICAL;
@@ -98,7 +101,6 @@ public class GuiPartPageList extends MGuiElementBase<GuiPartPageList> {
     @Override
     public void addChildElements() {
         super.addChildElements();
-
 
         toggleView = new GuiButton().setSize(10, 10).setHoverText(I18n.format("pi.button.toggle_nav_window.info"));
         GuiTexture tex = new GuiTexture(0, 16, 6, 7, PITextures.PI_PARTS);
@@ -459,6 +461,14 @@ public class GuiPartPageList extends MGuiElementBase<GuiPartPageList> {
             searchBox.setFocused(false);
         }
         return super.mouseClicked(mouseX, mouseY, mouseButton);
+    }
+
+    @Override
+    protected boolean keyTyped(char typedChar, int keyCode) throws IOException {
+        if (keyCode == 14 && !backButton.isDisabled() && backButton.isEnabled()) {
+            backButton.onPressed(backButton.xPos() + 1, backButton.yPos() + 1, 0);
+        }
+        return super.keyTyped(typedChar, keyCode);
     }
 
     public void setFullyExtended() {
