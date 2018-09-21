@@ -2035,13 +2035,13 @@ public class PIEditor extends javax.swing.JFrame {
         menuItems.add(pFormatMenu);
 
         pFormatMenu.add(item = new JMenuItem("Align Left"));
-        item.addActionListener(e -> insertParagraphTag("§align:left"));
+        item.addActionListener(e -> insertParagraphTag("\u00a7align:left"));
         pFormatMenu.add(item = new JMenuItem("Align Center"));
-        item.addActionListener(e -> insertParagraphTag("§align:center"));
+        item.addActionListener(e -> insertParagraphTag("\u00a7align:center"));
         pFormatMenu.add(item = new JMenuItem("Align Right"));
-        item.addActionListener(e -> insertParagraphTag("§align:right"));
+        item.addActionListener(e -> insertParagraphTag("\u00a7align:right"));
         pFormatMenu.add(item = new JMenuItem("Shadow"));
-        item.addActionListener(e -> insertParagraphTag("§shadow"));
+        item.addActionListener(e -> insertParagraphTag("\u00a7shadow"));
         pFormatMenu.add(item = new JMenuItem("Colour"));
 
         item.addActionListener(new ActionListener() {
@@ -2062,7 +2062,7 @@ public class PIEditor extends javax.swing.JFrame {
                 previewLabel.setBorder(BorderFactory.createEmptyBorder(0, 0, 1, 0));
                 chooser.setPreviewPanel(previewLabel);
 
-                JColorChooser.createDialog(PIEditor.this, "Select Colour", true, chooser, e1 -> insertParagraphTag("§colour[0x" + Integer.toHexString(chooser.getColor().getRGB()).substring(2) + "]"), null).setVisible(true);
+                JColorChooser.createDialog(PIEditor.this, "Select Colour", true, chooser, e1 -> insertParagraphTag("\u00a7colour[0x" + Integer.toHexString(chooser.getColor().getRGB()).substring(2) + "]"), null).setVisible(true);
             }
         });
 

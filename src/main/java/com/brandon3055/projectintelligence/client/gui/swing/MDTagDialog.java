@@ -393,7 +393,7 @@ public class MDTagDialog extends JDialog {
 
         switch (type) {
             case RECIPE:
-                tag = new StringBuilder("§recipe");
+                tag = new StringBuilder("\u00a7recipe");
                 value = textField1.getText();
                 options = addIf(options, "border_colour:" + colour1, () -> !(colour1.equals("-1") || colour1.isEmpty()));
                 options = addIf(options, "border_colour_hover:" + colour2, () -> !(colour2.equals("-1") || colour2.isEmpty()));
@@ -405,7 +405,7 @@ public class MDTagDialog extends JDialog {
                 options = addIf(options, "right_pad:" + p6, () -> p6 > 0);
                 break;
             case LINK:
-                tag = new StringBuilder("§link");
+                tag = new StringBuilder("\u00a7link");
                 value = textField1.getText();
                 options = addIf(options, "alt_text:\"" + textField2.getText() + "\"", () -> !textField2.getText().isEmpty());
                 options = addIf(options, "border_colour:" + colour3, () -> !(colour3.equals("-1") || colour3.isEmpty()));
@@ -420,7 +420,7 @@ public class MDTagDialog extends JDialog {
                 options = addIf(options, "link_style:" + styleSelector.getSelectedItem(), () -> !styleSelector.getSelectedItem().equals("text"));
                 break;
             case RULE:
-                tag = new StringBuilder("§rule");
+                tag = new StringBuilder("\u00a7rule");
                 options = addIf(options, "colour:" + colour1, () -> !(colour1.equals("-1") || colour1.isEmpty()));
                 options = addIf(options, "height:" + p1, () -> p1 > 0);
                 options = addIf(options, "top_pad:" + p2, () -> p2 > 0);
@@ -435,7 +435,7 @@ public class MDTagDialog extends JDialog {
                 options = addIf(options, "width:" + textField1.getText(), () -> true);
                 //options = addIf(options, "align:" + alignSelector.getSelectedItem(), () -> !alignSelector.getSelectedItem().equals("left"));
                 options = addIf(options, "vert_align:" + vertAlignSelector.getSelectedItem(), () -> !vertAlignSelector.getSelectedItem().equals("top"));
-                tag = new StringBuilder("§table[" + options + "]");
+                tag = new StringBuilder("\u00a7table[" + options + "]");
                 int rows = Math.max(1, (int) spinner1.getValue());
                 int columns = Math.max(1, (int) spinner2.getValue());
 

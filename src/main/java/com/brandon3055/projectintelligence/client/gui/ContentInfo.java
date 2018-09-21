@@ -201,7 +201,7 @@ public class ContentInfo {
     }
 
     public String toMDTag() {
-        String tag = "§" + type.name;
+        String tag = "\u00a7" + type.name;
         String ops = "";
         switch (type) {
             case ITEM_STACK:
@@ -233,7 +233,7 @@ public class ContentInfo {
 
                 break;
             case IMAGE:
-                tag = "§img[" + imageURL + "]";
+                tag = "\u00a7img[" + imageURL + "]";
 
                 ops = addIf(ops, "border_colour:0x" + Integer.toHexString(borderColour == null ? 0 : borderColour.rgb()), () -> borderColour != null);
                 ops = addIf(ops, "border_colour_hover:0x" + Integer.toHexString(borderColourHover == null ? 0 : borderColourHover.rgb()), () -> borderColourHover != null);

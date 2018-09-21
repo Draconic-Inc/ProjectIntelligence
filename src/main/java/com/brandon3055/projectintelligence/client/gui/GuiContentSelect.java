@@ -146,7 +146,7 @@ public class GuiContentSelect extends ModularGuiContainer<Container> {
                 contentInfo.hover_text = textField.getText();
                 stackRenderer.setToolTipOverride(contentInfo.hover_text.isEmpty() ? null : Lists.newArrayList(contentInfo.hover_text.split("\n")));
             };
-            container.addChild(newTextField("Override Vanilla Tool Tip", change, 0.75, 0).setText(contentInfo.hover_text)).setEnabled(!selectMode.isBasic()).setHoverText("Allows you to specify a custom tool tip for the item. Accepts \\n for new lines and the select character \\§ for formatting");
+            container.addChild(newTextField("Override Vanilla Tool Tip", change, 0.75, 0).setText(contentInfo.hover_text)).setEnabled(!selectMode.isBasic()).setHoverText("Allows you to specify a custom tool tip for the item. Accepts \\n for new lines and the select character \\\u00a7 for formatting");
             container.addChild(newButton("Draw Slot", guiButton -> contentInfo.drawSlot = !contentInfo.drawSlot, () -> contentInfo.drawSlot, 2.75).setEnabled(!selectMode.isBasic()));
             change = textField -> itemStackSelected(StackReference.fromString(textField.getText()), false);
             container.addChild(stackString = newTextField("Stack String", change, 4, 0).setText(contentInfo.stack.toString())).setHoverText("Format is: " + TextFormatting.GOLD + "registry:name,stackSize,damage,{nbt}");
@@ -184,7 +184,7 @@ public class GuiContentSelect extends ModularGuiContainer<Container> {
                     contentInfo.hover_text = textField.getText();
                     entityRenderer.setHoverTextArray(element -> contentInfo.hover_text.isEmpty() ? new String[]{} : contentInfo.hover_text.split("\n"));
                 };
-                container.addChild(newTextField("Hover text", change, 0, 0).setText(contentInfo.hover_text)).setHoverText("Allows you to add mouse hover text to this entity. Accepts \\n for new lines and the select character \\§ for formatting");
+                container.addChild(newTextField("Hover text", change, 0, 0).setText(contentInfo.hover_text)).setHoverText("Allows you to add mouse hover text to this entity. Accepts \\n for new lines and the select character \\\u00a7 for formatting");
                 container.addChild(newButton("Entity tracks mouse movement", (guiButton) -> entityRenderer.setTrackMouse(contentInfo.trackMouse = !contentInfo.trackMouse), () -> contentInfo.trackMouse, 2));
                 container.addChild(newButton("Draw Player Name (for player only)", (guiButton) -> entityRenderer.setDrawName((contentInfo.drawName = !contentInfo.drawName) && entityString.getText().startsWith("player:")), () -> contentInfo.drawName, 3));
                 container.addChild(entitySizeField = newSizeField("Size:", guiTextField -> contentInfo.size = Math.max(4, Utils.parseInt(guiTextField.getText())), 4, 0).setLinkedValue(() -> "" + contentInfo.size).setEnabled(selectMode.hasSizePos()));
@@ -270,7 +270,7 @@ public class GuiContentSelect extends ModularGuiContainer<Container> {
                 contentInfo.hover_text = textField.getText();
                 entityRenderer.setHoverTextArray(element -> contentInfo.hover_text.isEmpty() ? new String[]{} : contentInfo.hover_text.split("\n"));
             };
-            container.addChild(newTextField("Hover text", change, 7, 0).setText(contentInfo.hover_text)).setHoverText("Allows you to add mouse hover text to this entity. Accepts \\n for new lines and the select character \\§ for formatting");
+            container.addChild(newTextField("Hover text", change, 7, 0).setText(contentInfo.hover_text)).setHoverText("Allows you to add mouse hover text to this entity. Accepts \\n for new lines and the select character \\\u00a7 for formatting");
             container.addChild(newTextField("Link pageURI or web address (optional)", textField -> contentInfo.linkTarget = textField.getText(), 9, 0).setText(contentInfo.hover_text)).setHoverText("Allows you to add a link to be opened when this image is clicked.");
 
             container.addChild(new GuiLabel("jpg images are preferred due to their smaller file size. Please consider converting your image to jpg format.").setEnabledCallback(() -> imgURLField.getText().endsWith(".png")).setShadow(false).setPos(guiLeft() - 60, guiTop() + ySize() + 5).setSize(xSize() + 120, 20).setWrap(true).setTextColour(0xFF0000));
