@@ -90,7 +90,6 @@ processResources
 
 def commonManifest = {
     attributes 'FMLAT': 'ProjectIntelligence_at.cfg'
-    attributes 'ContainedDeps': "darcula.jar"
 }
 
 jar {
