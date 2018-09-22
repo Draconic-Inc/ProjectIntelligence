@@ -1,13 +1,11 @@
 package com.brandon3055.projectintelligence.internal;
 
 import com.brandon3055.projectintelligence.ProjectIntelligence;
-import com.brandon3055.projectintelligence.api.IGuiDocRegistry;
 import com.brandon3055.projectintelligence.api.internal.IPiAPI;
 import com.brandon3055.projectintelligence.client.PIGuiHelper;
 import com.brandon3055.projectintelligence.client.keybinding.KeyInputHandler;
 import com.brandon3055.projectintelligence.docmanagement.DocumentationManager;
 import com.brandon3055.projectintelligence.docmanagement.DocumentationPage;
-import com.brandon3055.projectintelligence.registry.GuiDocRegistry;
 import com.google.common.collect.ImmutableList;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.settings.KeyBinding;
@@ -102,10 +100,5 @@ public class PiAPIImpl implements IPiAPI {
     @Override
     public KeyBinding getETWorldKey() {
         return KeyInputHandler.etWorld;
-    }
-
-    @Override
-    public IGuiDocRegistry getGuiDocRegistry() {
-        return GuiDocRegistry.INSTANCE;
     }
 }

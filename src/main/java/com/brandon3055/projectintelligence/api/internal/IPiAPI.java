@@ -1,6 +1,5 @@
 package com.brandon3055.projectintelligence.api.internal;
 
-import com.brandon3055.projectintelligence.api.IGuiDocRegistry;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.settings.KeyBinding;
 import net.minecraft.item.ItemStack;
@@ -150,13 +149,4 @@ public interface IPiAPI {
      * @since PI 1.0.0
      */
     KeyBinding getETWorldKey();
-
-    /**
-     * The gui doc registry can be used to bind doc pages to mod gui's so that documentation for that gui or the block its attached to
-     * can be displayed directly in that GUI as a sort of "help tab". The actual implementation is very flexible.
-     *
-     * @return the IGuiDocRegistry instance.
-     * @since PI 1.0.0
-     */
-    IGuiDocRegistry getGuiDocRegistry();
 }

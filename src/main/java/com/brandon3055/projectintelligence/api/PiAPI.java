@@ -225,18 +225,4 @@ public class PiAPI {
         }
         return null;
     }
-
-    /**
-     * The gui doc registry can be used to bind doc pages to mod gui's so that documentation for that gui or the block its attached to
-     * can be displayed directly in that GUI as a sort of "help tab". The actual implementation is very flexible.
-     *
-     * @return the IGuiDocRegistry instance.
-     * @since PI 1.0.0
-     */
-    public static IGuiDocRegistry getGuiDocRegistry() {
-        if (isAPIAvalible()) {
-            return INSTANCE.getGuiDocRegistry();
-        }
-        return null;
-    }
 }
