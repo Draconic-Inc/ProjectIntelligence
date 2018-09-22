@@ -62,6 +62,11 @@ public class ClientProxy extends CommonProxy {
             Minecraft.getMinecraft().displayGuiScreen(new GuiProjectIntelligence(parentScreen));
         }
 
+        //This is first launch and no documentation has been downloaded yet so return to avoid displaying errors
+        if (!PIConfig.downloadsAllowed && !PIConfig.tutorialDisplayed) {
+            return;
+        }
+
         if (modid != null) {
             if (DocumentationManager.hasModPage(modid)) {
                 DocumentationPage modPage = DocumentationManager.getModPage(modid);
