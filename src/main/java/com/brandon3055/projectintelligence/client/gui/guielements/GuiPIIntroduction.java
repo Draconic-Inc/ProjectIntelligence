@@ -20,6 +20,7 @@ import com.brandon3055.projectintelligence.client.StyleHandler.PropertyGroup;
 import com.brandon3055.projectintelligence.client.gui.PIConfig;
 import com.brandon3055.projectintelligence.client.gui.PIGuiContainer;
 import com.brandon3055.projectintelligence.client.gui.PIPartRenderer;
+import com.brandon3055.projectintelligence.client.keybinding.KeyInputHandler;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
@@ -51,6 +52,7 @@ public class GuiPIIntroduction extends MGuiElementBase<GuiPIIntroduction> {
         screens.add(new InfoScreen(this, "pi.info_screen.welcome.title", "pi.info_screen.welcome.text").setSize(250, 200));
         screens.add(new InfoScreen(this, "pi.info_screen.guide_intro.title", "pi.info_screen.guide_intro.text").setSize(250, 120));
         screens.add(new OverviewScreen(this, "pi.info_screen.basic_overview.title", "pi.info_screen.basic_overview.text").setSize(150, 90));
+        screens.add(new InfoScreen(this, "pi.info_screen.pi_interaction.title", "pi.info_screen.pi_interaction.text", KeyInputHandler.openPI.getDisplayName(), KeyInputHandler.etGUI.getDisplayName(), KeyInputHandler.etWorld.getDisplayName()).setSize(250, 200));
         screens.add(new InfoScreen(this, "pi.info_screen.ui_style.title", "pi.info_screen.ui_style.text").setSize(250, 100));
         screens.add(new InfoScreen(this, "pi.info_screen.contributing.title", "pi.info_screen.contributing.text").setSize(250, 100));
     }
@@ -116,10 +118,10 @@ public class GuiPIIntroduction extends MGuiElementBase<GuiPIIntroduction> {
         private StyledGuiButton prevButton;
         private GuiButton later;
 
-        private InfoScreen(GuiPIIntroduction parent, String unLocalTitle, String unLocalInfo) {
+        private InfoScreen(GuiPIIntroduction parent, String unLocalTitle, String unLocalInfo, Object... localParamaters) {
             this.parent = parent;
             this.title = new GuiLabel(I18n.format(unLocalTitle));
-            this.info = new GuiLabel(I18n.format(unLocalInfo).replace("  ", "\n\n"));
+            this.info = new GuiLabel(I18n.format(unLocalInfo, localParamaters).replace("  ", "\n\n"));
         }
 
         @Override

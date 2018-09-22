@@ -210,6 +210,9 @@ pi.info_screen.guide_intro.text=This is the first launch introduction. It will w
 pi.info_screen.basic_overview.title=Overview
 pi.info_screen.basic_overview.text=Everything here should be pretty self explanatory. Hover your mouse over any of the arrows to view info about that item.
 
+pi.info_screen.pi_interaction.title=General PI Interaction
+pi.info_screen.pi_interaction.text=This is just a general overview of some of the different ways you can use PI. As you have probably already figured out you can open PI by pressing %s.  PI Also has an "Explain This" function which allows you to press %s while hovering your mouse over an item in an inventory to view any documentation related to that item. You can also press %s to view available documentation for a block or entity you are looking at in world.  PI GUI Notes: Whenever you open the main PI UI you will return to the previous page you had open. When you open PI for the first time in a session you will get the "Home Page" by default this is the Project Intelligence mod page but you can change this by right clicking on a page in the page list and selecting the "set as home page" option.
+
 pi.info_screen.ui_style.title=UI Style
 pi.info_screen.ui_style.text=This gui is extremely customizable! You can find the style settings by pressing the options button in the top right corner of PI. There you will find some builtin style presets and an option to edit the current preset which you can then save as your own custom preset!
 
