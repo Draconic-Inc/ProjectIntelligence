@@ -4,17 +4,14 @@ import com.brandon3055.brandonscore.integration.ModHelperBC;
 import com.brandon3055.projectintelligence.client.DisplayController;
 import com.brandon3055.projectintelligence.client.PIGuiHelper;
 import com.brandon3055.projectintelligence.docmanagement.LanguageManager.PageLangData;
-import com.google.common.base.Charsets;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import net.minecraft.util.JsonUtils;
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
+import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.util.LinkedList;
 import java.util.Map;
 import java.util.Random;
@@ -161,10 +158,11 @@ public class DocumentationPage {
                 }
             }
             else {
-                try {
-                    FileInputStream is = new FileInputStream(mdFile);
-                    mdLineCache.addAll(IOUtils.readLines(is, Charsets.UTF_8));
-                    IOUtils.closeQuietly(is);
+                try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(mdFile), StandardCharsets.UTF_8))) {
+                    String s;
+                    while ((s = reader.readLine()) != null) {
+                        mdLineCache.add(s);
+                    }
                 }
                 catch (IOException e) {
                     mdLineCache.add("Error Loading Page!");
@@ -229,7 +227,11 @@ public class DocumentationPage {
         }
 
         try {
-            FileUtils.writeStringToFile(getMarkdownFile(), rawMarkdownString, Charsets.UTF_8);
+            OutputStreamWriter writer = new OutputStreamWriter(new FileOutputStream(getMarkdownFile()), StandardCharsets.UTF_8);
+            writer.write(rawMarkdownString);
+            IOUtils.closeQuietly(writer);
+
+//            FileUtils.writeStringToFile(getMarkdownFile(), rawMarkdownString, StandardCharsets.UTF_8);
             saveToDisk();
         }
         catch (IOException e) {

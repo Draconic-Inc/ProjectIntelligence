@@ -25,6 +25,7 @@ import com.google.common.collect.Maps;
 import com.google.gson.JsonObject;
 import net.minecraft.util.text.TextFormatting;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOUtils;
 
 import javax.annotation.Nullable;
 import javax.swing.*;
@@ -35,10 +36,9 @@ import javax.swing.undo.CannotUndoException;
 import javax.swing.undo.UndoManager;
 import java.awt.*;
 import java.awt.event.*;
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.net.URL;
-import java.nio.file.Files;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.List;
 import java.util.function.Consumer;
@@ -139,7 +139,8 @@ public class PIEditor extends javax.swing.JFrame {
             item.addActionListener(e -> loadLAF("com.bulenkov.darcula.DarculaLaf", true));
             lafs.add(item);
         }
-        catch (ClassNotFoundException ignored) {}
+        catch (ClassNotFoundException ignored) {
+        }
 
 
         jMenu3.add(lafs);
@@ -172,7 +173,8 @@ public class PIEditor extends javax.swing.JFrame {
                 undo.undo();
             }
         }
-        catch (CannotUndoException ignored) {}
+        catch (CannotUndoException ignored) {
+        }
     }
 
     private void redo() {
@@ -181,7 +183,8 @@ public class PIEditor extends javax.swing.JFrame {
                 undo.redo();
             }
         }
-        catch (CannotUndoException ignored) {}
+        catch (CannotUndoException ignored) {
+        }
     }
 
     @Override
@@ -989,7 +992,8 @@ public class PIEditor extends javax.swing.JFrame {
                     pageTree.collapseRow(row);
                 }
             }
-            catch (Throwable ignored) {}
+            catch (Throwable ignored) {
+            }
         });
 
         if (selectedPage != null && keepSelection.get()) {
@@ -1180,6 +1184,7 @@ public class PIEditor extends javax.swing.JFrame {
     //Page Fields
 
     private boolean ignoreWeightChange = false;
+
     private void weightChanged(ChangeEvent evt) {
         if (ignoreWeightChange) return;
         long t = System.currentTimeMillis();
@@ -1655,7 +1660,7 @@ public class PIEditor extends javax.swing.JFrame {
 
 //        BoundedRangeModel model = mdScrollPane.getVerticalScrollBar().getModel();
 //        double scrollPos = (double) model.getValue() / (double) (model.getMaximum() - model.getMinimum());
-        if (page != null){
+        if (page != null) {
             //This is a mess... The entire tree loading system in the editor needs a proper overhaul.
             ProcessHandlerClient.syncTask(() -> DisplayController.MASTER_CONTROLLER.openPage(getSelectedPageURI(), false));
         }
@@ -1670,11 +1675,10 @@ public class PIEditor extends javax.swing.JFrame {
         File mdFile = page.getMarkdownFile();
         boolean set = false;
 
-        try {
-            markdownWindow.setText(new String(Files.readAllBytes(mdFile.toPath())));
+        try (InputStreamReader reader = new InputStreamReader(new FileInputStream(mdFile), StandardCharsets.UTF_8)) {
+            markdownWindow.setText(IOUtils.toString(reader));
             int pos = caretPositions.getOrDefault(page.getPageURI(), 0);
             markdownWindow.setCaretPosition(MathHelper.clip(pos, 0, markdownWindow.getText().length() - 1));
-
             set = true;
         }
         catch (IOException ignored) {}

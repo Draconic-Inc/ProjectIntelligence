@@ -20,12 +20,18 @@ import net.minecraft.item.ItemStack;
 import net.minecraftforge.common.crafting.CraftingHelper;
 import net.minecraftforge.fluids.Fluid;
 import net.minecraftforge.fml.common.Loader;
+import net.minecraftforge.fml.common.ModContainer;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.io.output.FileWriterWithEncoding;
 
 import javax.annotation.Nullable;
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
@@ -95,10 +101,16 @@ public class DocumentationManager {
             LogHelper.bigError("Failed to create config directory! Things are going to break! " + piConfigDirectory);
         }
 
-        CraftingHelper.findFiles(Loader.instance().getIndexedModList().get(ProjectIntelligence.MODID), "assets/" +ProjectIntelligence.MODID + "/default_styles", path -> true, (path2, file) -> {
-            if (file.toString().endsWith(".json")) {
+        ModContainer piContainer = Loader.instance().getIndexedModList().get(ProjectIntelligence.MODID);
+        CraftingHelper.findFiles(piContainer, "assets/" +ProjectIntelligence.MODID + "/default_styles", path -> true, (path2, filePath) -> {
+            if (filePath.toString().endsWith(".json")) {
                 try {
-                    Files.copy(file, file.getFileSystem().getPath(piConfigDirectory.getAbsolutePath(), "GuiStyle/DefaultPresets/" + file.getFileName()));
+                    Path styleFolder = Paths.get(piConfigDirectory.getAbsolutePath(), "GuiStyle/DefaultPresets");
+                    if (!Files.exists(styleFolder)) {
+                        Files.createDirectories(styleFolder);
+                    }
+                    Path outputFile = styleFolder.resolve(filePath.getFileName().toString());
+                    Files.copy(filePath, outputFile, StandardCopyOption.REPLACE_EXISTING);
                 }
                 catch (IOException e) {
                     e.printStackTrace();
@@ -106,30 +118,6 @@ public class DocumentationManager {
             }
             return true;
         }, false, false);
-
-//        try {
-//            String[] defaults = new String[]{"darcula.json", "vanilla.json"};
-//
-//            CraftingHelper.findFiles(Loader.instance().getIndexedModList().get(ProjectIntelligence.MODID), "assets/" +ProjectIntelligence.MODID + "/default_styles", path -> true, (path2, file) -> {
-//                LogHelper.dev("File: " + file);
-//                return true;
-//            }, false, false);
-//
-//            for (String defStyle : defaults) {
-////                CraftingHelper.findFiles()
-//                IResource style = Minecraft.getMinecraft().getResourceManager().getResource(new ResourceLocation(ProjectIntelligence.MODID + ":default_styles/" + defStyle));
-//                File defDir = new File(piConfigDirectory, "GuiStyle/DefaultPresets");
-//                defDir.mkdirs();
-//                InputStream is = style.getInputStream();
-//                OutputStream os = new FileOutputStream(new File(defDir, defStyle));
-//                IOUtils.copy(is, os);
-//                IOUtils.closeQuietly(is, os);
-//                LogHelper.dev("Loaded Default Style: " + defStyle);
-//            }
-//        }
-//        catch (IOException e) {
-//            e.printStackTrace();
-//        }
 
         checkAndReloadDocFiles();
     }
@@ -258,11 +246,9 @@ public class DocumentationManager {
      * @return true if the structure file was successful parsed.
      */
     private static void parseStructureFile(File structureFile, File versionFolder, boolean isPackDoc) {
-        try {
+        try (JsonReader jsonReader = new JsonReader(new InputStreamReader(new FileInputStream(structureFile), StandardCharsets.UTF_8))) {
             JsonParser parser = new JsonParser();
-            JsonReader jsonReader = new JsonReader(new FileReader(structureFile));
             JsonElement element = parser.parse(jsonReader);
-            IOUtils.closeQuietly(jsonReader);
             if (element.isJsonObject()) {
                 JsonObject jObj = element.getAsJsonObject();
                 ModStructurePage structurePage = ModStructurePage.generateFromJson(jObj, isPackDoc);
@@ -321,12 +307,10 @@ public class DocumentationManager {
         JsonObject jObj = modPage.writeToJson();
 
         //region Save JsonObject
-        try {
-            JsonWriter writer = new JsonWriter(new FileWriter(structureFileMap.get(modPage)));
+        try (JsonWriter writer = new JsonWriter(new FileWriterWithEncoding(structureFileMap.get(modPage), StandardCharsets.UTF_8))) {
             writer.setIndent("  ");
             Streams.write(jObj, writer);
             writer.flush();
-            IOUtils.closeQuietly(writer);
         }
         catch (Exception e) {
             PIGuiHelper.displayError("Error saving mod Descriptor " + e.getMessage());
