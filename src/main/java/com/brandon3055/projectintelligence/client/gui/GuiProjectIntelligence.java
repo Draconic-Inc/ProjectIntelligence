@@ -180,6 +180,10 @@ public class GuiProjectIntelligence extends GuiScreen {
         if (container.mouseClicked(mouseX, mouseY, mouseButton)) {
             return;
         }
+        else if (!container.getPartContainer().isMouseOver(mouseX, mouseY)) {
+            closeGui();
+            return;
+        }
 
         super.mouseClicked(mouseX, mouseY, mouseButton);
     }
