@@ -16,6 +16,7 @@ import com.brandon3055.brandonscore.client.gui.modulargui.lib.GuiAlign;
 import com.brandon3055.brandonscore.lib.DelayedTask;
 import com.brandon3055.brandonscore.utils.Utils;
 import com.brandon3055.projectintelligence.client.PITextures;
+import com.brandon3055.projectintelligence.client.StyleHandler;
 import com.brandon3055.projectintelligence.client.StyleHandler.PropertyGroup;
 import com.brandon3055.projectintelligence.client.gui.PIConfig;
 import com.brandon3055.projectintelligence.client.gui.PIGuiContainer;
@@ -29,6 +30,7 @@ import org.lwjgl.opengl.GL11;
 
 import java.awt.*;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
@@ -53,7 +55,7 @@ public class GuiPIIntroduction extends MGuiElementBase<GuiPIIntroduction> {
         screens.add(new InfoScreen(this, "pi.info_screen.guide_intro.title", "pi.info_screen.guide_intro.text").setSize(250, 120));
         screens.add(new OverviewScreen(this, "pi.info_screen.basic_overview.title", "pi.info_screen.basic_overview.text").setSize(150, 90));
         screens.add(new InfoScreen(this, "pi.info_screen.pi_interaction.title", "pi.info_screen.pi_interaction.text", KeyInputHandler.openPI.getDisplayName(), KeyInputHandler.etGUI.getDisplayName(), KeyInputHandler.etWorld.getDisplayName()).setSize(250, 200));
-        screens.add(new InfoScreen(this, "pi.info_screen.ui_style.title", "pi.info_screen.ui_style.text").setSize(250, 100));
+        screens.add(new StyleScreen(this, "pi.info_screen.ui_style.title", "pi.info_screen.ui_style.text").setSize(250, 100));
         screens.add(new InfoScreen(this, "pi.info_screen.contributing.title", "pi.info_screen.contributing.text").setSize(250, 100));
     }
 
@@ -95,6 +97,15 @@ public class GuiPIIntroduction extends MGuiElementBase<GuiPIIntroduction> {
     }
 
     @Override
+    protected boolean keyTyped(char typedChar, int keyCode) throws IOException {
+        if (keyCode == 59 || keyCode == 1) {
+            close(!PIConfig.tutorialDisplayed);
+            return true;
+        }
+        return super.keyTyped(typedChar, keyCode);
+    }
+
+    @Override
     public boolean mouseClicked(int mouseX, int mouseY, int mouseButton) throws IOException {
         super.mouseClicked(mouseX, mouseY, mouseButton);
         return true;
@@ -107,16 +118,16 @@ public class GuiPIIntroduction extends MGuiElementBase<GuiPIIntroduction> {
     }
 
     private static class InfoScreen extends MGuiElementBase<InfoScreen> {
-        private PIPartRenderer windowRenderer = new PIPartRenderer(windowProps);
-        private PIPartRenderer buttonRenderer = new PIPartRenderer(buttonProps).setButtonRender(true);
+        protected PIPartRenderer windowRenderer = new PIPartRenderer(windowProps);
+        protected PIPartRenderer buttonRenderer = new PIPartRenderer(buttonProps).setButtonRender(true);
 
         protected GuiPIIntroduction parent;
-        private final GuiLabel title;
-        private final GuiLabel info;
-        private GuiScrollElement infoContainer;
-        private StyledGuiButton nextButton;
-        private StyledGuiButton prevButton;
-        private GuiButton later;
+        protected final GuiLabel title;
+        protected final GuiLabel info;
+        protected GuiScrollElement infoContainer;
+        protected StyledGuiButton nextButton;
+        protected StyledGuiButton prevButton;
+        protected GuiButton later;
 
         private InfoScreen(GuiPIIntroduction parent, String unLocalTitle, String unLocalInfo, Object... localParamaters) {
             this.parent = parent;
@@ -146,7 +157,7 @@ public class GuiPIIntroduction extends MGuiElementBase<GuiPIIntroduction> {
             addChild(nextButton = new StyledGuiButton(buttonRenderer)).setText(I18n.format(index == parent.screens.size() - 1 ? "pi.button.close" : "pi.button.next"));
             addChild(prevButton = new StyledGuiButton(buttonRenderer)).setText(I18n.format(index == 0 ? "pi.button.skip" : "pi.button.previous"));
 
-            if (index == 0) {
+            if (index == 0 && PIConfig.tutorialDisplayed && !PIConfig.showTutorialLater) {
                 later = new StyledGuiButton(buttonRenderer).setText(I18n.format("pi.button.show_me_later"));
                 later.setListener(() -> parent.close(true));
                 later.setTrim(false);
@@ -325,6 +336,38 @@ public class GuiPIIntroduction extends MGuiElementBase<GuiPIIntroduction> {
 
                 return super.onUpdate();
             }
+        }
+    }
+
+    private static class StyleScreen extends InfoScreen {
+        private GuiButton nextStyle;
+
+        private StyleScreen(GuiPIIntroduction parent, String unLocalTitle, String unLocalInfo) {
+            super(parent, unLocalTitle, unLocalInfo);
+        }
+
+        @Override
+        public void addChildElements() {
+            super.addChildElements();
+            nextStyle = new StyledGuiButton(buttonRenderer);
+            nextStyle.setText(I18n.format("pi.button.next_style"));
+            nextStyle.setListener(this::nextStyle);
+            nextStyle.setSize(80, 14);
+            addChild(nextStyle);
+        }
+
+        @Override
+        public void reloadElement() {
+            super.reloadElement();
+            nextStyle.setPos(xPos() + xSize() / 2 - nextStyle.xSize() / 2, prevButton.yPos());
+        }
+
+        int index = 0;
+        private void nextStyle() {
+            index++;
+            List<String> presets = new ArrayList<>(StyleHandler.getDefaultPresets());;
+            String preset = presets.get(index % presets.size());
+            StyleHandler.loadPreset(preset, false);
         }
     }
 }

@@ -670,6 +670,19 @@ public class DocumentationManager {
 
     //endregion
 
+    public static void clear() {
+        uriPageMap.clear();
+        modStructureMap.clear();
+        structureFileMap.clear();
+        installedModVersionFileMap.clear();
+        sortedModVersionMap.clear();
+        activeModVersionMap.clear();
+        packDocFileMap.clear();
+        contentRelationsMap.clear();
+        loadRootPage();
+        LanguageManager.clearTranslations();
+    }
+
     //# Content Relations
     //region //############################################################################
 

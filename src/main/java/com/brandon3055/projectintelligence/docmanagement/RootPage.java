@@ -8,6 +8,8 @@ import net.minecraft.client.resources.I18n;
 import java.io.File;
 import java.util.LinkedList;
 
+import static com.brandon3055.projectintelligence.docmanagement.PIUpdateManager.UpdateStage.INACTIVE;
+
 /**
  * Created by brandon3055 on 11/08/2017.
  * This is the root page for a mod. This page is serialized to jason and saved to the mods structure.json file
@@ -43,6 +45,13 @@ public class RootPage extends DocumentationPage {
     public LinkedList<String> getMarkdownLines() {
         DocumentationPage homePage = getHomePage();
         if (homePage == null) {
+            if (!PIConfig.downloadsAllowed) {
+                return new LinkedList<>(Lists.newArrayList("Waiting for permission to download documentation..."));
+            }
+            else if (PIUpdateManager.updateStage != INACTIVE) {
+                return new LinkedList<>(Lists.newArrayList("Documentation download in progress..."));
+            }
+
             return new LinkedList<>(Lists.newArrayList("The specified home page \""+ PIConfig.homePage+"\" does not exist!", //
                     "To set a new home page right-click on a page in the navigation pane and select \"Set as home page\""));
         }

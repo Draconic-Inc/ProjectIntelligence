@@ -1,8 +1,12 @@
 package com.brandon3055.projectintelligence.client.gui;
 
 import com.brandon3055.brandonscore.handlers.FileHandler;
+import com.brandon3055.brandonscore.lib.DLRSCache;
+import com.brandon3055.projectintelligence.api.PiAPI;
+import com.brandon3055.projectintelligence.client.DisplayController;
 import com.brandon3055.projectintelligence.client.PIGuiHelper;
 import com.brandon3055.projectintelligence.client.gui.guielements.GuiPartMenu;
+import com.brandon3055.projectintelligence.docmanagement.DocumentationManager;
 import com.brandon3055.projectintelligence.utils.LogHelper;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -10,17 +14,20 @@ import com.google.gson.JsonParser;
 import com.google.gson.internal.Streams;
 import com.google.gson.stream.JsonWriter;
 import net.minecraft.util.JsonUtils;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
 /**
  * Created by brandon3055 on 3/09/2016.
  */
+//TODO switch to instance based config
 public class PIConfig {
 
     public static File configFile;
@@ -65,6 +72,7 @@ public class PIConfig {
         configFile = new File(piFolder, "GuiConfig.json");
 
         if (!configFile.exists()) {
+            configFile.getParentFile().mkdirs();
             save();
         }
         load();
@@ -206,6 +214,43 @@ public class PIConfig {
 
     public static synchronized boolean editMode() {
         return editMode;
+    }
+
+    public static void deleteConfigAndReload() {
+        File piFolder = new File(FileHandler.brandon3055Folder, "ProjectIntelligence");
+        try {
+            FileUtils.deleteDirectory(piFolder);
+            DocumentationManager.clear();
+
+            //So this is why i want to switch to an instance based config...
+            editMode = false;
+            editingRepoLoc = "";
+            screenMode = 0;
+            screenPosOverride = false;
+            screenPosX = 0;
+            screenPosY = 0;
+            etCheckFluid = true;
+            editorAlwaysOnTop = false;
+            editorLineWrap = false;
+            modVersionOverrides = new HashMap<>();
+            maxTabs = 16;
+            editorLAF = "";
+            userLanguage = "[MINECRAFT-LANG]";
+            pageLangOverrides = new HashMap<>();
+            modLangOverrides = new HashMap<>();
+            searchMode = SearchMode.EVERYWHERE;
+            tutorialDisplayed = false;
+            downloadsAllowed = false;
+            showTutorialLater = false;
+            initialize();
+            DisplayController.MASTER_CONTROLLER.clear();
+            DLRSCache.clearFileCache();
+            PiAPI.openGui(null);
+        }
+        catch (IOException e) {
+            e.printStackTrace();
+            PIGuiHelper.displayError(e.getMessage());
+        }
     }
 
     //endregion

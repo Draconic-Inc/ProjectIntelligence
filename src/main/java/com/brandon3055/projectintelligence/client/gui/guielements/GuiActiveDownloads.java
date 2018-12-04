@@ -11,7 +11,8 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.resources.I18n;
 
 import java.io.File;
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
 
 import static com.brandon3055.projectintelligence.docmanagement.PIUpdateManager.UpdateStage.INACTIVE;
 import static com.brandon3055.projectintelligence.docmanagement.PIUpdateManager.UpdateStage.RELOAD_DOCUMENTATION;
@@ -128,7 +129,7 @@ public class GuiActiveDownloads extends MGuiElementBase<GuiActiveDownloads> {
             downloads.entrySet().removeIf(entry -> entry.getValue().finishedTime > (entry.getValue().failed ? 200 : 10));
 
             int newY = (downloads.size() * 9) + (downloads.isEmpty() ? 22 : 25);
-            setYSize(PIUpdateManager.updateStage == INACTIVE ? newY : Math.max(ySize(), newY));
+            setYSize(Math.min(PIUpdateManager.updateStage == INACTIVE || PIUpdateManager.updateStage == RELOAD_DOCUMENTATION ? newY : Math.max(ySize(), newY), parent.ySize() - 50));
             setPos((parent.guiLeft() + parent.xSize()) - xSize() - 2, (parent.guiTop() + parent.ySize()) - ySize() - 2);
             textColour = StyleHandler.getInt("user_dialogs.text_colour");
         }

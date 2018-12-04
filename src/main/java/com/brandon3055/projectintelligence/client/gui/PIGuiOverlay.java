@@ -77,7 +77,7 @@ public class PIGuiOverlay implements IModularGui<GuiScreen> {
     @Override
     public void addElements(GuiElementManager manager) {
         docElement = new DocElement(this, guiDocHelper);
-        manager.add(docElement);
+        manager.add(docElement, 200);
     }
 
     //region Gui Method Pass-through
@@ -106,8 +106,8 @@ public class PIGuiOverlay implements IModularGui<GuiScreen> {
         manager.renderElements(mc, mouseX, mouseY, partialTicks);
     }
 
-    public void renderOverlayLayer(int mouseX, int mouseY, float partialTicks) {
-        manager.renderOverlayLayer(mc, mouseX, mouseY, partialTicks);
+    public boolean renderOverlayLayer(int mouseX, int mouseY, float partialTicks) {
+        return manager.renderOverlayLayer(mc, mouseX, mouseY, partialTicks);
     }
 
     public void updateScreen() {
@@ -156,6 +156,10 @@ public class PIGuiOverlay implements IModularGui<GuiScreen> {
     @Override
     public int getZLevel() {
         return zLevel;
+    }
+
+    public boolean isMouseOver(int mouseX, int mosueY) {
+        return docElement != null && docElement.isMouseOver(mouseX, mosueY);
     }
 
     //endregion
@@ -357,7 +361,7 @@ public class PIGuiOverlay implements IModularGui<GuiScreen> {
                 GlStateManager.translate(xPos() + (animRect.width / 2D) * (1D - d), yPos() + (animRect.height / 2D) * (1D - d), 0);
                 GlStateManager.scale(d, d, 1);
                 GlStateManager.translate(-xPos(), -yPos(), 0);
-                zOffset += 500;
+//                zOffset += 500;
             }
 
             windowRenderer.render(this, xPos(), yPos(), xSize(), ySize(), false);
@@ -365,7 +369,7 @@ public class PIGuiOverlay implements IModularGui<GuiScreen> {
             drawColouredRect(xPos() + 4, maxYPos() - 6, xSize() - 16, 2, headerProps.background());
 
             if (d < 1) {
-                zOffset -= 500;
+//                zOffset -= 500;
                 GlStateManager.popMatrix();
             }
 
@@ -419,7 +423,7 @@ public class PIGuiOverlay implements IModularGui<GuiScreen> {
 
         private void showSettings() {
             GuiStyleEditor editor = new GuiStyleEditor(this);
-            editor.show(displayZLevel + 50);
+            editor.show(displayZLevel + 250);
             editor.setXPos(xPos() + (xSize() / 2) - (editor.xSize() / 2));
             editor.setYPos(yPos() + (ySize() / 2) - (editor.ySize() / 2));
         }

@@ -1,6 +1,7 @@
 package com.brandon3055.projectintelligence.client.gui.guielements;
 
 import codechicken.lib.math.MathHelper;
+import codechicken.lib.reflect.ObfMapping;
 import com.brandon3055.brandonscore.client.gui.modulargui.MGuiElementBase;
 import com.brandon3055.brandonscore.client.gui.modulargui.baseelements.GuiButton;
 import com.brandon3055.brandonscore.client.gui.modulargui.baseelements.GuiPopUpDialogBase;
@@ -103,6 +104,11 @@ public class GuiPIConfig extends GuiPopUpDialogBase<GuiPIConfig> {
 
         if (PIConfig.editMode()) {
             addConfig(new ConfigProperty(this, "pi.config.open_editor").setAction(PIGuiHelper::displayEditor));
+        }
+
+
+        if (!ObfMapping.obfuscated) {
+            addConfig(new ConfigProperty(this, () -> "Reset PI").setAction(PIConfig::deleteConfigAndReload));
         }
 
         //endregion

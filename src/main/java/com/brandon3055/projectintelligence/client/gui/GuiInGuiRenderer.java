@@ -51,6 +51,17 @@ public class GuiInGuiRenderer {
         }
     }
 
+    public void drawScreenPost(GuiScreen gui) {
+        if (isActiveScreen(gui) && overlay != null) {
+            int mouseX = getMouseX(gui);
+            int mouseY = getMouseY(gui);
+            GlStateManager.color(1, 1, 1, 1);
+            GlStateManager.translate(0, 0, 500);
+            overlay.renderOverlayLayer(mouseX, mouseY, gui.mc.getRenderPartialTicks());
+            GlStateManager.translate(0, 0, -500);
+        }
+    }
+
     public void updateScreen() {
         if (activeScreen != null && overlay != null) {
             overlay.updateScreen();
@@ -99,7 +110,7 @@ public class GuiInGuiRenderer {
 
     //Helpers
 
-    private boolean isActiveScreen(GuiScreen gui) {
+    public boolean isActiveScreen(GuiScreen gui) {
         return gui != null && gui == activeScreen && guiDocHelper != null;
     }
 
@@ -109,5 +120,9 @@ public class GuiInGuiRenderer {
 
     private int getMouseY(GuiScreen gui) {
         return gui.height - Mouse.getEventY() * gui.height / gui.mc.displayHeight - 1;
+    }
+
+    public boolean blockToolTip(GuiScreen currentScreen) {
+        return isActiveScreen(currentScreen) && overlay != null && overlay.isMouseOver(getMouseX(currentScreen), getMouseY(currentScreen));
     }
 }

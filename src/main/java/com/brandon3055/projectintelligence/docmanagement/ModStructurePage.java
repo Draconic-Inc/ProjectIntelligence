@@ -25,6 +25,7 @@ public class ModStructurePage extends DocumentationPage {
      */
     protected List<String> modAliases = new LinkedList<>();
     protected Map<String, DocumentationPage> URIPageMap = new HashMap<>();
+    public boolean verified = false;
 
     protected ModStructurePage(DocumentationPage parent, String modid, String modVersion, boolean isPackDoc) {
         super(parent, modid, modVersion, isPackDoc);
@@ -84,6 +85,7 @@ public class ModStructurePage extends DocumentationPage {
 
     @Override
     public void loadFromJson(JsonObject jObj) {
+        verified = JsonUtils.getBoolean(jObj, "verified", false);
         markdownFile = JsonUtils.getString(jObj, "file", "");
 
         if (JsonUtils.isJsonArray(jObj, "mod_aliases")) {
@@ -129,6 +131,8 @@ public class ModStructurePage extends DocumentationPage {
         JsonObject jObj = new JsonObject();
         jObj.addProperty("mod_id", modid);
         jObj.addProperty("mod_version", modVersion);
+        jObj.addProperty("__verified_comment", "Do not change this to true. If you do so your PR will be automatically rejected.");
+        jObj.addProperty("verified", false);//Not going to worry about separating this by language because all languages should be direct translations of the default language doc.
         jObj.addProperty("file", markdownFile);
 
         if (modAliases.size() > 0) {

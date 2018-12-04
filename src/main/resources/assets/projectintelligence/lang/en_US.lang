@@ -27,7 +27,7 @@ pi.style.confirm_delete.txt=Confirm Delete
 pi.style.confirm_load_unsaved.txt=It looks like you have made changes to the current style. If you load a preset before saving your changes will be lost.
 pi.style.shade_borders.info=Not compatible with vanilla texture, Applies shading to the borders to give a raised look.
 
-pi.style.show_subs.txt=Show Sub Items
+pi.style.show_subs.txt=Show Sub Itemsa
 pi.style.hide_subs.txt=Hide Sub Items
 
 //Style Property Names
@@ -118,6 +118,7 @@ pi.button.show_me_later=Show me next time
 pi.button.more_information=More Info
 pi.button.deny_access=Deny Access
 pi.button.open_in_pi_main=Open in main Project Intelligence GUI
+pi.button.next_style=Next Style
 
 //Config
 pi.config.basic_config=Basic Configuration
@@ -164,6 +165,8 @@ pi.notification.show_tutorial_later.txt=PI Intro screen will be displayed the ne
 
 //Misc UI Text
 pi.popup.select_language=Select Language
+pi.pagebtn.verified=Verified
+pi.pagebtn.verified.info=This documentation was ether written or verified by a member of this mods development team.
 
 //Page context menu items
 pi.page.cm.page_options=Page Options

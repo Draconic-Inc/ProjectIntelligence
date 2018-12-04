@@ -102,6 +102,13 @@ public class PageButton extends GuiButton {
         versMissMatch.zOffset += 10;
         addChild(versMissMatch);
 
+        if (page instanceof ModStructurePage && ((ModStructurePage) page).verified) {
+            GuiTexture verified = new GuiTexture(72, 16, 5, 5, PITextures.PI_PARTS);
+            verified.setYPos(yPos() + 2);
+            verified.setXPosMod(() -> maxXPos() - 8);
+            verified.setHoverText(TextFormatting.GREEN + I18n.format("pi.pagebtn.verified"), TextFormatting.BLUE + I18n.format("pi.pagebtn.verified.info"));
+            addChild(verified);
+        }
 
         super.addChildElements();
     }

@@ -82,6 +82,8 @@ public class GuiProjectIntelligence extends GuiScreen {
                 });
                 dialog2.showCenter(850);
             });
+            dialog.setEscapeCallback(this::closeGui);
+            dialog.setBlockOutsideClicks(true);
             dialog.showCenter(850);
         }
         else {
@@ -208,8 +210,14 @@ public class GuiProjectIntelligence extends GuiScreen {
 
     @Override
     protected void keyTyped(char typedChar, int keyCode) throws IOException {
-        if (!container.keyTyped(typedChar, keyCode) && KeyInputHandler.openPI.isActiveAndMatches(keyCode)) {
+        boolean captured = container.keyTyped(typedChar, keyCode);
+
+        if (!captured && KeyInputHandler.openPI.isActiveAndMatches(keyCode)) {
             closeGui();
+        }
+        else if (!captured && keyCode == 59) {
+            GuiPIIntroduction guiIntro = new GuiPIIntroduction(container);
+            container.getManager().add(guiIntro, 820);
         }
     }
 
