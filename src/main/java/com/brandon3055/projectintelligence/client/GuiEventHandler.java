@@ -45,7 +45,7 @@ public class GuiEventHandler {
         GuiContainer gui = event.getGuiContainer();
         GlStateManager.disableLighting();
         GlStateManager.pushMatrix();
-        GlStateManager.translate(-gui.guiLeft, -gui.guiTop, 0);
+        GlStateManager.translate(-gui.getGuiLeft(), -gui.getGuiTop(), 0);
         GuiInGuiRenderer.instance.drawScreen(gui);
         GlStateManager.popMatrix();
     }
