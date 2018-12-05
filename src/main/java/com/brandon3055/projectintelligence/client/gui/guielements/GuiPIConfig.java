@@ -1,7 +1,6 @@
 package com.brandon3055.projectintelligence.client.gui.guielements;
 
 import codechicken.lib.math.MathHelper;
-import codechicken.lib.reflect.ObfMapping;
 import com.brandon3055.brandonscore.client.gui.modulargui.MGuiElementBase;
 import com.brandon3055.brandonscore.client.gui.modulargui.baseelements.GuiButton;
 import com.brandon3055.brandonscore.client.gui.modulargui.baseelements.GuiPopUpDialogBase;
@@ -18,6 +17,7 @@ import com.brandon3055.projectintelligence.docmanagement.DocumentationManager;
 import com.brandon3055.projectintelligence.docmanagement.LanguageManager;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.audio.PositionedSoundRecord;
+import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.resources.I18n;
 import net.minecraft.init.SoundEvents;
 import net.minecraft.util.text.TextFormatting;
@@ -106,9 +106,8 @@ public class GuiPIConfig extends GuiPopUpDialogBase<GuiPIConfig> {
             addConfig(new ConfigProperty(this, "pi.config.open_editor").setAction(PIGuiHelper::displayEditor));
         }
 
-
-        if (!ObfMapping.obfuscated) {
-            addConfig(new ConfigProperty(this, () -> "Reset PI").setAction(PIConfig::deleteConfigAndReload));
+        if (GuiScreen.isShiftKeyDown()) {
+            addConfig(new ConfigProperty(this, () -> "Reset PI and clear image cache").setAction(PIConfig::deleteConfigAndReload));
         }
 
         //endregion
@@ -178,6 +177,7 @@ public class GuiPIConfig extends GuiPopUpDialogBase<GuiPIConfig> {
     @Override
     public void reloadElement() {
         super.reloadElement();
+        reloadConfigProperties();
     }
 
     @Override

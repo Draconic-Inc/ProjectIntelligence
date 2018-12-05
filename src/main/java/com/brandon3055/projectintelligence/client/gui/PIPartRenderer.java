@@ -5,7 +5,10 @@ import com.brandon3055.brandonscore.client.gui.modulargui.MGuiElementBase;
 import com.brandon3055.projectintelligence.client.PITextures;
 import com.brandon3055.projectintelligence.client.StyleHandler.PropertyGroup;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.GlStateManager;
+import net.minecraft.client.renderer.Tessellator;
+import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 
 import java.util.function.Supplier;
 
@@ -85,7 +88,7 @@ public class PIPartRenderer {
                 int texW = 256 - (left() ? 0 : 4) - (right() ? 0 : 4);
                 int texH = 128 - (top() ? 0 : 4) - (bottom() ? 0 : 4);
 
-                parent.drawTiledTextureRectWithTrim(x, y, width, height, top() ? 4 : 0, left() ? 4 : 0, bottom() ? 4 : 0, right() ? 4 : 0, texU, texV, texW, texH);
+                drawTiledTextureRectWithTrim(parent, x, y, width, height, top() ? 4 : 0, left() ? 4 : 0, bottom() ? 4 : 0, right() ? 4 : 0, texU, texV, texW, texH);
 
                 GlStateManager.color(1, 1, 1, 1);
                 if (squareTex) {
@@ -148,6 +151,70 @@ public class PIPartRenderer {
             element.drawColouredRect(x, y + height - bw, bw, bw, cornerMixColour);
         }
     }
+
+    private void drawTiledTextureRectWithTrim(MGuiElementBase element, int xPos, int yPos, int xSize, int ySize, int topTrim, int leftTrim, int bottomTrim, int rightTrim, int texU, int texV, int texWidth, int texHeight) {
+        int trimWidth = texWidth - leftTrim - rightTrim;
+        int trimHeight = texHeight - topTrim - bottomTrim;
+        if (xSize <= texWidth) trimWidth = Math.min(trimWidth, xSize - rightTrim);
+        if (xSize <= 0 || ySize <= 0 || trimWidth <= 0 || trimHeight <= 0) return;
+
+        Tessellator tessellator = Tessellator.getInstance();
+        BufferBuilder buffer = tessellator.getBuffer();
+        buffer.begin(0x07, DefaultVertexFormats.POSITION_TEX);
+
+        for (int x = 0; x < xSize; ) {
+            int rWidth = Math.min(xSize - x, trimWidth);
+            int trimU;
+            if (x == 0) {
+                trimU = texU;
+            }
+            else if (x + trimWidth <= xSize) {
+                trimU = texU + leftTrim;
+            }
+            else {
+                trimU = texU + (texWidth - (xSize - x));
+            }
+
+            //Top & Bottom trim
+            bufferTexturedModalRect(element, buffer, xPos + x, yPos, trimU, texV, rWidth, topTrim);
+            bufferTexturedModalRect(element, buffer, xPos + x, yPos + ySize - bottomTrim, trimU, texV + texHeight - bottomTrim, rWidth, bottomTrim);
+
+
+            rWidth = Math.min(xSize - x - leftTrim - rightTrim, trimWidth);
+            for (int y = 0; y < ySize; ) {
+                int rHeight = Math.min(ySize - y - topTrim - bottomTrim, trimHeight);
+                int trimV;
+                if (y + texHeight <= ySize) {
+                    trimV = texV + topTrim;
+                }
+                else {
+                    trimV = texV + (texHeight - (ySize - y));
+                }
+
+                //Left & Right trim
+                if (x == 0) {
+                    bufferTexturedModalRect(element, buffer, xPos, yPos + y + topTrim, texU, trimV, leftTrim, rHeight);
+                    bufferTexturedModalRect(element, buffer, xPos + xSize - rightTrim, yPos + y + topTrim, trimU + texWidth - rightTrim, trimV, rightTrim, rHeight);
+                }
+
+                //Core
+                bufferTexturedModalRect(element, buffer, xPos + x + leftTrim, yPos + y + topTrim, texU + leftTrim, texV + topTrim, rWidth, rHeight);
+                y += trimHeight;
+            }
+            x += trimWidth;
+        }
+
+        tessellator.draw();
+    }
+
+    private void bufferTexturedModalRect(MGuiElementBase element, BufferBuilder buffer, int x, int y, int textureX, int textureY, int width, int height) {
+        double zLevel = element.getRenderZLevel();
+        buffer.pos((double) (x), (double) (y + height), zLevel).tex((double) ((float) (textureX) * 0.00390625F), (double) ((float) (textureY + height) * 0.00390625F)).endVertex();
+        buffer.pos((double) (x + width), (double) (y + height), zLevel).tex((double) ((float) (textureX + width) * 0.00390625F), (double) ((float) (textureY + height) * 0.00390625F)).endVertex();
+        buffer.pos((double) (x + width), (double) (y), zLevel).tex((double) ((float) (textureX + width) * 0.00390625F), (double) ((float) (textureY) * 0.00390625F)).endVertex();
+        buffer.pos((double) (x), (double) (y), zLevel).tex((double) ((float) (textureX) * 0.00390625F), (double) ((float) (textureY) * 0.00390625F)).endVertex();
+    }
+
 
     private boolean top() {
         return sides[0];
