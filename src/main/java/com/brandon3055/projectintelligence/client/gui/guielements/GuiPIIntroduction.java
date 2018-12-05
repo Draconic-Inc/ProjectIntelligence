@@ -360,12 +360,13 @@ public class GuiPIIntroduction extends MGuiElementBase<GuiPIIntroduction> {
         public void reloadElement() {
             super.reloadElement();
             nextStyle.setPos(xPos() + xSize() / 2 - nextStyle.xSize() / 2, prevButton.yPos());
+            nextButton.setDisabled(StyleHandler.getDefaultPresets().isEmpty());
         }
 
         int index = 0;
         private void nextStyle() {
             index++;
-            List<String> presets = new ArrayList<>(StyleHandler.getDefaultPresets());;
+            List<String> presets = new ArrayList<>(StyleHandler.getDefaultPresets());
             String preset = presets.get(index % presets.size());
             StyleHandler.loadPreset(preset, false);
         }

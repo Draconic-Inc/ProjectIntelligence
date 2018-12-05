@@ -8,6 +8,7 @@ import com.brandon3055.brandonscore.utils.Utils;
 import com.brandon3055.projectintelligence.client.StyleHandler;
 import com.brandon3055.projectintelligence.docmanagement.PIUpdateManager;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.resources.I18n;
 
 import java.io.File;
@@ -75,6 +76,7 @@ public class GuiActiveDownloads extends MGuiElementBase<GuiActiveDownloads> {
                 y += 9;
             }
         }
+        GlStateManager.color(1, 1, 1, 1);
     }
 
     @Override

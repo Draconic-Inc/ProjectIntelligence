@@ -243,6 +243,7 @@ public class PIConfig {
             downloadsAllowed = false;
             showTutorialLater = false;
             initialize();
+            DocumentationManager.initialize();
             DisplayController.MASTER_CONTROLLER.clear();
             DLRSCache.clearFileCache();
             PiAPI.openGui(null);

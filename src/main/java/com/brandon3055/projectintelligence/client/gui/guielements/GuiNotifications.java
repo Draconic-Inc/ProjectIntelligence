@@ -12,6 +12,7 @@ import com.brandon3055.projectintelligence.client.PITextures;
 import com.brandon3055.projectintelligence.client.StyleHandler.PropertyGroup;
 import com.brandon3055.projectintelligence.client.gui.PIPartRenderer;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.resources.I18n;
 
 import java.util.LinkedList;
@@ -84,6 +85,12 @@ public class GuiNotifications extends MGuiElementBase<GuiNotifications> {
         }
 
         return super.onUpdate();
+    }
+
+    @Override
+    public void reloadElement() {
+        super.reloadElement();
+        GlStateManager.color(1, 1, 1, 1);
     }
 
     private static class Notification extends MGuiElementBase<Notification> {
