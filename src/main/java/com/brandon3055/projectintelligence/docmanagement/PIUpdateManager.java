@@ -31,7 +31,7 @@ public class PIUpdateManager {
 
     public static FileDownloadManager downloadManager = new FileDownloadManager("PI-Update-Manager", 6, false);
 
-    private static String modManifestURL = "http://pi.brandon3055.com/manifest.json";
+    private static String modManifestURL = "https://pi.brandon3055.com/manifest.json";
     private static File modManifest;
     private static File updaterFolder;
     private static File updaterModsFolder;
