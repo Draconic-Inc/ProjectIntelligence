@@ -7,7 +7,7 @@ The goal of this project is to create a truly universal documentation mod by lev
 
 So how will this work? Well for starters any mod developer can add documentation for their mod to PI. The problem is mod devs are busy people so most of them wont have time to write documentation for some random documentation mod such as PI and that in my opinion is a major issue with most of the current documentation mods. They need to be directly supported by modders. PI aims to solve this problem by making it possible for anyone in the community to contribute by writing documentation for various mods using the relatively simple built in editor. They can then submit their documentation via a pull request and if it passes review it will be added to the online repository.
 
-Everything PI does is open source and completely transparent. All documentation is stored in its raw form on github. That is then built by a jenkins server and uploaded to a web server controlled by covers1624 where it can be accessed by PI. Everything PI uses comes from this server including all images used in documentation. No requests are made to any servers outside of pi.brandon3055.com. The only possible exception to this is pack documentation which you can read more about bellow.
+Everything PI does is open source and completely transparent. All documentation is stored in its raw form on github. That is then built by a jenkins server and uploaded to a web server controlled by covers1624 where it can be accessed by PI. Everything PI uses comes from this server including all images used in documentation. No requests are made to any servers outside of pi.brandon3055.com. The only possible exception to this is pack documentation which you can read more about below.
 
  
 
