@@ -1,2 +1,6 @@
+######## 1.0.3.x ########
+-Fixed some minor issues with the editor.
+-Fixed SSL certificate issue. VanillaFix is no longer required.
+
 ######## 1.0.2.13 ########
 -Initial Public beta Release

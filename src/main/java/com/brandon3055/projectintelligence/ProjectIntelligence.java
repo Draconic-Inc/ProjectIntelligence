@@ -2,6 +2,7 @@ package com.brandon3055.projectintelligence;
 
 import com.brandon3055.brandonscore.BrandonsCore;
 import com.brandon3055.projectintelligence.utils.LogHelper;
+import com.brandon3055.projectintelligence.utils.SSLFix;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.SidedProxy;
 import net.minecraftforge.fml.common.event.FMLInitializationEvent;
@@ -29,6 +30,7 @@ public class ProjectIntelligence {
 
     public ProjectIntelligence() {
         LogHelper.info("Hello Minecraft!!!");
+        SSLFix.fixSSL();
     }
 
     @Mod.EventHandler
