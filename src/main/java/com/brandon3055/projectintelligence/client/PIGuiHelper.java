@@ -32,6 +32,7 @@ import java.net.URISyntaxException;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.function.Consumer;
 
 /**
@@ -40,7 +41,7 @@ import java.util.function.Consumer;
 public class PIGuiHelper {
 
     public static PIEditor editor = null;
-    public static LinkedList<String> errorCache = new LinkedList<>();
+    public static ConcurrentLinkedDeque<String> errorCache = new ConcurrentLinkedDeque<>();
     private static LinkedList<String> entitySelectionList = new LinkedList<>();
     private static LinkedList<String> playerInventory = new LinkedList<>();
 

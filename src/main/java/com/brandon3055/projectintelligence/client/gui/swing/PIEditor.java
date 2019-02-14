@@ -962,7 +962,7 @@ public class PIEditor extends javax.swing.JFrame {
         Singleton<Boolean> keepSelection = new Singleton<>(false);
 
         //Actually reload the tree
-        DefaultMutableTreeNode modsNode = new DefaultMutableTreeNode("Root Page");
+        DefaultMutableTreeNode modsNode = new DefaultMutableTreeNode("Root Page ("+ LanguageManager.getUserLanguage() + ")");
         pageTree.setModel(treeModel = new DefaultTreeModel(modsNode));
         treeModel.setAsksAllowsChildren(true);
 
@@ -1839,6 +1839,20 @@ public class PIEditor extends javax.swing.JFrame {
 
 //        LogHelper.dev("T4 " + (System.currentTimeMillis() - t));
 
+        if (!(container.getPage() instanceof RootPage)) {
+            File file = container.getPage().getMarkdownFile();
+            String path = file.getAbsolutePath();
+            item = new JMenuItem("Open File: " + path.substring(path.indexOf("ModDocs") + 8));
+            item.addActionListener(e -> {
+                try {
+                    Desktop.getDesktop().open(file);
+                }
+                catch (IOException ex) {
+                    ex.printStackTrace();
+                }
+            });
+            menuItems.add(item);
+        }
 
         return menuItems;
     }

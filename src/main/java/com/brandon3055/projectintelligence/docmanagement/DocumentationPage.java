@@ -3,7 +3,9 @@ package com.brandon3055.projectintelligence.docmanagement;
 import com.brandon3055.brandonscore.integration.ModHelperBC;
 import com.brandon3055.projectintelligence.client.DisplayController;
 import com.brandon3055.projectintelligence.client.PIGuiHelper;
+import com.brandon3055.projectintelligence.client.gui.PIConfig;
 import com.brandon3055.projectintelligence.docmanagement.LanguageManager.PageLangData;
+import com.google.common.base.Objects;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -137,13 +139,15 @@ public class DocumentationPage {
         return isPackDoc;
     }
 
+    private File lastFile = null;
+
     public LinkedList<String> getMarkdownLines() {
-        if (mdLineCache == null) {
+        if (PIConfig.editMode() || mdLineCache == null || !Objects.equal(lastFile, getMarkdownFile())) {
             mdLineCache = new LinkedList<>();
 
             File mdFile = getMarkdownFile();
             PageLangData data = LanguageManager.getLangData(pageURI, getLocalizationLang());
-            if (data == null) {
+            if (data == null && !PIConfig.editMode()) {
                 mdLineCache.add("This page has not yet been translated to your language!");
                 mdLineCache.add("Click the \"Broken Language\" icon on the page button to select an alternate language.");
                 mdLineCache.add("Or change your selected language in PI settings (PI language can be set independently from Minecraft language)");
