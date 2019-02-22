@@ -335,7 +335,7 @@ public class PIGuiOverlay implements IModularGui<GuiScreen> {
                 pageName = page.getDisplayName();
             }
             else {
-                lines = Arrays.asList("Could not fine specified documentation page!", "Ether the documentation failed to download or this documentation version is not compatible with the installed mod version.", "Or its just plane broken.", "Broken Page: " + pageURI);
+                lines = Arrays.asList("Could not find specified documentation page!", "Either the documentation failed to download or this documentation version is not compatible with the installed mod version.", "Or it's just plain broken.", "Broken Page: " + pageURI);
                 pageName = pageURI;
             }
 
