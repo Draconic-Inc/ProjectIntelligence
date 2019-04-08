@@ -273,39 +273,43 @@ public class LogHelper {
     }
 
     public static void startTimer(String name) {
-        if (timerRunning) {
-            LogHelper.error("The timer is already running!");
-            return;
-        }
+        if (!ObfMapping.obfuscated) {
+            if (timerRunning) {
+                LogHelper.error("The timer is already running!");
+                return;
+            }
 
-        timerName = name;
-        timerRunning = true;
-        startTime = System.nanoTime();
+            timerName = name;
+            timerRunning = true;
+            startTime = System.nanoTime();
+        }
     }
 
     public static void stopTimer() {
-        if (!timerRunning) {
-            LogHelper.error("The timer was not running!!!");
-            return;
-        }
+        if (!ObfMapping.obfuscated) {
+            if (!timerRunning) {
+                LogHelper.error("The timer was not running!!!");
+                return;
+            }
 
-        long ns = System.nanoTime() - startTime;
+            long ns = System.nanoTime() - startTime;
 
-        String value;
-        long ms = 1000000;
-        long s = ms * 1000;
+            String value;
+            long ms = 1000000;
+            long s = ms * 1000;
 
-        if (ns > s) {
-            value = Utils.round(ns / (double) s, 1000) + "s";
-        }
-        else if (ns > 1000) {
-            value = Utils.round(ns / (double) ms, 10000) + "ms";
-        }
-        else {
-            value = ns + "ns";
-        }
+            if (ns > s) {
+                value = Utils.round(ns / (double) s, 1000) + "s";
+            }
+            else if (ns > 1000) {
+                value = Utils.round(ns / (double) ms, 10000) + "ms";
+            }
+            else {
+                value = ns + "ns";
+            }
 
-        dev("[Timer]: " + timerName + " Took " + value);
-        timerRunning = false;
+            dev("[Timer]: " + timerName + " Took " + value);
+            timerRunning = false;
+        }
     }
 }

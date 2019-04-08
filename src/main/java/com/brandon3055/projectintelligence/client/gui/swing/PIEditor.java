@@ -940,68 +940,109 @@ public class PIEditor extends javax.swing.JFrame {
     }
 
     public void reload() {
-        reloading = true;
-        alwaysOnTop.setSelected(PIConfig.editorAlwaysOnTop);
-        setAlwaysOnTop(PIConfig.editorAlwaysOnTop);
-        markdownWindow.setLineWrap(PIConfig.editorLineWrap);
-        updateTree();
-        reloading = false;
+        SwingUtilities.invokeLater(() -> {
+            reloading = true;
+            alwaysOnTop.setSelected(PIConfig.editorAlwaysOnTop);
+            setAlwaysOnTop(PIConfig.editorAlwaysOnTop);
+            markdownWindow.setLineWrap(PIConfig.editorLineWrap);
+            updateTree();
+            reloading = false;
+        });
     }
 
     private void updateTree() {
         //Create a list of all currently expanded pages.
 
+        LogHelper.startTimer("expandedList");
         java.util.List<String> expanded = streamTree(pageTree)//
                 .filter(pageTree::isExpanded)//
                 .map(pageTree::getPathForRow)//
                 .map(TreePath::getLastPathComponent)//
                 .map(Object::toString)//
                 .collect(Collectors.toList());
+        LogHelper.stopTimer();
+        LogHelper.dev("Expanded: " + expanded);
 
         DocumentationPage selectedPage = getSelected();
-        Singleton<Boolean> keepSelection = new Singleton<>(false);
 
         //Actually reload the tree
-        DefaultMutableTreeNode modsNode = new DefaultMutableTreeNode("Root Page ("+ LanguageManager.getUserLanguage() + ")");
+        LogHelper.startTimer("modsNode");
+        DefaultMutableTreeNode modsNode = new DefaultMutableTreeNode("Root Page (" + LanguageManager.getUserLanguage() + ")");
         pageTree.setModel(treeModel = new DefaultTreeModel(modsNode));
         treeModel.setAsksAllowsChildren(true);
+        LogHelper.stopTimer();
 
+        LogHelper.startTimer("structureMap");
         Map<String, ModStructurePage> structureMap = DocumentationManager.getModStructureMap();
         for (String modid : structureMap.keySet()) {
             modsNode.add(loadModPages(structureMap.get(modid)));
         }
+        LogHelper.stopTimer();
 
+        LogHelper.startTimer("treeModel.reload");
         treeModel.reload();
+        LogHelper.stopTimer();
 
+        //Old
         //Reset the tree state to what it was before the reload
-        streamTree(pageTree).forEach(pageTree::expandRow);
+//        LogHelper.startTimer("streamTree");
+//        streamTree(pageTree).forEach(pageTree::expandRow);
+//        LogHelper.stopTimer();
+//
+//        LogHelper.startTimer("selectedPage");
+//        if (selectedPage != null) {
+//            streamTree(pageTree, true).forEachOrdered(row -> {
+//                Object component = pageTree.getPathForRow(row).getLastPathComponent();
+//                if (component instanceof DefaultMutableTreeNode && ((DefaultMutableTreeNode) component).getUserObject() == selectedPage) {
+////                    keepSelection.set(true);
+//                    pageTree.setSelectionRow(row);
+//                }
+//            });
+//        }
+//        LogHelper.stopTimer();
+//
+//        LogHelper.startTimer("streamTree");
+//        streamTree(pageTree, true).forEachOrdered(row -> {
+//            try {
+//                String node = pageTree.getPathForRow(row).getLastPathComponent().toString();
+//                if (!expanded.contains(node) && !node.equals("Root Page")) {
+//                    pageTree.collapseRow(row);
+//                }
+//            }
+//            catch (Throwable ignored) {
+//            }
+//        });
+//        LogHelper.stopTimer();
 
-        if (selectedPage != null) {
-            streamTree(pageTree, true).forEachOrdered(row -> {
-                Object component = pageTree.getPathForRow(row).getLastPathComponent();
-                if (component instanceof DefaultMutableTreeNode && ((DefaultMutableTreeNode) component).getUserObject() == selectedPage) {
-                    keepSelection.set(true);
-                    pageTree.setSelectionRow(row);
-                }
-            });
+        LogHelper.startTimer("Restore Tree");
+        //New
+        boolean keepSelection = false;
+        int selectedRow = -1;
+        for (int row = 0; row < pageTree.getRowCount(); row++) {
+            Object component = pageTree.getPathForRow(row).getLastPathComponent();
+            String node = component.toString();
+
+            if (expanded.contains(node) || node.equals("Root Page")) {
+                pageTree.expandRow(row);
+            }
+
+            if (component instanceof DefaultMutableTreeNode && ((DefaultMutableTreeNode) component).getUserObject().equals(selectedPage)) {
+                keepSelection = true;
+                pageTree.setSelectionRow(selectedRow);
+            }
         }
-        streamTree(pageTree, true).forEachOrdered(row -> {
-            try {
-                String node = pageTree.getPathForRow(row).getLastPathComponent().toString();
-                if (!expanded.contains(node) && !node.equals("Root Page")) {
-                    pageTree.collapseRow(row);
-                }
-            }
-            catch (Throwable ignored) {
-            }
-        });
+        LogHelper.stopTimer();
 
-        if (selectedPage != null && keepSelection.get()) {
+        LogHelper.startTimer("setSelectedPage");
+        if (selectedPage != null && keepSelection) {
             setSelectedPage(selectedPage);
         }
         else {
             setSelectedPage(null);
         }
+        LogHelper.stopTimer();
+
+        SwingUtilities.updateComponentTreeUI(this);
     }
 
     private DefaultMutableTreeNode loadModPages(DocumentationPage page) {
@@ -1681,7 +1722,8 @@ public class PIEditor extends javax.swing.JFrame {
             markdownWindow.setCaretPosition(MathHelper.clip(pos, 0, markdownWindow.getText().length() - 1));
             set = true;
         }
-        catch (IOException ignored) {}
+        catch (IOException ignored) {
+        }
 
         if (!set) {
             markdownWindow.setText("");
@@ -2160,7 +2202,7 @@ public class PIEditor extends javax.swing.JFrame {
             case "icons":
                 return "This is where you can add icons to be displayed to the left of the page name in the page list. An icon can be ether an item stack, entity or correctly sized image.\n" + "By default if you add more than one icon the first will be displayed and the others will be used as fallback icons. This means if your documentation spans multiple\n" + "mod versions and the id for an item changes you can add all of its id's and it will use whatever one is avalible for the icon.\n" + "You also have the option to check the \"Cycle Icons\" box. When option is enabled and you have multiple icons it will cycle between the listed icons.";
             case "relations":
-                return "Relations are not yet implemented but when they are they will allow you to link pages directly to in game contend. For example the page for Draconium Ore could be\n" + "linked to the Draconium Ore item. Then there would be an option in game perhaps via a key bind while you have your mouse over draconium ore in your inventory to go\n" + "directly to the documentation page linked to that item. This may also be applied to mobs and blocks in world.";
+                return "Relations allow you to link pages directly to in game contend. For example the page for Draconium Ore could be\n" + "linked to the Draconium Ore item. Then there would be an option in game perhaps via a key bind while you have your mouse over draconium ore in your inventory to go\n" + "directly to the documentation page linked to that item. This may also be applied to mobs and blocks in world.";
         }
 
         return "[Error]: This help button has no bound help info!\n" + topic;
@@ -2306,6 +2348,11 @@ public class PIEditor extends javax.swing.JFrame {
 
         public DocumentationPage getPage() {
             return DocumentationManager.getPage(pageURI);
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            return super.equals(obj) || (obj instanceof DocumentationPage && ((DocumentationPage) obj).getPageURI().equals(pageURI));
         }
     }
 

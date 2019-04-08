@@ -1,4 +1,8 @@
-######## 1.0.3.x ########
+######## 1.0.4.17 ########
+-Fixed some bugs in the editor related top creating new documentation and deleting and re-adding pages.
+p.s. This change log is too short... Why aren't there more bugs in this brand new mod?
+
+######## 1.0.3.16 ########
 -Fixed some minor issues with the editor.
 -Fixed SSL certificate issue. VanillaFix is no longer required.
 

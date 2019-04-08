@@ -10,7 +10,6 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import net.minecraft.util.JsonUtils;
-import org.apache.commons.io.IOUtils;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
@@ -230,11 +229,15 @@ public class DocumentationPage {
             } while (getMarkdownFile().exists());
         }
 
-        try {
-            OutputStreamWriter writer = new OutputStreamWriter(new FileOutputStream(getMarkdownFile()), StandardCharsets.UTF_8);
-            writer.write(rawMarkdownString);
-            IOUtils.closeQuietly(writer);
+        File mdFile = getMarkdownFile();
+        File mdParent = mdFile.getParentFile();
 
+        if (!mdParent.exists() && !mdParent.mkdirs()) {
+            throw new MDException("Was unable to create parent folder for markdown file!. \nParent Folder: " + mdParent.getAbsolutePath());
+        }
+
+        try (OutputStreamWriter writer = new OutputStreamWriter(new FileOutputStream(mdFile), StandardCharsets.UTF_8)) {
+            writer.write(rawMarkdownString);
 //            FileUtils.writeStringToFile(getMarkdownFile(), rawMarkdownString, StandardCharsets.UTF_8);
             saveToDisk();
         }

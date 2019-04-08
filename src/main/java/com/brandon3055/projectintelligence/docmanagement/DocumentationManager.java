@@ -216,7 +216,9 @@ public class DocumentationManager {
         //Last thing to do is sort documentation versions (this also loads the appropriate versions)
         sortDocVersions();
         loadRootPage();
+        LogHelper.startTimer("LanguageManager.reloadLookupMap");
         LanguageManager.reloadLookupMap();
+        LogHelper.stopTimer();
 
         GuiProjectIntelligence.requiresEditReload = true;
         if (PIGuiHelper.editor != null) {
@@ -351,6 +353,7 @@ public class DocumentationManager {
      * Edit mode allows version overrides so you can edit any version of a mods documentation.
      */
     private static void sortDocVersions() {
+        LogHelper.startTimer("Sorting documentation versions");
         LogHelper.dev("Sorting documentation versions...");
         activeModVersionMap.clear();
         sortedModVersionMap.clear();
@@ -413,6 +416,7 @@ public class DocumentationManager {
         for (String pack : packDocFileMap.keySet()) {
             loadDocVersion(packDocFileMap.get(pack), true);
         }
+        LogHelper.stopTimer();
     }
 
     public static Comparator<String> VERSION_COMPARATOR = DocumentationManager::compareVersion;
@@ -823,6 +827,12 @@ public class DocumentationManager {
             catch (IOException e) {
                 e.printStackTrace();
             }
+        }
+
+        if (page instanceof ModStructurePage){
+            loadDocumentationFromDisk();
+        }else {
+            uriPageMap.remove(page.pageURI);
         }
     }
 
