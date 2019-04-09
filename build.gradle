@@ -108,9 +108,16 @@ task deobfJar(type: Jar) {
     manifest commonManifest
 }
 
+task apiJar(type: Jar) {
+    from sourceSets.main.output
+    from sourceSets.main.java
+    classifier = 'api'
+    include 'com/brandon3055/projectintelligence/api/**'
+}
+
 // Tell the artifact system about our extra jars
 artifacts {
-    archives srcJar, deobfJar
+    archives srcJar, deobfJar, apiJar
 }
 
 uploadArchives {

@@ -1,3 +1,7 @@
+######## 1.0.5.x ########
+-Fixed broken "Override Mod Language" option.
+-Fixed broken file encoding causing issues with certain characters in other languages.
+
 ######## 1.0.4.17 ########
 -Fixed some bugs in the editor related top creating new documentation and deleting and re-adding pages.
 p.s. This change log is too short... Why aren't there more bugs in this brand new mod?

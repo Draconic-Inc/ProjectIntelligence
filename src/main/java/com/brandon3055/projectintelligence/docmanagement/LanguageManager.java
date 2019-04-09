@@ -10,12 +10,10 @@ import com.google.gson.JsonParser;
 import com.google.gson.internal.Streams;
 import com.google.gson.stream.JsonWriter;
 import net.minecraft.client.Minecraft;
-import org.apache.commons.io.IOUtils;
 
 import javax.annotation.Nullable;
-import java.io.File;
-import java.io.FileReader;
-import java.io.FileWriter;
+import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 /**
@@ -120,20 +118,19 @@ public class LanguageManager {
 
     public static void loadLangFile(String modid, File langFile, String lang) {
         JsonArray translations;
-        //region Load JsonObject
-        try {
+
+        try (InputStreamReader reader = new InputStreamReader(new FileInputStream(langFile), StandardCharsets.UTF_8)) {
             JsonParser parser = new JsonParser();
-            FileReader reader = new FileReader(langFile);
             JsonElement element = parser.parse(reader);
-            IOUtils.closeQuietly(reader);
             if (!element.isJsonArray()) {
                 PIGuiHelper.displayError("Failed to load lang file. Detected invalid json file: " + langFile);
                 return;
             }
             translations = element.getAsJsonArray();
+
         }
-        catch (Exception e) {
-            PIGuiHelper.displayError("Error loading lang file: " + e.getMessage());
+        catch (IOException e) {
+            PIGuiHelper.displayError("Error loading lang file: " + e.getMessage() + ", For mod: " + modid);
             PIGuiHelper.displayError("File: " + langFile);
             LogHelper.error("Error loading lang file: " + langFile);
             e.printStackTrace();
@@ -182,21 +179,17 @@ public class LanguageManager {
         JsonArray translations = new JsonArray();
         langMap.forEach((uri, langData) -> translations.add(langData.toObj()));
 
-        //region Save JsonObject
-        try {
-            JsonWriter writer = new JsonWriter(new FileWriter(langFile));
+        try (JsonWriter writer = new JsonWriter(new OutputStreamWriter(new FileOutputStream(langFile), StandardCharsets.UTF_8))) {
             writer.setIndent("  ");
             Streams.write(translations, writer);
             writer.flush();
-            IOUtils.closeQuietly(writer);
         }
-        catch (Exception e) {
-            PIGuiHelper.displayError("Error saving lang file: " + e.getMessage());
+        catch (IOException e) {
+            PIGuiHelper.displayError("Error saving lang file: " + e.getMessage() + ", For mod: " + modid);
             PIGuiHelper.displayError("File: " + langFile);
             LogHelper.error("Error saving lang file: " + langFile);
             e.printStackTrace();
         }
-        //endregion
     }
 
     /**
