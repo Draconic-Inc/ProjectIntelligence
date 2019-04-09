@@ -13,6 +13,7 @@ import java.util.List;
  * <p>
  * This interface is for internal use only. All your interaction with PI should go through @{@link com.brandon3055.projectintelligence.api.PiAPI}
  */
+@Deprecated //This deprecated just in case anyone accidentally implements it. This should give them a hint that they are doing things wrong.
 public interface IPiAPI {
 
     /**

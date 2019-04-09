@@ -396,11 +396,12 @@ public class PageButton extends GuiButton {
 
         langSelect.setSelectionListener(lang -> {
             langButton.playClickSound();
+            String newLang = lang.equals(doTrans) ? null : lang;
             if (mod){
-                LanguageManager.setPageLangOverride(page.getPageURI(), lang.equals(doTrans) ? null : lang);
+                LanguageManager.setModLangOverride(page.getModid(), newLang);
             }
             else {
-                LanguageManager.setPageLangOverride(page.getPageURI(), lang.equals(doTrans) ? null : lang);
+                LanguageManager.setPageLangOverride(page.getPageURI(), newLang);
             }
         });
         langSelect.setCloseOnSelection(true);
