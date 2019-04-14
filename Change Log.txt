@@ -1,4 +1,4 @@
-######## 1.0.5.19 ########
+######## 1.0.5.20 ########
 -Fixed broken "Override Mod Language" option.
 -Fixed broken file encoding causing issues with certain characters in other languages.
 -Added JEI plugin to move bookmarks out of the way of the PI doc window.
