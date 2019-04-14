@@ -76,7 +76,7 @@ public class GuiEventHandler {
         GuiInGuiRenderer.instance.updateScreen();
     }
 
-    @SubscribeEvent
+    @SubscribeEvent(priority = EventPriority.HIGHEST) //Should prevent other buttons getting in the way of the close button in the event it conflicts with other mods.
     public void onMouseInput(GuiScreenEvent.MouseInputEvent.Pre event) {
         GuiScreen gui = event.getGui();
         try {

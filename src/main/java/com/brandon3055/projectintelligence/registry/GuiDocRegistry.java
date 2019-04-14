@@ -6,12 +6,13 @@ import com.brandon3055.projectintelligence.api.IGuiDocHandler;
 import com.brandon3055.projectintelligence.api.IGuiDocRegistry;
 import com.brandon3055.projectintelligence.api.IPageSupplier;
 import com.brandon3055.projectintelligence.utils.LogHelper;
+import mezz.jei.api.gui.IGlobalGuiHandler;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.gui.inventory.GuiContainer;
 
 import java.awt.*;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.function.Supplier;
 
 /**
@@ -24,6 +25,7 @@ public class GuiDocRegistry implements IGuiDocRegistry {
     private IGuiDocHandler<GuiScreen> DEFAULT_HANDLER = new DefaultHandlerImpl();
     private Map<Class<? extends GuiScreen>, IGuiDocHandler> guiHandlerMap = new HashMap<>();
     private Map<Class<? extends GuiScreen>, List<IPageSupplier>> pageSupplierMap = new HashMap<>();
+    private List<IGlobalGuiHandler> jeiMovers = new ArrayList<>();
 
 //    //todo remove
 //    public static void clear() {

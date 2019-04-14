@@ -1,6 +1,8 @@
-######## 1.0.5.x ########
+######## 1.0.5.19 ########
 -Fixed broken "Override Mod Language" option.
 -Fixed broken file encoding causing issues with certain characters in other languages.
+-Added JEI plugin to move bookmarks out of the way of the PI doc window.
+-Theoretically fixed not being able to close the docs window when the close button conflicts with a button from another mod.
 
 ######## 1.0.4.17 ########
 -Fixed some bugs in the editor related top creating new documentation and deleting and re-adding pages.

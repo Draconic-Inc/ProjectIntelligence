@@ -9,7 +9,10 @@ import org.lwjgl.input.Keyboard;
 import org.lwjgl.input.Mouse;
 
 import javax.annotation.Nullable;
+import java.awt.*;
 import java.io.IOException;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * Created by brandon3055 on 7/26/2018.
@@ -124,5 +127,14 @@ public class GuiInGuiRenderer {
 
     public boolean blockToolTip(GuiScreen currentScreen) {
         return isActiveScreen(currentScreen) && overlay != null && overlay.isMouseOver(getMouseX(currentScreen), getMouseY(currentScreen));
+    }
+
+    public List<Rectangle> getJeiExclusionAreas() {
+        GuiScreen screen = Minecraft.getMinecraft().currentScreen;
+        if (isActiveScreen(screen) && overlay != null && overlay.getDocBounds() != null) {
+            return Collections.singletonList(guiDocHelper.isDocVisible() ? guiDocHelper.getExpandedArea() : guiDocHelper.getCollapsedArea());
+        }
+
+        return Collections.emptyList();
     }
 }

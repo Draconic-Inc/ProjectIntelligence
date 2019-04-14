@@ -76,6 +76,10 @@ public class PIGuiOverlay implements IModularGui<GuiScreen> {
 
     @Override
     public void addElements(GuiElementManager manager) {
+        if (docElement != null) {
+            manager.remove(docElement);
+        }
+
         docElement = new DocElement(this, guiDocHelper);
         manager.add(docElement, 200);
     }
@@ -160,6 +164,10 @@ public class PIGuiOverlay implements IModularGui<GuiScreen> {
 
     public boolean isMouseOver(int mouseX, int mosueY) {
         return docElement != null && docElement.isMouseOver(mouseX, mosueY);
+    }
+
+    public Rectangle getDocBounds() {
+        return docElement == null ? null : docElement.getRect();
     }
 
     //endregion
