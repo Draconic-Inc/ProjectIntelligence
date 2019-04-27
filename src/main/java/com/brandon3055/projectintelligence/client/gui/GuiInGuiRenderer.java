@@ -132,7 +132,7 @@ public class GuiInGuiRenderer {
     public List<Rectangle> getJeiExclusionAreas() {
         GuiScreen screen = Minecraft.getMinecraft().currentScreen;
         if (isActiveScreen(screen) && overlay != null && overlay.getDocBounds() != null) {
-            return Collections.singletonList(guiDocHelper.isDocVisible() ? guiDocHelper.getExpandedArea() : guiDocHelper.getCollapsedArea());
+            return Collections.singletonList(new Rectangle(overlay.getDocBounds())); //TODO remove redundant copy once JEI's fix is live.
         }
 
         return Collections.emptyList();

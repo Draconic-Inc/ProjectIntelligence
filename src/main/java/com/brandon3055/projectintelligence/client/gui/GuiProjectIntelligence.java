@@ -166,7 +166,6 @@ public class GuiProjectIntelligence extends GuiScreen {
         return container;
     }
 
-
     public static GuiPartMenu getMenuPart() {
         GuiScreen screen = Minecraft.getMinecraft().currentScreen;
         if (screen instanceof GuiProjectIntelligence) {

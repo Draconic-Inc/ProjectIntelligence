@@ -17,7 +17,7 @@ public class ProjectIntelligence {
     public static final String VERSION = "${mod_version}";
     public static final String PROXY_CLIENT = "com.brandon3055.projectintelligence.client.ClientProxy";
     public static final String PROXY_SERVER = "com.brandon3055.projectintelligence.CommonProxy";
-    public static final String DEPENDENCIES = "required-after:brandonscore@[" + BrandonsCore.VERSION + ",);";
+    public static final String DEPENDENCIES = "required-after:brandonscore@[" + BrandonsCore.VERSION + ",);before:nei;";
 //    public static final String GUI_FACTORY = "com.brandon3055.projectintelligence.PIGuiFactory";
 
     //endregion
