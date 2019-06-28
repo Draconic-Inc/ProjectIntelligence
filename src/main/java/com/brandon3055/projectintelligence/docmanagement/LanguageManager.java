@@ -83,7 +83,22 @@ public class LanguageManager {
      */
     public static void reloadLookupMap() {
         pageLangTranslationMap.clear();
-        modLangPageTranslationMap.forEach((mod, langPageTransMap) -> langPageTransMap.forEach((lang, pageTransMap) -> pageTransMap.forEach((page, trans) -> pageLangTranslationMap.computeIfAbsent(page, s -> new HashMap<>()).put(lang, trans))));
+        //It occurred to me that although lambda's are cool its also nice to be able to understand my own code 6 months after i write it.
+        //modLangPageTranslationMap.forEach((mod, langPageTransMap) -> langPageTransMap.forEach((lang, pageTransMap) -> pageTransMap.forEach((page, trans) -> pageLangTranslationMap.computeIfAbsent(page, s -> new HashMap<>()).put(lang, trans))));
+
+        for (String mod : modLangPageTranslationMap.keySet()) {
+            Map<String, Map<String, PageLangData>> langPageTransMap = modLangPageTranslationMap.get(mod);
+
+            for (String lang : langPageTransMap.keySet()) {
+                Map<String, PageLangData> pageTransMap = langPageTransMap.get(lang);
+
+                for (String page : pageTransMap.keySet()) {
+                    PageLangData langData = pageTransMap.get(page);
+
+                    pageLangTranslationMap.computeIfAbsent(page, s -> new HashMap<>()).put(lang, langData);
+                }
+            }
+        }
     }
 
     /**

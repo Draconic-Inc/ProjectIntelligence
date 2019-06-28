@@ -155,8 +155,10 @@ pi.button.toggle_nav_window.info=Toggle Navigation Window
 
 //Errors / Notifications
 pi.error.page_not_localized.info=It appears this page has not yet been translated to your selected language!
-pi.error.page_not_localized_click_here.info=Click here to see available languages for this page or change your selected language in the PI option menu
-pi.button.language_override_enabled.info=Language override is currently enabled for this page. Click here to configure override.
+pi.error.page_not_localized_click_here.info=Click here to see available languages for this page or change your selected language in the PI option menu.
+pi.error.page_not_localized_alt_version.info=Or try a different mod version (Right click page -> Override mod version)
+pi.button.language_override_page.info=Language override is currently enabled for this page. Click here to configure override.
+pi.button.language_override_mod.info=Language override is currently enabled for this mod. Click here to configure override.
 pi.error.page_lang_outdated=This page translation was written for a previous %s revision. This page may be outdated.
 pi.md.no_recipe_for_item.txt=No recipe could be found for this item!
 pi.md.link_confirmation.txt=Are you sure you want to open the following link in your browser?
@@ -165,8 +167,11 @@ pi.notification.show_tutorial_later.txt=PI Intro screen will be displayed the ne
 
 //Misc UI Text
 pi.popup.select_language=Select Language
+pi.popup.select_version=Select Version
 pi.pagebtn.verified=Verified
 pi.pagebtn.verified.info=This documentation was ether written or verified by a member of this mods development team.
+pi.pagebtn.version_override=Mod Version Override Enabled
+pi.pagebtn.version_override.info=Click here to configure version override.
 
 //Page context menu items
 pi.page.cm.page_options=Page Options
@@ -174,6 +179,7 @@ pi.page.cm.open_new_tab=Open in new tab
 pi.page.cm.override_lang=Override page language
 pi.page.cm.override_mod_lang=Override mod language
 pi.page.cm.set_home_page=Set as home page
+pi.page.cm.override_mod_version=Override Mod Version
 
 //Update Manager
 pi.update_manager.title=PI Update Manager

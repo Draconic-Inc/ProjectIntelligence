@@ -145,10 +145,10 @@ public class GuiPartMDWindow extends MGuiElementBase<GuiPartMDWindow> {
         }
 
         if (!bodyProps.vanillaTex()) {
-            zOffset += 500;
+            zOffset += 100;
             drawMultiPassGradientRect(xPos() + 3, yPos() + 14, maxXPos() - 13, yPos() + 18, bodyProps.colour(), bodyProps.colour() & 0x00FFFFFF, 2);
             drawMultiPassGradientRect(xPos() + 3, maxYPos() - 6, maxXPos() - 13, maxYPos() - 2, bodyProps.colour() & 0x00FFFFFF, bodyProps.colour(), 2);
-            zOffset -= 500;
+            zOffset -= 100;
         }
     }
 

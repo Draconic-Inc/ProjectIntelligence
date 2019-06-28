@@ -669,6 +669,7 @@ public class DocumentationManager {
                 PIConfig.modVersionOverrides.remove(modid);
             }
         }
+        PIConfig.save();
         checkAndReloadDocFiles();
     }
 

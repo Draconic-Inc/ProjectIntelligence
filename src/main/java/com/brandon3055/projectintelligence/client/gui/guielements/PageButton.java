@@ -84,15 +84,31 @@ public class PageButton extends GuiButton {
         label.setYPos(yPos() + (ySize() / 2) - (label.ySize() / 2));
         icons.forEach(icon -> icon.setXPosMod((o, o2) -> xPos() + 2).setYPos(yPos() + (ySize() / 2) - (icon.ySize() / 2)));
 
-        langButton = new GuiButton().setSize(12, 12).setXPosMod((guiButton, integer) -> label.maxXPos() - 14).setYPos(yPos() + 1);
+        boolean showVerified = page instanceof ModStructurePage && ((ModStructurePage) page).verified;
+
+        langButton = new GuiButton().setSize(12, 12).setXPosMod((guiButton, integer) -> label.maxXPos() - 14).setYPos(showVerified ? maxYPos() - 14 : yPos() + 1);
         langButton.setBorderColours(0, 0xFF004080).setFillColour(0);
         langButton.zOffset += 10;
-        String[] error = {I18n.format("pi.error.page_not_localized.info"), I18n.format("pi.error.page_not_localized_click_here.info")};
-        langButton.setHoverTextArray(e -> LanguageManager.isPageLangOverridden(page.getPageURI()) ? new String[]{I18n.format("pi.button.language_override_enabled.info"), TextFormatting.GOLD + LanguageManager.LANG_NAME_MAP.get(LanguageManager.getPageLanguage(page.getPageURI()))} : error);
+        String[] error = {I18n.format("pi.error.page_not_localized.info"), I18n.format("pi.error.page_not_localized_click_here.info"), TextFormatting.GRAY + I18n.format("pi.error.page_not_localized_alt_version.info")};
+        langButton.setHoverTextArray(e -> {
+            boolean pageLangOverriden = LanguageManager.isPageLangOverridden(page.getPageURI());
+            boolean modLangOverriden = LanguageManager.isModLangOverridden(page.getModid());
+            if (pageLangOverriden) {
+                String lang = LanguageManager.getPageLanguage(page.getPageURI());
+                return new String[]{I18n.format("pi.button.language_override_page.info"), TextFormatting.GOLD + LanguageManager.LANG_NAME_MAP.get(lang) + " [" + lang + "]"};
+            }
+            else if (modLangOverriden) {
+                String lang = LanguageManager.getModLanguage(page.getModid());
+                return new String[]{I18n.format("pi.button.language_override_mod.info"), TextFormatting.GOLD + LanguageManager.LANG_NAME_MAP.get(lang) + " [" + lang + "]"};
+            }
+            else {
+                return error;
+            }
+        });
         addChild(langButton);
-        langButton.setListener(() -> openLanguageSelector(false));
+        langButton.setListener(() -> openLanguageSelector(LanguageManager.isModLangOverridden(page.getModid())));
 
-        langButtonTexture = new GuiTexture(10, 10, PITextures.PI_PARTS).setXPosMod((guiButton, integer) -> label.maxXPos() - 13).setYPos(yPos() + 2);
+        langButtonTexture = new GuiTexture(10, 10, PITextures.PI_PARTS).setXPosMod((guiButton, integer) -> label.maxXPos() - 13).setYPos(langButton.yPos() + 1/*yPos() + 2*/);
         langButtonTexture.setTexSizeOverride(13, 14);
         langButtonTexture.zOffset += 10;
         langButton.addChild(langButtonTexture);
@@ -103,12 +119,33 @@ public class PageButton extends GuiButton {
         versMissMatch.zOffset += 10;
         addChild(versMissMatch);
 
-        if (page instanceof ModStructurePage && ((ModStructurePage) page).verified) {
+        if (showVerified) {
             GuiTexture verified = new GuiTexture(72, 16, 5, 5, PITextures.PI_PARTS);
             verified.setYPos(yPos() + 2);
             verified.setXPosMod(() -> maxXPos() - 8);
             verified.setHoverText(TextFormatting.GREEN + I18n.format("pi.pagebtn.verified"), TextFormatting.BLUE + I18n.format("pi.pagebtn.verified.info"));
             addChild(verified);
+        }
+
+        if ((page instanceof ModStructurePage) && PIConfig.modVersionOverrides.get(page.getModid()) != null) {
+            String text = "v" + PIConfig.modVersionOverrides.get(page.getModid());
+            GuiButton versOverLabel = new GuiButton() {
+                @Override
+                public void renderElement(Minecraft minecraft, int mouseX, int mouseY, float partialTicks) {
+                    super.renderElement(minecraft, mouseX, mouseY, partialTicks);
+                    GlStateManager.pushMatrix();
+                    GlStateManager.translate(label.xPos() + 1, PageButton.this.yPos() + 1, 0);
+                    GlStateManager.scale(0.5, 0.5, 1);
+                    drawString(fontRenderer, text, 0, 0, 0xFF5050, pageButtonProps.textShadow());
+                    GlStateManager.popMatrix();
+                }
+            };
+            versOverLabel.setYPos(yPos() + 1);
+            versOverLabel.setXPosMod(() -> label.xPos() + 1);
+            versOverLabel.setSize(fontRenderer.getStringWidth(text) / 2, 4);
+            versOverLabel.setHoverText(TextFormatting.RED + I18n.format("pi.pagebtn.version_override"), TextFormatting.BLUE + I18n.format("pi.pagebtn.version_override.info"));
+            versOverLabel.setListener(() -> openVersionSelector());
+            addChild(versOverLabel);
         }
 
         super.addChildElements();
@@ -216,7 +253,7 @@ public class PageButton extends GuiButton {
 
     @Override
     public void reloadElement() {
-        boolean overridden = LanguageManager.isPageLangOverridden(page.getPageURI());
+        boolean overridden = LanguageManager.isPageLangOverridden(page.getPageURI()) || LanguageManager.isModLangOverridden(page.getModid());
         if (isElementInitialized() && langButtonTexture != null && langButton != null) {
             langButtonTexture.setTexturePos(overridden ? 82 : 66, 0);
             langButton.setEnabled(!PIConfig.editMode() && (overridden || !LanguageManager.isPageLocalized(page.getPageURI(), LanguageManager.getPageLanguage(page.getPageURI()))));
@@ -266,6 +303,10 @@ public class PageButton extends GuiButton {
                 PIConfig.setHomePage(page.getPageURI());
                 controller.onActivePageChange();
             });
+            context.addItem(menuItem);
+
+            menuItem = new ContextMenuItem(I18n.format("pi.page.cm.override_mod_version"));
+            menuItem.setAction(() -> openVersionSelector());
             context.addItem(menuItem);
 
             if (PIConfig.editMode() || !ObfMapping.obfuscated) {
@@ -318,7 +359,7 @@ public class PageButton extends GuiButton {
 //            drawColouredRect(xPos() + xSize() - b, yPos(), b, ySize(), neg);
 //        }
 //        else if (pageButtonProps.vanillaTex()) {
-            int texV = 48 + (getRenderState(highlighted) * 20);
+        int texV = 48 + (getRenderState(highlighted) * 20);
 //
 //            pageButtonProps.glColour(highlighted);
 //            ResourceHelperBC.bindTexture(PITextures.PI_PARTS);
@@ -398,7 +439,7 @@ public class PageButton extends GuiButton {
         langSelect.setSelectionListener(lang -> {
             langButton.playClickSound();
             String newLang = lang.equals(doTrans) ? null : lang;
-            if (mod){
+            if (mod) {
                 LanguageManager.setModLangOverride(page.getModid(), newLang);
             }
             else {
@@ -407,6 +448,44 @@ public class PageButton extends GuiButton {
         });
         langSelect.setCloseOnSelection(true);
         langSelect.showCenter(200);
+    }
+
+    public void openVersionSelector() {
+        try {
+            LogHelper.dev("Version Selector");
+
+            StyledSelectDialog<String> versionSelect = new StyledSelectDialog<>(langButton, "user_dialogs", I18n.format("pi.popup.select_version"));
+            String doTrans = I18n.format("pi.lang.disable_override");
+
+            //Add Search Box
+            GuiTextField filter = new GuiTextField();
+            versionSelect.addChild(filter);
+            filter.setSize(versionSelect.xSize() - 4, 14).setPos(versionSelect.xPos() + 2, versionSelect.maxYPos() - 16);
+            filter.setListener((event, eventSource) -> versionSelect.reloadElement());
+            versionSelect.setSelectionFilter(item -> {
+                String ft = filter.getText().toLowerCase();
+                return ft.isEmpty() || item.toLowerCase().contains(ft);
+            });
+
+            //Add Versions
+            String currentOverride = PIConfig.modVersionOverrides.get(page.getModid());
+            if (currentOverride != null) {
+                versionSelect.addItem(doTrans);
+            }
+
+            versionSelect.setSelected(currentOverride);
+            DocumentationManager.sortedModVersionMap.get(page.getModid()).forEach(versionSelect::addItem);
+
+            versionSelect.setSelectionListener(version -> {
+                langButton.playClickSound();
+                String newVersiob = version.equals(doTrans) ? null : version;
+                DocumentationManager.setModVersionOverride(page.getModid(), newVersiob);
+            });
+            versionSelect.setCloseOnSelection(true);
+            versionSelect.showCenter(200);
+        }
+        catch (Throwable e) {
+        }
     }
 
     private static class ContextMenuItem {
