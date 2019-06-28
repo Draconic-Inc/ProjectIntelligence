@@ -37,6 +37,7 @@ import java.util.LinkedList;
 /**
  * Created by brandon3055 on 21/08/2017.
  */
+@SuppressWarnings("ALL")
 public class PageButton extends GuiButton {
     public static StyleHandler.PropertyGroup pageButtonProps = new StyleHandler.PropertyGroup("page_list.page_buttons");
     public PIPartRenderer buttonRender = new PIPartRenderer(pageButtonProps).setButtonRender(true);

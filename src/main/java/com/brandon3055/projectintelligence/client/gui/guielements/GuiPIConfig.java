@@ -31,6 +31,7 @@ import static com.brandon3055.projectintelligence.client.StyleHandler.StyleType.
 /**
  * Created by brandon3055 on 12/08/2017.
  */
+@SuppressWarnings("ALL")
 public class GuiPIConfig extends GuiPopUpDialogBase<GuiPIConfig> {
     public static StyleHandler.PropertyGroup buttonProps = new StyleHandler.PropertyGroup("user_dialogs.button_style");
     private GuiScrollElement configList;

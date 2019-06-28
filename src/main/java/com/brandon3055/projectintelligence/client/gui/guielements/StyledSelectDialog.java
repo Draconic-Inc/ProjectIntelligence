@@ -24,12 +24,20 @@ public class StyledSelectDialog<T> extends GuiSelectDialog<T> {
         super(parent);
         this.prop = prop;
         this.heading = heading;
-        setSize(150, 200);
+        setSize(180, 250);
         setInsets(14, 2, 2, 2);
         setDragBar(13);
 
         setRendererBuilder(t -> {
-            GuiButton button = new StyledGuiButton(prop + "." + StyleType.BUTTON_STYLE.getName()).setText(LanguageManager.LANG_NAME_MAP.getOrDefault(String.valueOf(t), String.valueOf(t)));
+            GuiButton button = new StyledGuiButton(prop + "." + StyleType.BUTTON_STYLE.getName());
+            if (LanguageManager.LANG_NAME_MAP.containsKey(String.valueOf(t))) { //Adds a custom language display
+                String langCode = String.valueOf(t);
+                button.setText(LanguageManager.LANG_NAME_MAP.get(langCode) + " [" + langCode + "]");
+            }
+            else {
+                button.setText(String.valueOf(t));
+            }
+
             if (t.equals(selected)) {
                 button.setToggleMode(true).setToggleState(true);
             }
