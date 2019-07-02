@@ -1,6 +1,7 @@
 ######## 1.0.6.x ########
 -Fixed broken language selection list. (filter was broken)
 -Added ability to override mod documentation version.
+-Fixed error when loading a default style preset with unsaved changes to current preset.
 
 ######## 1.0.5.20 ########
 -Fixed broken "Override Mod Language" option.

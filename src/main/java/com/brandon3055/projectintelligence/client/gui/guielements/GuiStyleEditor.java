@@ -183,7 +183,7 @@ public class GuiStyleEditor extends GuiPopUpDialogBase<GuiStyleEditor> {
             button.setListener(() -> {
                 if (StyleHandler.unsavedChanges) {
                     GuiPopupDialogs.createDialog(this, GuiPopupDialogs.DialogType.OK_CANCEL_OPTION, I18n.format("pi.style.confirm_load_unsaved.txt") + "\n" + preset, "")//
-                            .setOkListener((event1, eventSource1) -> StyleHandler.loadPreset(preset, true)).showCenter(displayZLevel + 50);
+                            .setOkListener((event1, eventSource1) -> StyleHandler.loadPreset(preset, false)).showCenter(displayZLevel + 50);
                 }
                 else {
                     StyleHandler.loadPreset(preset, false);
