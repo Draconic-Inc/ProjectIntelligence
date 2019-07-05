@@ -60,6 +60,8 @@ public class PageButton extends GuiButton {
     //# Initialization
     //region //############################################################################
 
+//    todo fix issue where buton position in list is proken because reasons.
+
     @Override
     public void addChildElements() {
         loadIcons();

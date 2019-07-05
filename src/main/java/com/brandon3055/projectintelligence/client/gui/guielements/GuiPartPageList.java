@@ -271,6 +271,7 @@ public class GuiPartPageList extends MGuiElementBase<GuiPartPageList> {
 
     private void reloadPageButtons(boolean updateNav, @Nullable List<String> pageOverride) {
         scrollElement.clearElements();
+        scrollElement.resetScrollPositions();
         List<DocumentationPage> pages;
         String search = searchBox.getText().toLowerCase();
 
