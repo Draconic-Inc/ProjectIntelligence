@@ -32,7 +32,10 @@ import net.minecraft.util.JsonUtils;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.text.TextFormatting;
 
+import java.util.Collections;
 import java.util.LinkedList;
+
+import static com.brandon3055.projectintelligence.client.StyleHandler.StyleType.*;
 
 /**
  * Created by brandon3055 on 21/08/2017.
@@ -40,7 +43,9 @@ import java.util.LinkedList;
 @SuppressWarnings("ALL")
 public class PageButton extends GuiButton {
     public static StyleHandler.PropertyGroup pageButtonProps = new StyleHandler.PropertyGroup("page_list.page_buttons");
+    public static StyleHandler.PropertyGroup pageBackButtonProps = new StyleHandler.PropertyGroup("page_list.page_buttons.page_back_button");
     public PIPartRenderer buttonRender = new PIPartRenderer(pageButtonProps).setButtonRender(true);
+    public PIPartRenderer pageBackButtonRender = new PIPartRenderer(pageBackButtonProps).setButtonRender(true);
 
     private DocumentationPage page;
     private DisplayController controller;
@@ -51,10 +56,17 @@ public class PageButton extends GuiButton {
     private GuiTexture langButtonTexture;
     private boolean invalidIcons = false;
     private int iconIndex = 0;
+    private boolean backPage = false;
 
     public PageButton(DocumentationPage page, DisplayController controller) {
         this.page = page;
         this.controller = controller;
+    }
+
+    public PageButton(DocumentationPage page, DisplayController controller, boolean backPage) {
+        this.page = page;
+        this.controller = controller;
+        this.backPage = backPage;
     }
 
     //# Initialization
@@ -66,95 +78,108 @@ public class PageButton extends GuiButton {
     public void addChildElements() {
         loadIcons();
 
-        boolean noIcon = icons.isEmpty();
+        boolean noIcon = icons.isEmpty() || backPage;
         int textXPos = 0;
-        int textXSize = noIcon ? xSize() : xSize() - 20;
+        int textXSize = noIcon ? backPage ? xSize() - 10 : xSize() : xSize() - 20;
         label = new GuiLabel(page.getDisplayName()) {
             @Override
             public boolean hasShadow() {
-                return pageButtonProps.textShadow();
+                return backPage ? pageBackButtonProps.textShadow() : pageButtonProps.textShadow();
             }
         }.setXPos(textXPos).setXSize(textXSize).setInsets(3, noIcon ? 6 : 3, 3, 3);
         label.setHeightForText().setAlignment(GuiAlign.LEFT);
-        label.setXPosMod((guiLabel, integer) -> noIcon ? xPos() : xPos() + 20);
-        label.setTextColGetter(hovering -> pageButtonProps.textColour(hovering));
+        label.setXPosMod((guiLabel, integer) -> noIcon ? backPage ? xPos() + 5 : xPos() : xPos() + 20);
+        label.setTextColGetter(hovering ->  backPage ? pageBackButtonProps.textColour(hovering) : pageButtonProps.textColour(hovering));
         label.setWrap(true);
 
         addChild(label);
 
-        setYSize(Math.max(label.ySize(), 22));
+        setYSize(Math.max(label.ySize(), backPage ? 16 : 22));
         label.setYPos(yPos() + (ySize() / 2) - (label.ySize() / 2));
         icons.forEach(icon -> icon.setXPosMod((o, o2) -> xPos() + 2).setYPos(yPos() + (ySize() / 2) - (icon.ySize() / 2)));
 
-        boolean showVerified = page instanceof ModStructurePage && ((ModStructurePage) page).verified;
-
-        langButton = new GuiButton().setSize(12, 12).setXPosMod((guiButton, integer) -> label.maxXPos() - 14).setYPos(showVerified ? maxYPos() - 14 : yPos() + 1);
-        langButton.setBorderColours(0, 0xFF004080).setFillColour(0);
-        langButton.zOffset += 10;
-        String[] error = {I18n.format("pi.error.page_not_localized.info"), I18n.format("pi.error.page_not_localized_click_here.info"), TextFormatting.GRAY + I18n.format("pi.error.page_not_localized_alt_version.info")};
-        langButton.setHoverTextArray(e -> {
-            boolean pageLangOverriden = LanguageManager.isPageLangOverridden(page.getPageURI());
-            boolean modLangOverriden = LanguageManager.isModLangOverridden(page.getModid());
-            if (pageLangOverriden) {
-                String lang = LanguageManager.getPageLanguage(page.getPageURI());
-                return new String[]{I18n.format("pi.button.language_override_page.info"), TextFormatting.GOLD + LanguageManager.LANG_NAME_MAP.get(lang) + " [" + lang + "]"};
-            }
-            else if (modLangOverriden) {
-                String lang = LanguageManager.getModLanguage(page.getModid());
-                return new String[]{I18n.format("pi.button.language_override_mod.info"), TextFormatting.GOLD + LanguageManager.LANG_NAME_MAP.get(lang) + " [" + lang + "]"};
-            }
-            else {
-                return error;
-            }
-        });
-        addChild(langButton);
-        langButton.setListener(() -> openLanguageSelector(LanguageManager.isModLangOverridden(page.getModid())));
-
-        langButtonTexture = new GuiTexture(10, 10, PITextures.PI_PARTS).setXPosMod((guiButton, integer) -> label.maxXPos() - 13).setYPos(langButton.yPos() + 1/*yPos() + 2*/);
-        langButtonTexture.setTexSizeOverride(13, 14);
-        langButtonTexture.zOffset += 10;
-        langButton.addChild(langButtonTexture);
-
-        versMissMatch = new GuiTexture(8, 8, PITextures.PI_PARTS).setXPosMod((guiButton, integer) -> label.maxXPos() - 13).setYPos(yPos() + 12);
-        versMissMatch.setTexSizeOverride(8, 8);
-        versMissMatch.setTexturePos(0, 24);
-        versMissMatch.zOffset += 10;
-        addChild(versMissMatch);
-
-        if (showVerified) {
-            GuiTexture verified = new GuiTexture(72, 16, 5, 5, PITextures.PI_PARTS);
-            verified.setYPos(yPos() + 2);
-            verified.setXPosMod(() -> maxXPos() - 8);
-            verified.setHoverText(TextFormatting.GREEN + I18n.format("pi.pagebtn.verified"), TextFormatting.BLUE + I18n.format("pi.pagebtn.verified.info"));
-            addChild(verified);
+        if (backPage) {
+            GuiTexture backIcon = new GuiTexture(17, 24, 6, 8, PITextures.PI_PARTS);
+            backIcon.setPreDrawCallback((minecraft, mouseX, mouseY, partialTicks, mouseOver) -> {
+                StyleHandler.getColour(PAGE_LIST.pre() + PAGE_BUTTONS.pre() + PAGE_BACK_BUTTON.pre() + ICON.pre() + (isMouseOver(mouseX, mouseY) ? "hover" : "colour")).glColour();
+            });
+//            backIcon.setPostDrawCallback(IDrawCallback::resetColour);
+            addChild(backIcon);
+//          backButton.addAndFireReloadCallback(guiButton -> guiButton.setYPos(yPos() + (NAV_BAR_SIZE - backButton.ySize()) / 2));
+            backIcon.setXPosMod(() -> xPos() + 3).setYPos(yPos() + (ySize() / 2) - (backIcon.ySize() / 2));
+            ;
         }
+        else {
+            boolean showVerified = page instanceof ModStructurePage && ((ModStructurePage) page).verified;
 
-        if ((page instanceof ModStructurePage) && PIConfig.modVersionOverrides.get(page.getModid()) != null) {
-            String text = "v" + PIConfig.modVersionOverrides.get(page.getModid());
-            GuiButton versOverLabel = new GuiButton() {
-                @Override
-                public void renderElement(Minecraft minecraft, int mouseX, int mouseY, float partialTicks) {
-                    super.renderElement(minecraft, mouseX, mouseY, partialTicks);
-                    GlStateManager.pushMatrix();
-                    GlStateManager.translate(label.xPos() + 1, PageButton.this.yPos() + 1, 0);
-                    GlStateManager.scale(0.5, 0.5, 1);
-                    drawString(fontRenderer, text, 0, 0, 0xFF5050, pageButtonProps.textShadow());
-                    GlStateManager.popMatrix();
+            langButton = new GuiButton().setSize(12, 12).setXPosMod((guiButton, integer) -> label.maxXPos() - 14).setYPos(showVerified ? maxYPos() - 14 : yPos() + 1);
+            langButton.setBorderColours(0, 0xFF004080).setFillColour(0);
+            langButton.zOffset += 10;
+            String[] error = {I18n.format("pi.error.page_not_localized.info"), I18n.format("pi.error.page_not_localized_click_here.info"), TextFormatting.GRAY + I18n.format("pi.error.page_not_localized_alt_version.info")};
+            langButton.setHoverTextArray(e -> {
+                boolean pageLangOverriden = LanguageManager.isPageLangOverridden(page.getPageURI());
+                boolean modLangOverriden = LanguageManager.isModLangOverridden(page.getModid());
+                if (pageLangOverriden) {
+                    String lang = LanguageManager.getPageLanguage(page.getPageURI());
+                    return new String[]{I18n.format("pi.button.language_override_page.info"), TextFormatting.GOLD + LanguageManager.LANG_NAME_MAP.get(lang) + " [" + lang + "]"};
                 }
-            };
-            versOverLabel.setYPos(yPos() + 1);
-            versOverLabel.setXPosMod(() -> label.xPos() + 1);
-            versOverLabel.setSize(fontRenderer.getStringWidth(text) / 2, 4);
-            versOverLabel.setHoverText(TextFormatting.RED + I18n.format("pi.pagebtn.version_override"), TextFormatting.BLUE + I18n.format("pi.pagebtn.version_override.info"));
-            versOverLabel.setListener(() -> openVersionSelector());
-            addChild(versOverLabel);
+                else if (modLangOverriden) {
+                    String lang = LanguageManager.getModLanguage(page.getModid());
+                    return new String[]{I18n.format("pi.button.language_override_mod.info"), TextFormatting.GOLD + LanguageManager.LANG_NAME_MAP.get(lang) + " [" + lang + "]"};
+                }
+                else {
+                    return error;
+                }
+            });
+            addChild(langButton);
+            langButton.setListener(() -> openLanguageSelector(LanguageManager.isModLangOverridden(page.getModid())));
+
+            langButtonTexture = new GuiTexture(10, 10, PITextures.PI_PARTS).setXPosMod((guiButton, integer) -> label.maxXPos() - 13).setYPos(langButton.yPos() + 1/*yPos() + 2*/);
+            langButtonTexture.setTexSizeOverride(13, 14);
+            langButtonTexture.zOffset += 10;
+            langButton.addChild(langButtonTexture);
+
+            versMissMatch = new GuiTexture(8, 8, PITextures.PI_PARTS).setXPosMod((guiButton, integer) -> label.maxXPos() - 13).setYPos(yPos() + 12);
+            versMissMatch.setTexSizeOverride(8, 8);
+            versMissMatch.setTexturePos(0, 24);
+            versMissMatch.zOffset += 10;
+            addChild(versMissMatch);
+
+            if (showVerified) {
+                GuiTexture verified = new GuiTexture(72, 16, 5, 5, PITextures.PI_PARTS);
+                verified.setYPos(yPos() + 2);
+                verified.setXPosMod(() -> maxXPos() - 8);
+                verified.setHoverText(TextFormatting.GREEN + I18n.format("pi.pagebtn.verified"), TextFormatting.BLUE + I18n.format("pi.pagebtn.verified.info"));
+                addChild(verified);
+            }
+
+            if ((page instanceof ModStructurePage) && PIConfig.modVersionOverrides.get(page.getModid()) != null) {
+                String text = "v" + PIConfig.modVersionOverrides.get(page.getModid());
+                GuiButton versOverLabel = new GuiButton() {
+                    @Override
+                    public void renderElement(Minecraft minecraft, int mouseX, int mouseY, float partialTicks) {
+                        super.renderElement(minecraft, mouseX, mouseY, partialTicks);
+                        GlStateManager.pushMatrix();
+                        GlStateManager.translate(label.xPos() + 1, PageButton.this.yPos() + 1, 0);
+                        GlStateManager.scale(0.5, 0.5, 1);
+                        drawString(fontRenderer, text, 0, 0, 0xFF5050, pageButtonProps.textShadow());
+                        GlStateManager.popMatrix();
+                    }
+                };
+                versOverLabel.setYPos(yPos() + 1);
+                versOverLabel.setXPosMod(() -> label.xPos() + 1);
+                versOverLabel.setSize(fontRenderer.getStringWidth(text) / 2, 4);
+                versOverLabel.setHoverText(TextFormatting.RED + I18n.format("pi.pagebtn.version_override"), TextFormatting.BLUE + I18n.format("pi.pagebtn.version_override.info"));
+                versOverLabel.setListener(() -> openVersionSelector());
+                addChild(versOverLabel);
+            }
         }
 
         super.addChildElements();
     }
 
     private void loadIcons() {
-        if (page.getIcons().isEmpty()) {
+        if (page.getIcons().isEmpty() || backPage) {
             return;
         }
 
@@ -236,7 +261,7 @@ public class PageButton extends GuiButton {
 
         //Apply Icon(s)
         if (icons.isEmpty() && invalidIcons) {
-            icons.add(new GuiStackIcon(new StackReference("error")));
+            icons.add(new GuiStackIcon(new StackReference("error")).setToolTipOverride(Collections.singletonList("Invalid or missing icon.")));
         }
 
         if (!icons.isEmpty()) {
@@ -255,24 +280,26 @@ public class PageButton extends GuiButton {
 
     @Override
     public void reloadElement() {
-        boolean overridden = LanguageManager.isPageLangOverridden(page.getPageURI()) || LanguageManager.isModLangOverridden(page.getModid());
-        if (isElementInitialized() && langButtonTexture != null && langButton != null) {
-            langButtonTexture.setTexturePos(overridden ? 82 : 66, 0);
-            langButton.setEnabled(!PIConfig.editMode() && (overridden || !LanguageManager.isPageLocalized(page.getPageURI(), LanguageManager.getPageLanguage(page.getPageURI()))));
-        }
+        if (!backPage) {
+            boolean overridden = LanguageManager.isPageLangOverridden(page.getPageURI()) || LanguageManager.isModLangOverridden(page.getModid());
+            if (isElementInitialized() && langButtonTexture != null && langButton != null) {
+                langButtonTexture.setTexturePos(overridden ? 82 : 66, 0);
+                langButton.setEnabled(!PIConfig.editMode() && (overridden || !LanguageManager.isPageLocalized(page.getPageURI(), LanguageManager.getPageLanguage(page.getPageURI()))));
+            }
 
-        PageLangData data = LanguageManager.getLangData(page.getPageURI(), LanguageManager.getPageLanguage(page.getPageURI()));
-        if (data != null && data.matchLang != null) {
-            PageLangData matches = LanguageManager.getLangData(page.getPageURI(), data.matchLang);
-            if (matches != null && matches.pageRev > data.matchRev) {
-                versMissMatch.setHoverText(I18n.format("pi.error.page_lang_outdated", matches.lang));
+            PageLangData data = LanguageManager.getLangData(page.getPageURI(), LanguageManager.getPageLanguage(page.getPageURI()));
+            if (data != null && data.matchLang != null) {
+                PageLangData matches = LanguageManager.getLangData(page.getPageURI(), data.matchLang);
+                if (matches != null && matches.pageRev > data.matchRev) {
+                    versMissMatch.setHoverText(I18n.format("pi.error.page_lang_outdated", matches.lang));
+                }
+                else {
+                    versMissMatch.setEnabled(false);
+                }
             }
             else {
                 versMissMatch.setEnabled(false);
             }
-        }
-        else {
-            versMissMatch.setEnabled(false);
         }
 
         super.reloadElement();
@@ -345,33 +372,14 @@ public class PageButton extends GuiButton {
     public void renderElement(Minecraft mc, int mouseX, int mouseY, float partialTicks) {
         boolean highlighted = isMouseOver(mouseX, mouseY) || controller.getActiveTab().pageURI.equals(page.getPageURI());
 
-        buttonRender.render(this, highlighted);
+        if (backPage) {
+            pageBackButtonRender.render(this, highlighted);
+        }
+        else {
+            buttonRender.render(this, highlighted);
+        }
 
-//        if (pageButtonProps.shadeBorders()) {
-//            int back = pageButtonProps.colour(highlighted);
-//            int border = pageButtonProps.border(highlighted);
-//            int pos = changeShade(border, 0.2);
-//            int neg = changeShade(border, -0.1);
-//            double b = pageButtonProps.thickBorders() || highlighted ? 1 : 0.5;
-//
-//            drawColouredRect(xPos(), yPos(), xSize(), ySize(), back);
-//            drawColouredRect(xPos(), yPos(), xSize(), b, pos);
-//            drawColouredRect(xPos(), yPos(), b, ySize(), pos);
-//            drawColouredRect(xPos(), yPos() + ySize() - b, xSize(), b, neg);
-//            drawColouredRect(xPos() + xSize() - b, yPos(), b, ySize(), neg);
-//        }
-//        else if (pageButtonProps.vanillaTex()) {
         int texV = 48 + (getRenderState(highlighted) * 20);
-//
-//            pageButtonProps.glColour(highlighted);
-//            ResourceHelperBC.bindTexture(PITextures.PI_PARTS);
-//            drawTiledTextureRectWithTrim(xPos(), yPos(), xSize(), ySize(), 2, 2, 2, 2, 0, texV, 200, 20);
-//            GlStateManager.color(1, 1, 1, 1);
-//            drawBorderedRect(xPos(), yPos(), xSize(), ySize(), 1, 0, pageButtonProps.border(highlighted)/*highlighted ? GuiPartPageList.btnBorderHover.argb() : GuiPartPageList.btnBorder.argb()*/);
-//        }
-//        else {
-//            drawBorderedRect(xPos(), yPos(), xSize(), ySize(), 1, pageButtonProps.colour(highlighted), pageButtonProps.border(highlighted));
-//        }
 
         if (page.isHidden() && PIConfig.editMode()) {
             drawColouredRect(xPos() + 1, yPos() + 1, xSize() - 2, ySize() - 2, 0xA0000000);

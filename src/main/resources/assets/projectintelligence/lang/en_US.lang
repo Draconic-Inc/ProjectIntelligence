@@ -43,6 +43,7 @@ pi.style.user_dialogs.prop=User Dialogs
 //Page List
 pi.style.page_list.prop=Page List
 pi.style.page_buttons.prop=Page Buttons
+pi.style.page_back_button.prop=Parent Page Button
 pi.style.page_icon.prop=Page Icon
 pi.style.hide_button.prop=Nav Buttons
 pi.style.dir_path.prop=Directory Path
@@ -83,6 +84,7 @@ pi.style.text_shadow.prop=Text Shadow
 pi.style.sub_elements.info=Used by windows such as the style editor and configuration window which have separately configurable internal components.
 pi.style.sub_elements.prop=Sub Elements
 pi.style.small_bar.prop=Compact
+pi.style.icon.prop=Icon
 
 //default presets
 pi.style.builtin=(Builtin)

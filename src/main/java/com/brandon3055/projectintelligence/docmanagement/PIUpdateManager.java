@@ -17,6 +17,7 @@ import org.apache.commons.io.FileUtils;
 import java.io.File;
 import java.io.IOException;
 import java.util.LinkedHashMap;
+import java.util.Locale;
 import java.util.Map;
 
 import static com.brandon3055.projectintelligence.docmanagement.PIUpdateManager.UpdateStage.*;
@@ -321,7 +322,7 @@ public class PIUpdateManager {
         RELOAD_DOCUMENTATION;
 
         public String getUnlocalizedName() {
-            return "pi.update.status." + name().toLowerCase();
+            return "pi.update.status." + name().toLowerCase(Locale.ENGLISH);
         }
     }
 }

@@ -99,6 +99,7 @@ public class GuiProjectIntelligence extends GuiScreen {
     }
 
     private void closeGui() {
+        container.dispose();
         mc.displayGuiScreen(parent);
         if (mc.currentScreen == null) {
             mc.setIngameFocus();

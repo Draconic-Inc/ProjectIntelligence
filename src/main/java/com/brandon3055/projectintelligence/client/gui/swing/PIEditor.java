@@ -1289,7 +1289,7 @@ public class PIEditor extends javax.swing.JFrame {
             return;
         }
 
-        String id = name.toLowerCase().replaceAll(" ", "_");
+        String id = name.toLowerCase(Locale.ENGLISH).replaceAll(" ", "_");
 
         id = (String) JOptionPane.showInputDialog(this, "Please enter the id for the new page. Id should use \"snake_case\"\n" +//
                 "formatting and should be based on the content this page is for.\n" +//
@@ -1298,7 +1298,7 @@ public class PIEditor extends javax.swing.JFrame {
                 "Change this if you need to.", "Choose page ID", JOptionPane.PLAIN_MESSAGE, null, null, id);
         if (id == null) return;
 
-        id = id.toLowerCase().replaceAll(" ", "_");
+        id = id.toLowerCase(Locale.ENGLISH).replaceAll(" ", "_");
 
         if (id.isEmpty()) {
             JOptionPane.showMessageDialog(this, "Page id can not be empty!", "Invalid Input", JOptionPane.ERROR_MESSAGE);

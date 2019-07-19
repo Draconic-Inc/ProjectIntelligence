@@ -1,6 +1,7 @@
 package com.brandon3055.projectintelligence.client;
 
 import com.brandon3055.projectintelligence.client.gui.PIConfig;
+import com.brandon3055.projectintelligence.client.gui.PIGuiContainer;
 import com.brandon3055.projectintelligence.docmanagement.DocumentationManager;
 import com.brandon3055.projectintelligence.docmanagement.DocumentationPage;
 import com.brandon3055.projectintelligence.docmanagement.PIUpdateManager;
@@ -34,7 +35,7 @@ public class DisplayController {
      * This is the current active page (tab) if null will default to the default page next time the active page is requested.
      */
     private TabData activeTab = null;
-    private WeakHashMap<Object, Runnable> pageChangeListeners = new WeakHashMap<>();
+    private WeakHashMap<PIGuiContainer, Runnable> pageChangeListeners = new WeakHashMap<>();
 
     public LinkedList<TabData> getOpenTabs() {
         openTabs.removeIf(tabData -> !DocumentationManager.doesPageExist(tabData.pageURI));
@@ -186,8 +187,12 @@ public class DisplayController {
         getActiveTab().forward();
     }
 
-    public void addChangeListener(Object listenerObject, Runnable changeCallback) {
+    public void addChangeListener(PIGuiContainer listenerObject, Runnable changeCallback) {
         pageChangeListeners.put(listenerObject, changeCallback);
+    }
+
+    public void removeChangeListener(PIGuiContainer piGuiContainer) {
+        pageChangeListeners.remove(piGuiContainer);
     }
 
     public static class TabData {

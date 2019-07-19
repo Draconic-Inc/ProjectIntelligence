@@ -55,7 +55,6 @@ public class GuiPartMDWindow extends MGuiElementBase<GuiPartMDWindow> {
     public GuiPartMDWindow(DisplayController controller) {
         this.controller = controller;
         this.disableOnRemove = true;
-        controller.addChangeListener(this, this::reloadElement);
     }
 
     @Override

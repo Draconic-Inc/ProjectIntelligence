@@ -1,4 +1,8 @@
-######## 1.0.7.x ########
+######## 1.0.8.x ########
+
+######## 1.0.7.24 ########
+-Fixed issue with text wrapping and random unintended spaces in the middle of sentences.
+-Added button to go to previous page to the top of the page list.
 
 ######## 1.0.6.22 ########
 -Fixed broken language selection list. (filter was broken)

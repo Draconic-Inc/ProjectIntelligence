@@ -22,6 +22,7 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 
 /**
@@ -263,7 +264,7 @@ public class PIConfig {
         PAGE_ONLY;
 
         public String getUnlocalizedName() {
-            return "pi.search.mode." + name().toLowerCase();
+            return "pi.search.mode." + name().toLowerCase(Locale.ENGLISH);
         }
     }
 }
