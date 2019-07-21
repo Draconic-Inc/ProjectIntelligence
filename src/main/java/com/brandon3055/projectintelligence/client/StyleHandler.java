@@ -155,6 +155,22 @@ public class StyleHandler {
         pageButtons.addSubProp(new ColourProperty(TEXT_HOVER, 0xffffa0, false));
         pageButtons.addSubProp(new BooleanProperty(TEXT_SHADOW, true));
 
+        StyleProperty pageBackButton = pageButtons.addSubProp(new StyleProperty(PAGE_BACK_BUTTON));
+        pageBackButton.addSubProp(new BooleanProperty(VANILLA_TEXTURE, true));
+        pageBackButton.addSubProp(new BooleanProperty(SHADED_BORDERS, true).setTip(TextFormatting.DARK_GRAY + I18n.format("pi.style.shade_borders.info"))) //
+                .addSubProp(new BooleanProperty(INVERT_SHADE, false).setTip(TextFormatting.DARK_GRAY + I18n.format("pi.style.invert_shade.info")));
+        pageBackButton.addSubProp(new BooleanProperty(THICK_BORDERS, false));
+        pageBackButton.addSubProp(new ColourProperty(COLOUR, 0xFFFFFFFF, true));
+        pageBackButton.addSubProp(new ColourProperty(HOVER, 0xFFFFFFFF, true));
+        pageBackButton.addSubProp(new ColourProperty(BORDER, 0x00000000, true));
+        pageBackButton.addSubProp(new ColourProperty(BORDER_HOVER, 0x00000000, true));
+        pageBackButton.addSubProp(new ColourProperty(TEXT_COLOUR, 0xe0e0e0, false));
+        pageBackButton.addSubProp(new ColourProperty(TEXT_HOVER, 0xffffa0, false));
+        pageBackButton.addSubProp(new BooleanProperty(TEXT_SHADOW, true));
+        StyleProperty pageBackButtonIcon = pageBackButton.addSubProp(new StyleProperty(ICON));
+        pageBackButtonIcon.addSubProp(new ColourProperty(COLOUR, 0xFFFFFF, false));
+        pageBackButtonIcon.addSubProp(new ColourProperty(HOVER, 0xffffa0, false));
+
         createScrollBarProp(pageList);
 
         //endregion
@@ -1100,6 +1116,7 @@ public class StyleHandler {
         PAGE_LIST("page_list"),
         PAGE_ICON("page_icon"),
         PAGE_BUTTONS("page_buttons"),
+        PAGE_BACK_BUTTON("page_back_button"),
         HIDE_BUTTON("hide_button"),
         DIR_PATH("dir_path"),
         DIR_BUTTONS("dir_buttons"),
@@ -1132,7 +1149,8 @@ public class StyleHandler {
         SEARCH("search"),
         SCROLL_BAR("scroll_bar"),
         SCROLL_SLIDER("scroll_slider"),
-        COMPACT_BAR("small_bar");
+        COMPACT_BAR("small_bar"),
+        ICON("icon");
 
         private String name;
 

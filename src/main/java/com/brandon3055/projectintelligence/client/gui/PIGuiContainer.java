@@ -121,6 +121,15 @@ public class PIGuiContainer implements IModularGui<GuiScreen> {
             partContainer.addChild(mdWindow);
         }
         updatePartArrangement(true);
+
+        controller.addChangeListener(this, () -> {
+            if (enablePageList) pageList.reloadElement();
+            if (enableContentWindow) mdWindow.reloadElement();
+        });
+    }
+
+    public void dispose() {
+        controller.removeChangeListener(this);
     }
 
     public void updatePos(int xPos, int yPos) {

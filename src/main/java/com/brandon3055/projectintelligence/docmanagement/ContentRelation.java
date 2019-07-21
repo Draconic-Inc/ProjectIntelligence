@@ -17,6 +17,7 @@ import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
 import javax.annotation.Nullable;
+import java.util.Locale;
 
 import static com.brandon3055.projectintelligence.docmanagement.ContentRelation.Type.*;
 
@@ -178,7 +179,7 @@ public class ContentRelation {
 
     @Override
     public String toString() {
-        return type.name().toLowerCase() + "|" + contentString + (type == STACK ? (", ignMeta: " + ignoreMeta + ", incNBT: " + includeNBT) : "");
+        return type.name().toLowerCase(Locale.ENGLISH) + "|" + contentString + (type == STACK ? (", ignMeta: " + ignoreMeta + ", incNBT: " + includeNBT) : "");
     }
 
     public enum Type {

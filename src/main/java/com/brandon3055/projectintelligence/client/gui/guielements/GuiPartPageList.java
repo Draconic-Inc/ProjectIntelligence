@@ -21,6 +21,7 @@ import com.brandon3055.projectintelligence.client.gui.PIPartRenderer;
 import com.brandon3055.projectintelligence.docmanagement.ContentRelation;
 import com.brandon3055.projectintelligence.docmanagement.DocumentationManager;
 import com.brandon3055.projectintelligence.docmanagement.DocumentationPage;
+import com.brandon3055.projectintelligence.docmanagement.RootPage;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.resources.I18n;
 
@@ -95,7 +96,6 @@ public class GuiPartPageList extends MGuiElementBase<GuiPartPageList> {
     public GuiPartPageList(PIGuiContainer container, DisplayController controller) {
         this.container = container;
         this.controller = controller;
-        controller.addChangeListener(this, this::reloadElement);
     }
 
     @Override
@@ -251,6 +251,7 @@ public class GuiPartPageList extends MGuiElementBase<GuiPartPageList> {
         scrollElement.setSize(xSize() - 12, ySize() - TITLE_BAR_SIZE - NAV_BAR_SIZE - FOOTER_SIZE - 3);
         scrollElement.setListSpacing(1);
 
+        currentPage = controller.getActiveTab().pageURI;
         reloadPageButtons(true);
 
         super.reloadElement();
@@ -294,7 +295,7 @@ public class GuiPartPageList extends MGuiElementBase<GuiPartPageList> {
 
         pages.sort(Comparator.comparingInt(page -> (page.treeDepth * 5000) + page.getSortingWeight()));
 
-        addPageButtons(pages);
+        addPageButtons(pages, pageOverride == null);
         if (updateNav) {
             updateNavButtons();
         }
@@ -350,7 +351,21 @@ public class GuiPartPageList extends MGuiElementBase<GuiPartPageList> {
         return false;
     }
 
-    private void addPageButtons(List<DocumentationPage> buttons) {
+    private void addPageButtons(List<DocumentationPage> buttons, boolean addBack) {
+        DocumentationPage current = DocumentationManager.getPage(currentPage);
+
+        if (current != null && current.getParent() != null && !currentPage.equals(RootPage.ROOT_URI)) {
+            if (current.getSubPages().isEmpty()) {
+                current = current.getParent();
+            }
+            if (current != null && current.getParent() != null) {
+                PageButton back = new PageButton(current.getParent(), controller, true);
+                back.setXSize(scrollElement.xSize() - (scrollBar.xSize() + 4));
+                back.setXPosMod((guiButton, integer) -> scrollElement.maxXPos() - guiButton.xSize() - (scrollBar.xSize() + 3));
+                scrollElement.addElement(back);
+            }
+        }
+
         for (DocumentationPage page : buttons) {
             if (page.isHidden() && !PIConfig.editMode()) continue;
             PageButton button = new PageButton(page, controller);

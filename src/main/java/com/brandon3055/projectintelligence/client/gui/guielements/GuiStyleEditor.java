@@ -133,7 +133,9 @@ public class GuiStyleEditor extends GuiPopUpDialogBase<GuiStyleEditor> {
 
         editTree.clearElements();
         for (StyleProperty prop : StyleHandler.getPropertyMap().values()) {
-            editTree.addElement(new StyleSetting(prop));
+            StyleSetting setting = new StyleSetting(prop);
+            setting.displayZLevel = displayZLevel;
+            editTree.addElement(setting);
         }
 
         addChild(editTree);
@@ -253,6 +255,7 @@ public class GuiStyleEditor extends GuiPopUpDialogBase<GuiStyleEditor> {
                         subsShown = true;
                         for (StyleProperty subProp : subProps) {
                             StyleSetting child = new StyleSetting(subProp).setXPos(xPos() + 10).setXSize(xSize() - 10);
+                            child.displayZLevel = displayZLevel;
                             child.addToGroup("SUB_PROPS");
                             addChild(child);
                         }
@@ -321,7 +324,7 @@ public class GuiStyleEditor extends GuiPopUpDialogBase<GuiStyleEditor> {
                     pickColour.setColour(((ColourProperty) property).getColour());
                     pickColour.setIncludeAlpha(((ColourProperty) property).alpha);
                     pickColour.setColourChangeListener(integer -> ((ColourProperty) property).set(pickColour.getColour()));
-                    pickColour.showCenter(displayZLevel + 100);
+                    pickColour.showCenter(displayZLevel + 10);
                     mc.getSoundHandler().playSound(PositionedSoundRecord.getMasterRecord(SoundEvents.UI_BUTTON_CLICK, 1.0F));
                 }
                 else if (property.isInteger()) {
@@ -332,7 +335,7 @@ public class GuiStyleEditor extends GuiPopUpDialogBase<GuiStyleEditor> {
                     textDialog.setValidator(s -> s.isEmpty() || s.equals("-") || Utils.validInteger(s));
                     textDialog.addTextChangeCallback(s -> ((IntegerProperty) property).set(s.isEmpty() || s.equals("-") ? 0 : Utils.parseInt(s)));
                     textDialog.addChild(new GuiBorderedRect().setPosAndSize(textDialog).setFillColour(0xFF000000));
-                    textDialog.showCenter(displayZLevel + 100);
+                    textDialog.showCenter(displayZLevel + 10);
                     textDialog.textField.setYSize(20).translate(0, 5);
                     textDialog.okButton.setYSize(20).translate(0, 5);
                     mc.getSoundHandler().playSound(PositionedSoundRecord.getMasterRecord(SoundEvents.UI_BUTTON_CLICK, 1.0F));
@@ -413,7 +416,7 @@ public class GuiStyleEditor extends GuiPopUpDialogBase<GuiStyleEditor> {
                     context.addChild(darken);
                 }
 
-                context.show(displayZLevel + 100);
+                context.show(displayZLevel + 10);
             }
 
             return false;
