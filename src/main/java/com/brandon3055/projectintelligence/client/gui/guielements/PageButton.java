@@ -354,6 +354,9 @@ public class PageButton extends GuiButton {
 
             if (!newTab && controller.getActiveTab().pageURI.equals(page.getPageURI())) {
                 //Go back if the page is already selected
+                if (page.getParent() == null) {
+                    return;
+                }
                 controller.openPage(page.getParent().getPageURI(), false);
             }
             else {

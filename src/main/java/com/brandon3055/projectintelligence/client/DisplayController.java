@@ -181,10 +181,12 @@ public class DisplayController {
 
     public void goBack() {
         getActiveTab().back();
+        onActivePageChange();
     }
 
     public void goForward() {
         getActiveTab().forward();
+        onActivePageChange();
     }
 
     public void addChangeListener(PIGuiContainer listenerObject, Runnable changeCallback) {
