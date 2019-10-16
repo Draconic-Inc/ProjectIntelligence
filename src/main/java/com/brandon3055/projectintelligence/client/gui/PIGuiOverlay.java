@@ -401,7 +401,7 @@ public class PIGuiOverlay implements IModularGui<GuiScreen> {
             GlStateManager.enableRescaleNormal();
             MODEL_BOOK.render(null, 0, pageAnim % 1, 0, hoverAnim, 0, 0.1F);
             GlStateManager.disableRescaleNormal();
-            RenderHelper.disableStandardItemLighting();
+            RenderHelper.enableGUIStandardItemLighting();
             GlStateManager.popMatrix();
         }
 

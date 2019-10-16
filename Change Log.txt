@@ -1,4 +1,8 @@
-######## 1.0.8.x ########
+######## 1.0.9.x ########
+-Fixed minor lighting bug in gui's with PI button.
+
+######## 1.0.8.25 ########
+-Fixed crash related to back button.
 
 ######## 1.0.7.24 ########
 -Fixed issue with text wrapping and random unintended spaces in the middle of sentences.
