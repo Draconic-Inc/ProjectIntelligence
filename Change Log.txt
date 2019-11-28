@@ -1,5 +1,6 @@
 ######## 1.0.9.x ########
 -Fixed minor lighting bug in gui's with PI button.
+-Fixed backspace returning to prev page while search bar has focus.
 
 ######## 1.0.8.25 ########
 -Fixed crash related to back button.

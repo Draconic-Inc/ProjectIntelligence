@@ -481,10 +481,12 @@ public class GuiPartPageList extends MGuiElementBase<GuiPartPageList> {
 
     @Override
     protected boolean keyTyped(char typedChar, int keyCode) throws IOException {
-        if (keyCode == 14 && !backButton.isDisabled() && backButton.isEnabled()) {
+        boolean ret = super.keyTyped(typedChar, keyCode);
+        if (!ret && keyCode == 14 && !backButton.isDisabled() && backButton.isEnabled()) {
             backButton.onPressed(backButton.xPos() + 1, backButton.yPos() + 1, 0);
+            return true;
         }
-        return super.keyTyped(typedChar, keyCode);
+        return ret;
     }
 
     public void setFullyExtended() {
