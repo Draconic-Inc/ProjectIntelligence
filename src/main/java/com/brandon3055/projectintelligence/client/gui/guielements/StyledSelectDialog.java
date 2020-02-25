@@ -1,15 +1,15 @@
 package com.brandon3055.projectintelligence.client.gui.guielements;
 
 import com.brandon3055.brandonscore.client.ResourceHelperBC;
-import com.brandon3055.brandonscore.client.gui.modulargui.MGuiElementBase;
+import com.brandon3055.brandonscore.client.gui.modulargui.GuiElement;
 import com.brandon3055.brandonscore.client.gui.modulargui.baseelements.GuiButton;
 import com.brandon3055.brandonscore.client.gui.modulargui.guielements.GuiSelectDialog;
 import com.brandon3055.projectintelligence.client.PITextures;
 import com.brandon3055.projectintelligence.client.StyleHandler;
 import com.brandon3055.projectintelligence.client.StyleHandler.StyleType;
 import com.brandon3055.projectintelligence.docmanagement.LanguageManager;
+import com.mojang.blaze3d.platform.GlStateManager;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.GlStateManager;
 
 /**
  * Created by brandon3055 on 14/08/2017.
@@ -20,7 +20,7 @@ public class StyledSelectDialog<T> extends GuiSelectDialog<T> {
     private final String heading;
     private String selected = "";
 
-    public StyledSelectDialog(MGuiElementBase parent, String prop, String heading) {
+    public StyledSelectDialog(GuiElement parent, String prop, String heading) {
         super(parent);
         this.prop = prop;
         this.heading = heading;
@@ -67,7 +67,7 @@ public class StyledSelectDialog<T> extends GuiSelectDialog<T> {
             StyleHandler.getColour(prop + "." + StyleType.COLOUR.getName()).glColour();
             ResourceHelperBC.bindTexture(PITextures.VANILLA_GUI);
             drawTiledTextureRectWithTrim(xPos(), yPos(), xSize(), ySize(), 4, 4, 4, 4, 0, thickBorders ? 0 : 128, 256, 128);
-            GlStateManager.color(1, 1, 1, 1);
+            GlStateManager.color4f(1, 1, 1, 1);
             drawBorderedRect(xPos(), yPos(), xSize(), ySize(), 1, 0, border);
         }
         else {

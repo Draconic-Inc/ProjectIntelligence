@@ -1,8 +1,8 @@
 package com.brandon3055.projectintelligence.client.gui.guielements;
 
 import codechicken.lib.math.MathHelper;
+import com.brandon3055.brandonscore.client.gui.modulargui.GuiElement;
 import com.brandon3055.brandonscore.client.gui.modulargui.IModularGui;
-import com.brandon3055.brandonscore.client.gui.modulargui.MGuiElementBase;
 import com.brandon3055.brandonscore.client.gui.modulargui.baseelements.GuiButton;
 import com.brandon3055.brandonscore.client.gui.modulargui.guielements.GuiLabel;
 import com.brandon3055.brandonscore.client.gui.modulargui.guielements.GuiTexture;
@@ -11,8 +11,8 @@ import com.brandon3055.brandonscore.utils.DataUtils;
 import com.brandon3055.projectintelligence.client.PITextures;
 import com.brandon3055.projectintelligence.client.StyleHandler.PropertyGroup;
 import com.brandon3055.projectintelligence.client.gui.PIPartRenderer;
+import com.mojang.blaze3d.platform.GlStateManager;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.resources.I18n;
 
 import java.util.LinkedList;
@@ -21,7 +21,7 @@ import java.util.Queue;
 /**
  * Created by brandon3055 on 7/21/2018.
  */
-public class GuiNotifications extends MGuiElementBase<GuiNotifications> {
+public class GuiNotifications extends GuiElement<GuiNotifications> {
     private static PropertyGroup windowProps = new PropertyGroup("user_dialogs");
     private static PropertyGroup buttonProps = new PropertyGroup("user_dialogs.button_style");
     private PIPartRenderer windowRenderer = new PIPartRenderer(windowProps);
@@ -90,10 +90,10 @@ public class GuiNotifications extends MGuiElementBase<GuiNotifications> {
     @Override
     public void reloadElement() {
         super.reloadElement();
-        GlStateManager.color(1, 1, 1, 1);
+        GlStateManager.color4f(1, 1, 1, 1);
     }
 
-    private static class Notification extends MGuiElementBase<Notification> {
+    private static class Notification extends GuiElement<Notification> {
         private GuiNotifications parent;
         private final String text;
         private final boolean autoClose;
@@ -130,7 +130,7 @@ public class GuiNotifications extends MGuiElementBase<GuiNotifications> {
             closeTex.setPreDrawCallback((minecraft, mouseX, mouseY, partialTicks, mouseOver) -> buttonProps.glColour(mouseOver));
             closeTex.setPostDrawCallback(IDrawCallback::resetColour);
             close.addChild(closeTex);
-            close.setListener(() -> setEnabled(false));
+            close.onPressed(() -> setEnabled(false));
             close.setPos(maxXPos() - 11, yPos() + 3);
             addChild(close);
             targetYPos = yPos();

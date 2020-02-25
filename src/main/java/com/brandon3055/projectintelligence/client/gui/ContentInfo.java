@@ -7,7 +7,8 @@ import com.brandon3055.projectintelligence.docmanagement.ContentRelation;
 import com.brandon3055.projectintelligence.utils.LogHelper;
 import com.google.gson.JsonObject;
 import net.minecraft.item.ItemStack;
-import net.minecraft.util.JsonUtils;
+import net.minecraft.util.JSONUtils;
+
 
 import java.util.function.Supplier;
 
@@ -56,7 +57,6 @@ public class ContentInfo {
     public String linkTarget = "";
 
     //Relations
-    public boolean ignoreMeta = false;
     public boolean includeNBT = false;
 
     public ContentInfo(ContentType type) {
@@ -112,44 +112,44 @@ public class ContentInfo {
     }
 
     public static ContentInfo fromIconObj(JsonObject iconObj) {
-        ContentInfo ci = new ContentInfo(ContentType.getByName(JsonUtils.getString(iconObj, "type", "stack")));
+        ContentInfo ci = new ContentInfo(ContentType.getByName(JSONUtils.getString(iconObj, "type", "stack")));
 
-        ci.drawSlot = JsonUtils.getBoolean(iconObj, "draw_slot", ci.drawSlot);
-        ci.drawHover = JsonUtils.getBoolean(iconObj, "draw_hover", ci.drawHover);
-        ci.hover_text = JsonUtils.getString(iconObj, "hover_text", "");
+        ci.drawSlot = JSONUtils.getBoolean(iconObj, "draw_slot", ci.drawSlot);
+        ci.drawHover = JSONUtils.getBoolean(iconObj, "draw_hover", ci.drawHover);
+        ci.hover_text = JSONUtils.getString(iconObj, "hover_text", "");
 
         switch (ci.type) {
             case ITEM_STACK:
-                if (JsonUtils.hasField(iconObj, "icon_string")) {
-                    ci.stack = StackReference.fromString(JsonUtils.getString(iconObj, "icon_string", ""));
+                if (JSONUtils.hasField(iconObj, "icon_string")) {
+                    ci.stack = StackReference.fromString(JSONUtils.getString(iconObj, "icon_string", ""));
                 }
                 break;
             case ENTITY:
-                ci.trackMouse = JsonUtils.getBoolean(iconObj, "track_mouse", ci.trackMouse);
-                if (JsonUtils.hasField(iconObj, "equipment") && iconObj.get("equipment").isJsonObject()) {
+                ci.trackMouse = JSONUtils.getBoolean(iconObj, "track_mouse", ci.trackMouse);
+                if (JSONUtils.hasField(iconObj, "equipment") && iconObj.get("equipment").isJsonObject()) {
                     JsonObject equip = iconObj.get("equipment").getAsJsonObject();
 
-                    if (JsonUtils.hasField(equip, "main_hand"))
-                        ci.entityInventory[0] = getStack(JsonUtils.getString(equip, "main_hand", ""));
-                    if (JsonUtils.hasField(equip, "off_hand"))
-                        ci.entityInventory[1] = getStack(JsonUtils.getString(equip, "off_hand", ""));
-                    if (JsonUtils.hasField(equip, "head"))
-                        ci.entityInventory[2] = getStack(JsonUtils.getString(equip, "head", ""));
-                    if (JsonUtils.hasField(equip, "chest"))
-                        ci.entityInventory[3] = getStack(JsonUtils.getString(equip, "chest", ""));
-                    if (JsonUtils.hasField(equip, "legs"))
-                        ci.entityInventory[4] = getStack(JsonUtils.getString(equip, "legs", ""));
-                    if (JsonUtils.hasField(equip, "feet"))
-                        ci.entityInventory[5] = getStack(JsonUtils.getString(equip, "feet", ""));
+                    if (JSONUtils.hasField(equip, "main_hand"))
+                        ci.entityInventory[0] = getStack(JSONUtils.getString(equip, "main_hand", ""));
+                    if (JSONUtils.hasField(equip, "off_hand"))
+                        ci.entityInventory[1] = getStack(JSONUtils.getString(equip, "off_hand", ""));
+                    if (JSONUtils.hasField(equip, "head"))
+                        ci.entityInventory[2] = getStack(JSONUtils.getString(equip, "head", ""));
+                    if (JSONUtils.hasField(equip, "chest"))
+                        ci.entityInventory[3] = getStack(JSONUtils.getString(equip, "chest", ""));
+                    if (JSONUtils.hasField(equip, "legs"))
+                        ci.entityInventory[4] = getStack(JSONUtils.getString(equip, "legs", ""));
+                    if (JSONUtils.hasField(equip, "feet"))
+                        ci.entityInventory[5] = getStack(JSONUtils.getString(equip, "feet", ""));
                 }
 
-                if (JsonUtils.hasField(iconObj, "icon_string")) {
-                    ci.entity = JsonUtils.getString(iconObj, "icon_string", "");
+                if (JSONUtils.hasField(iconObj, "icon_string")) {
+                    ci.entity = JSONUtils.getString(iconObj, "icon_string", "");
                 }
                 break;
             case IMAGE:
-                if (JsonUtils.hasField(iconObj, "icon_string")) {
-                    ci.imageURL = JsonUtils.getString(iconObj, "icon_string", "");
+                if (JSONUtils.hasField(iconObj, "icon_string")) {
+                    ci.imageURL = JSONUtils.getString(iconObj, "icon_string", "");
                 }
                 break;
         }
@@ -168,15 +168,15 @@ public class ContentInfo {
                 break;
             case ENTITY:
                 contentString = entity;
-                ignoreMeta = includeNBT = false;
+                includeNBT = false;
                 break;
             case FLUID:
                 contentString = fluid;
-                ignoreMeta = includeNBT = false;
+                includeNBT = false;
                 break;
         }
 
-        return new ContentRelation(ContentType.toRelationType(type), contentString, ignoreMeta, includeNBT);
+        return new ContentRelation(ContentType.toRelationType(type), contentString, includeNBT);
     }
 
     public static ContentInfo fromRelation(ContentRelation relation) {
@@ -187,7 +187,6 @@ public class ContentInfo {
                 if (info.stack == null) {
                     info.stack = new StackReference(ItemStack.EMPTY);
                 }
-                info.ignoreMeta = relation.ignoreMeta;
                 info.includeNBT = relation.includeNBT;
                 break;
             case ENTITY:

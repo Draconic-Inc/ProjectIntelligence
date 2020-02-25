@@ -2,7 +2,7 @@ package com.brandon3055.projectintelligence.client.gui;
 
 import com.brandon3055.brandonscore.client.gui.modulargui.GuiElementManager;
 import com.brandon3055.brandonscore.client.gui.modulargui.IModularGui;
-import com.brandon3055.brandonscore.client.gui.modulargui.MGuiElementBase;
+import com.brandon3055.brandonscore.client.gui.modulargui.GuiElement;
 import com.brandon3055.brandonscore.client.gui.modulargui.guielements.GuiDraggable;
 import com.brandon3055.brandonscore.client.gui.modulargui.guielements.GuiDraggable.PositionRestraint;
 import com.brandon3055.projectintelligence.client.DisplayController;
@@ -10,8 +10,8 @@ import com.brandon3055.projectintelligence.client.gui.guielements.GuiPartMDWindo
 import com.brandon3055.projectintelligence.client.gui.guielements.GuiPartMenu;
 import com.brandon3055.projectintelligence.client.gui.guielements.GuiPartPageList;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiScreen;
-import net.minecraft.client.gui.ScaledResolution;
+import net.minecraft.client.gui.screen.Screen;
+import net.minecraft.client.util.InputMappings;
 
 import java.io.IOException;
 import java.util.function.Consumer;
@@ -20,7 +20,7 @@ import java.util.function.Supplier;
 /**
  * Created by brandon3055 on 7/25/2018.
  */
-public class PIGuiContainer implements IModularGui<GuiScreen> {
+public class PIGuiContainer implements IModularGui<Screen> {
 
     private Minecraft mc;
     private int xPos;
@@ -30,7 +30,7 @@ public class PIGuiContainer implements IModularGui<GuiScreen> {
     private int screenWidth;
     private int screenHeight;
     private GuiElementManager manager = new GuiElementManager(this);
-    private GuiScreen gui;
+    private Screen gui;
     private DisplayController controller;
     private int zLevel = 0;
     private boolean enableMenu = true;
@@ -41,13 +41,13 @@ public class PIGuiContainer implements IModularGui<GuiScreen> {
     private GuiPartMenu menu = null;
     private GuiPartMDWindow mdWindow = null;
     private GuiPartPageList pageList = null;
-    private Runnable siseChangeHandler = null;
+    private Runnable sizeChangeHandler = null;
     private Runnable closeHandler = null;
     private Supplier<Boolean> canDrag = () -> false;
     private Consumer<GuiDraggable> onMoved = null;
-    private PositionRestraint positionRestraint = MGuiElementBase::normalizePosition;
+    private PositionRestraint positionRestraint = GuiElement::normalizePosition;
 
-    public PIGuiContainer(GuiScreen gui, DisplayController controller) {
+    public PIGuiContainer(Screen gui, DisplayController controller) {
         this.gui = gui;
         this.controller = controller;
         onGuiInit();
@@ -62,10 +62,9 @@ public class PIGuiContainer implements IModularGui<GuiScreen> {
     }
 
     public void onGuiInit() {
-        this.mc = Minecraft.getMinecraft();
-        ScaledResolution scaledresolution = new ScaledResolution(mc);
-        this.screenWidth = scaledresolution.getScaledWidth();
-        this.screenHeight = scaledresolution.getScaledHeight();
+        this.mc = Minecraft.getInstance();
+        this.screenWidth = mc.mainWindow.getScaledWidth();
+        this.screenHeight = mc.mainWindow.getScaledHeight();
         manager.setWorldAndResolution(mc, screenWidth, screenHeight);
     }
 
@@ -107,7 +106,7 @@ public class PIGuiContainer implements IModularGui<GuiScreen> {
         partContainer.setCanDrag(canDrag);
         partContainer.setPositionRestraint(positionRestraint);
         partContainer.setOnMovedCallback(onMoved == null ? null : () -> onMoved.accept(partContainer));
-        manager.add(partContainer);
+        manager.addChild(partContainer);
 
         if (enableMenu && menu != null) {
             partContainer.addChild(menu);
@@ -222,7 +221,7 @@ public class PIGuiContainer implements IModularGui<GuiScreen> {
         }
     }
 
-    public void setGui(GuiScreen gui) {
+    public void setGui(Screen gui) {
         this.gui = gui;
     }
 
@@ -256,29 +255,42 @@ public class PIGuiContainer implements IModularGui<GuiScreen> {
 
     //region Gui Method Pass-through
 
-    public boolean mouseClicked(int mouseX, int mouseY, int mouseButton) throws IOException {
-        return manager.mouseClicked(mouseX, mouseY, mouseButton);
+    public boolean mouseClicked(double mouseX, double mouseY, int button) {
+        return manager.mouseClicked(mouseX, mouseY, button);
     }
 
-    public boolean mouseReleased(int mouseX, int mouseY, int state) {
-        return manager.mouseReleased(mouseX, mouseY, state);
+    public boolean mouseReleased(double mouseX, double mouseY, int button) {
+        return manager.mouseReleased(mouseX, mouseY, button);
     }
 
-    public boolean mouseClickMove(int mouseX, int mouseY, int clickedMouseButton, long timeSinceLastClick) {
-        return manager.mouseClickMove(mouseX, mouseY, clickedMouseButton, timeSinceLastClick);
+    public void mouseMoved(double mouseX, double mouseY) {
+        manager.mouseMoved(mouseX, mouseY);
     }
 
-    public boolean keyTyped(char typedChar, int keyCode) throws IOException {
-        boolean ret = manager.keyTyped(typedChar, keyCode);
-        if (!ret && (keyCode == 1 || mc.gameSettings.keyBindInventory.isActiveAndMatches(keyCode)) && closeHandler != null) {
+    public boolean mouseDragged(double mouseX, double mouseY, int clickedMouseButton, double dragX, double dragY) {
+        return manager.mouseDragged(mouseX, mouseY, clickedMouseButton, dragX, dragY);
+    }
+
+    public boolean mouseScrolled(double mouseX, double mouseY, double scrollAmount) {
+        return manager.mouseScrolled(mouseX, mouseY, scrollAmount);
+    }
+
+    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+        return manager.keyPressed(keyCode, scanCode, modifiers);
+    }
+
+    public boolean keyReleased(int keyCode, int scanCode, int modifiers) {
+        return manager.keyReleased(keyCode, scanCode, modifiers);
+    }
+
+    public boolean charTyped(char typedChar, int keyCode) {
+        boolean ret = manager.charTyped(typedChar, keyCode);
+        InputMappings.Input key = InputMappings.Type.MOUSE.getOrMakeInput(keyCode);
+        if (!ret && (keyCode == 1 || mc.gameSettings.keyBindInventory.isActiveAndMatches(key)) && closeHandler != null) {
             closeHandler.run();
             return true;
         }
         return ret;
-    }
-
-    public boolean handleMouseInput() throws IOException {
-        return manager.handleMouseInput();
     }
 
     public void renderElements(int mouseX, int mouseY, float partialTicks) {
@@ -307,7 +319,7 @@ public class PIGuiContainer implements IModularGui<GuiScreen> {
     //region IModular Gui
 
     @Override
-    public GuiScreen getScreen() {
+    public Screen getScreen() {
         return gui;
     }
 

@@ -8,7 +8,7 @@ import codechicken.lib.vec.Translation;
 import codechicken.lib.vec.Vector3;
 import codechicken.lib.vec.Vertex5;
 import codechicken.lib.vec.uv.UV;
-import com.brandon3055.brandonscore.client.gui.modulargui.MGuiElementBase;
+import com.brandon3055.brandonscore.client.gui.modulargui.GuiElement;
 import com.brandon3055.brandonscore.client.gui.modulargui.baseelements.GuiButton;
 import com.brandon3055.brandonscore.client.gui.modulargui.baseelements.GuiScrollElement;
 import com.brandon3055.brandonscore.client.gui.modulargui.guielements.GuiLabel;
@@ -22,8 +22,8 @@ import com.brandon3055.projectintelligence.client.gui.PIConfig;
 import com.brandon3055.projectintelligence.client.gui.PIGuiContainer;
 import com.brandon3055.projectintelligence.client.gui.PIPartRenderer;
 import com.brandon3055.projectintelligence.client.keybinding.KeyInputHandler;
+import com.mojang.blaze3d.platform.GlStateManager;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.client.resources.I18n;
 import org.lwjgl.opengl.GL11;
@@ -38,7 +38,7 @@ import java.util.List;
 /**
  * Created by brandon3055 on 7/21/2018.
  */
-public class GuiPIIntroduction extends MGuiElementBase<GuiPIIntroduction> {
+public class GuiPIIntroduction extends GuiElement<GuiPIIntroduction> {
     private static PropertyGroup windowProps = new PropertyGroup("user_dialogs");
     private static PropertyGroup buttonProps = new PropertyGroup("user_dialogs.button_style");
     private PIGuiContainer container;
@@ -54,7 +54,7 @@ public class GuiPIIntroduction extends MGuiElementBase<GuiPIIntroduction> {
         screens.add(new InfoScreen(this, "pi.info_screen.welcome.title", "pi.info_screen.welcome.text").setSize(250, 200));
         screens.add(new InfoScreen(this, "pi.info_screen.guide_intro.title", "pi.info_screen.guide_intro.text").setSize(250, 120));
         screens.add(new OverviewScreen(this, "pi.info_screen.basic_overview.title", "pi.info_screen.basic_overview.text").setSize(150, 90));
-        screens.add(new InfoScreen(this, "pi.info_screen.pi_interaction.title", "pi.info_screen.pi_interaction.text", KeyInputHandler.openPI.getDisplayName(), KeyInputHandler.etGUI.getDisplayName(), KeyInputHandler.etWorld.getDisplayName()).setSize(250, 200));
+        screens.add(new InfoScreen(this, "pi.info_screen.pi_interaction.title", "pi.info_screen.pi_interaction.text", KeyInputHandler.openPI.getLocalizedName(), KeyInputHandler.etGUI.getLocalizedName(), KeyInputHandler.etWorld.getLocalizedName()).setSize(250, 200));
         screens.add(new StyleScreen(this, "pi.info_screen.ui_style.title", "pi.info_screen.ui_style.text").setSize(250, 100));
         screens.add(new InfoScreen(this, "pi.info_screen.contributing.title", "pi.info_screen.contributing.text").setSize(250, 100));
     }
@@ -93,31 +93,31 @@ public class GuiPIIntroduction extends MGuiElementBase<GuiPIIntroduction> {
             PIConfig.tutorialDisplayed = true;
             PIConfig.save();
         }
-        modularGui.getManager().remove(this);
+        modularGui.getManager().removeChild(this);
     }
 
     @Override
-    protected boolean keyTyped(char typedChar, int keyCode) throws IOException {
+    protected boolean keyPressed(int keyCode, int scanCode, int modifiers) {
         if (keyCode == 59 || keyCode == 1) {
             close(!PIConfig.tutorialDisplayed);
             return true;
         }
-        return super.keyTyped(typedChar, keyCode);
+        return super.keyPressed(keyCode, scanCode, modifiers);
     }
 
     @Override
-    public boolean mouseClicked(int mouseX, int mouseY, int mouseButton) throws IOException {
+    public boolean mouseClicked(double mouseX, double mouseY, int mouseButton) {
         super.mouseClicked(mouseX, mouseY, mouseButton);
         return true;
     }
 
     @Override
-    public boolean handleMouseScroll(int mouseX, int mouseY, int scrollDirection) {
+    public boolean handleMouseScroll(double mouseX, double mouseY, double scrollDirection) {
         super.handleMouseScroll(mouseX, mouseY, scrollDirection);
         return true;
     }
 
-    private static class InfoScreen extends MGuiElementBase<InfoScreen> {
+    private static class InfoScreen extends GuiElement<InfoScreen> {
         protected PIPartRenderer windowRenderer = new PIPartRenderer(windowProps);
         protected PIPartRenderer buttonRenderer = new PIPartRenderer(buttonProps).setButtonRender(true);
 
@@ -159,13 +159,13 @@ public class GuiPIIntroduction extends MGuiElementBase<GuiPIIntroduction> {
 
             if (index == 0 && PIConfig.tutorialDisplayed && !PIConfig.showTutorialLater) {
                 later = new StyledGuiButton(buttonRenderer).setText(I18n.format("pi.button.show_me_later"));
-                later.setListener(() -> parent.close(true));
+                later.onPressed(() -> parent.close(true));
                 later.setTrim(false);
                 addChild(later);
             }
 
-            nextButton.setListener(() -> parent.nextScreen());
-            prevButton.setListener(() -> parent.prevScreen());
+            nextButton.onPressed(() -> parent.nextScreen());
+            prevButton.onPressed(() -> parent.prevScreen());
 
             super.addChildElements();
         }
@@ -225,7 +225,7 @@ public class GuiPIIntroduction extends MGuiElementBase<GuiPIIntroduction> {
             return arrow;
         }
 
-        private void addArrow(MGuiElementBase target, String info) {
+        private void addArrow(GuiElement target, String info) {
             addArrow(target.xPos() + target.xSize() / 2, target.yPos() + target.ySize() / 2, info).setHighlight(target.getRect());
         }
 
@@ -259,7 +259,7 @@ public class GuiPIIntroduction extends MGuiElementBase<GuiPIIntroduction> {
 
         }
 
-        private static class InfoArrow extends MGuiElementBase<InfoArrow> {
+        private static class InfoArrow extends GuiElement<InfoArrow> {
             private final int targetX;
             private final int targetY;
             private final String info;
@@ -288,13 +288,13 @@ public class GuiPIIntroduction extends MGuiElementBase<GuiPIIntroduction> {
             public void renderElement(Minecraft minecraft, int mouseX, int mouseY, float partialTicks) {
                 super.renderElement(minecraft, mouseX, mouseY, partialTicks);
 
-                GlStateManager.disableDepth();
+                GlStateManager.disableDepthTest();
                 bindTexture(PITextures.PI_PARTS);
                 CCRenderState ccrs = CCRenderState.instance();
                 ccrs.startDrawing(GL11.GL_QUADS, DefaultVertexFormats.POSITION_TEX);
                 activeModel.render(ccrs);
                 ccrs.draw();
-                GlStateManager.enableDepth();
+                GlStateManager.enableDepthTest();
             }
 
             public InfoArrow setHighlight(Rectangle highlight) {
@@ -351,7 +351,7 @@ public class GuiPIIntroduction extends MGuiElementBase<GuiPIIntroduction> {
             super.addChildElements();
             nextStyle = new StyledGuiButton(buttonRenderer);
             nextStyle.setText(I18n.format("pi.button.next_style"));
-            nextStyle.setListener(this::nextStyle);
+            nextStyle.onPressed(this::nextStyle);
             nextStyle.setSize(80, 14);
             addChild(nextStyle);
         }

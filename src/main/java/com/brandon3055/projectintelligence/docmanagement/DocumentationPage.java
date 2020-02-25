@@ -9,7 +9,7 @@ import com.google.common.base.Objects;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import net.minecraft.util.JsonUtils;
+import net.minecraft.util.JSONUtils;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
@@ -284,15 +284,15 @@ public class DocumentationPage {
     //region //############################################################################
 
     public void loadFromJson(JsonObject jObj) {
-        pageId = JsonUtils.getString(jObj, "id", "<invalid-id>");
-        markdownFile = JsonUtils.getString(jObj, "file", "");
-        sortingWeight = JsonUtils.getInt(jObj, "sorting_weight", 0);
-        cycle_icons = JsonUtils.getBoolean(jObj, "cycle_icons", false);
-        hidden = JsonUtils.getBoolean(jObj, "hidden", false);
+        pageId = JSONUtils.getString(jObj, "id", "<invalid-id>");
+        markdownFile = JSONUtils.getString(jObj, "file", "");
+        sortingWeight = JSONUtils.getInt(jObj, "sorting_weight", 0);
+        cycle_icons = JSONUtils.getBoolean(jObj, "cycle_icons", false);
+        hidden = JSONUtils.getBoolean(jObj, "hidden", false);
 
-        if (JsonUtils.isJsonArray(jObj, "relations")) {
+        if (JSONUtils.isJsonArray(jObj, "relations")) {
             relations.clear();
-            for (JsonElement element : JsonUtils.getJsonArray(jObj, "relations")) {
+            for (JsonElement element : JSONUtils.getJsonArray(jObj, "relations")) {
                 if (element.isJsonObject()) {
                     ContentRelation relation = ContentRelation.fromJson(element.getAsJsonObject());
                     if (relation != null) {
@@ -302,17 +302,17 @@ public class DocumentationPage {
             }
         }
 
-        if (JsonUtils.isJsonArray(jObj, "icons")) {
+        if (JSONUtils.isJsonArray(jObj, "icons")) {
             icons.clear();
-            for (JsonElement element : JsonUtils.getJsonArray(jObj, "icons")) {
+            for (JsonElement element : JSONUtils.getJsonArray(jObj, "icons")) {
                 if (element.isJsonObject()) {
                     icons.add(element.getAsJsonObject());
                 }
             }
         }
 
-        if (JsonUtils.isJsonArray(jObj, "pages")) {
-            loadSubPages(JsonUtils.getJsonArray(jObj, "pages"));
+        if (JSONUtils.isJsonArray(jObj, "pages")) {
+            loadSubPages(JSONUtils.getJsonArray(jObj, "pages"));
         }
     }
 

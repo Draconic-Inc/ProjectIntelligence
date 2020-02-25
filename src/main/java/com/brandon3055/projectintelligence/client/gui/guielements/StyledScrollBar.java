@@ -1,6 +1,6 @@
 package com.brandon3055.projectintelligence.client.gui.guielements;
 
-import com.brandon3055.brandonscore.client.gui.modulargui.MGuiElementBase;
+import com.brandon3055.brandonscore.client.gui.modulargui.GuiElement;
 import com.brandon3055.brandonscore.client.gui.modulargui.baseelements.GuiSlideControl;
 import com.brandon3055.brandonscore.client.gui.modulargui.guielements.GuiBorderedRect;
 import com.brandon3055.projectintelligence.client.StyleHandler;
@@ -22,15 +22,15 @@ public class StyledScrollBar extends GuiSlideControl {
     @Override
     public void addChildElements() {
         GuiBorderedRect background = new GuiBorderedRect();
-        background.setFillColourGetter(hovering -> StyleHandler.getInt(prop + "." + (hovering ? BACKGROUND_HOVER : BACKGROUND).getName()));
-        background.setBorderColourGetter(hovering -> StyleHandler.getInt(prop + "." + (hovering ? BORDER_HOVER : BORDER).getName()));
+        background.setFillColourL(hovering -> StyleHandler.getInt(prop + "." + (hovering ? BACKGROUND_HOVER : BACKGROUND).getName()));
+        background.setBorderColourL(hovering -> StyleHandler.getInt(prop + "." + (hovering ? BORDER_HOVER : BORDER).getName()));
         setBackgroundElement(background);
         setSliderElement(new ScrollSlider(prop + ".scroll_slider"));
 
         super.addChildElements();
     }
 
-    public class ScrollSlider extends MGuiElementBase<ScrollSlider> {
+    public class ScrollSlider extends GuiElement<ScrollSlider> {
 
         private String prop;
 

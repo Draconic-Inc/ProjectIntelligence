@@ -1,6 +1,6 @@
 package com.brandon3055.projectintelligence.client.gui.guielements;
 
-import com.brandon3055.brandonscore.client.gui.modulargui.MGuiElementBase;
+import com.brandon3055.brandonscore.client.gui.modulargui.GuiElement;
 import com.brandon3055.brandonscore.client.gui.modulargui.baseelements.GuiButton;
 import com.brandon3055.brandonscore.client.gui.modulargui.guielements.GuiLabel;
 import com.brandon3055.brandonscore.client.gui.modulargui.guielements.GuiTexture;
@@ -12,7 +12,7 @@ import com.brandon3055.projectintelligence.client.gui.PIConfig;
 import com.brandon3055.projectintelligence.client.gui.PIGuiContainer;
 import com.brandon3055.projectintelligence.client.gui.PIPartRenderer;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiScreen;
+import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.resources.I18n;
 import net.minecraft.util.text.TextFormatting;
 
@@ -22,7 +22,7 @@ import java.io.IOException;
 /**
  * Created by brandon3055 on 31/08/2016.
  */
-public class GuiPartMenu extends MGuiElementBase<GuiPartMenu> {
+public class GuiPartMenu extends GuiElement<GuiPartMenu> {
     public static StyleHandler.PropertyGroup menuProps = new StyleHandler.PropertyGroup("menu");
     public static StyleHandler.PropertyGroup closeBtnProps = new StyleHandler.PropertyGroup("menu.close_button");
     public static StyleHandler.PropertyGroup settingsBtnProps = new StyleHandler.PropertyGroup("menu.settings_button");
@@ -54,7 +54,7 @@ public class GuiPartMenu extends MGuiElementBase<GuiPartMenu> {
             }
         };
         title.setSize(xSize() - 50, 20).setPos(this).translate(8, 1).setAlignment(GuiAlign.LEFT);
-        title.setTextColGetter(hovering -> menuProps.textColour());
+        title.setHoverableTextCol(hovering -> menuProps.textColour());
         title.setWidthFromText().setTrim(false);
         addChild(title);
 
@@ -66,7 +66,7 @@ public class GuiPartMenu extends MGuiElementBase<GuiPartMenu> {
         closeButton.addAndFireReloadCallback(guiButton -> guiButton.setPos(maxXPos() - 20, yPos() + 3));
 //        closeButton.setRectBorderColourGetter((hovering, disabled) -> 0);
 //        closeButton.setRectFillColourGetter((hovering, disabled) -> 0);
-        closeButton.setListener(() -> container.closeButtonPressed());
+        closeButton.onPressed(() -> container.closeButtonPressed());
         addChild(closeButton);
 
 
@@ -80,7 +80,7 @@ public class GuiPartMenu extends MGuiElementBase<GuiPartMenu> {
         });
 //        settingsButton.setRectBorderColourGetter((hovering, disabled) -> 0);
 //        settingsButton.setRectFillColourGetter((hovering, disabled) -> 0);
-        settingsButton.setListener(() -> configUI.toggleShown());
+        settingsButton.onPressed(() -> configUI.toggleShown());
         addChild(settingsButton);
 
         GuiButton maximizeButton = new GuiButton().setSize(16, 16).setHoverText(I18n.format("pi.button.maximize.info"));
@@ -92,7 +92,7 @@ public class GuiPartMenu extends MGuiElementBase<GuiPartMenu> {
 //        maximizeButton.setRectBorderColourGetter((hovering, disabled) -> 0);
 //        maximizeButton.setRectFillColourGetter((hovering, disabled) -> 0);
         maximizeButton.setEnabledCallback(() -> PIConfig.screenMode > 0);
-        maximizeButton.setListener(() -> setGuiSize(true));
+        maximizeButton.onPressed(() -> setGuiSize(true));
 
         minimizeButton = new GuiButton().setSize(16, 16).setHoverText(I18n.format("pi.button.minimize.info"));
         GuiTexture minimizeTex = new GuiTexture(48, 0, 16, 16, PITextures.PI_PARTS);
@@ -103,7 +103,7 @@ public class GuiPartMenu extends MGuiElementBase<GuiPartMenu> {
 //        minimizeButton.setRectBorderColourGetter((hovering, disabled) -> 0);
 //        minimizeButton.setRectFillColourGetter((hovering, disabled) -> 0);
         minimizeButton.setEnabledCallback(() -> PIConfig.screenMode < 6);
-        minimizeButton.setListener(() -> setGuiSize(false));
+        minimizeButton.onPressed(() -> setGuiSize(false));
         if (resizeHandler != null) {
             addChild(maximizeButton);
             addChild(minimizeButton);
@@ -114,7 +114,7 @@ public class GuiPartMenu extends MGuiElementBase<GuiPartMenu> {
         editorButton.setFillColour(0);
         editorButton.setBorderColours(0xFF707070, 0xFFA0A0A0);
         editorButton.setEnabledCallback(PIConfig::editMode);
-        editorButton.setListener((event, eventSource) -> PIGuiHelper.displayEditor());
+        editorButton.onPressed(PIGuiHelper::displayEditor);
         addChild(editorButton);
 
         super.addChildElements();
@@ -126,18 +126,13 @@ public class GuiPartMenu extends MGuiElementBase<GuiPartMenu> {
         title.setLabelText(I18n.format("pi.gui.project_intelligence.title") + (PIConfig.editMode() ? TextFormatting.RED + " (Edit Mode)" : ""));
     }
 
-    @Override
-    protected boolean keyTyped(char typedChar, int keyCode) throws IOException {
-        return super.keyTyped(typedChar, keyCode);
-    }
-
     private void setGuiSize(boolean maximize) {
         if (maximize && PIConfig.screenMode > 0) {
-            if (GuiScreen.isShiftKeyDown()) PIConfig.screenMode = 0;
+            if (Screen.hasShiftDown()) PIConfig.screenMode = 0;
             else PIConfig.screenMode--;
         }
         else if (!maximize && PIConfig.screenMode < 6) {
-            if (GuiScreen.isShiftKeyDown()) PIConfig.screenMode = 6;
+            if (Screen.hasShiftDown()) PIConfig.screenMode = 6;
             else PIConfig.screenMode++;
         }
         PIConfig.screenPosOverride = false;

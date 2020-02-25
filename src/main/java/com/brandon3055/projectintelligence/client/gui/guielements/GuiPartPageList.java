@@ -2,7 +2,7 @@ package com.brandon3055.projectintelligence.client.gui.guielements;
 
 import codechicken.lib.colour.Colour;
 import codechicken.lib.math.MathHelper;
-import com.brandon3055.brandonscore.client.gui.modulargui.MGuiElementBase;
+import com.brandon3055.brandonscore.client.gui.modulargui.GuiElement;
 import com.brandon3055.brandonscore.client.gui.modulargui.baseelements.GuiButton;
 import com.brandon3055.brandonscore.client.gui.modulargui.baseelements.GuiPopUpDialogBase;
 import com.brandon3055.brandonscore.client.gui.modulargui.baseelements.GuiScrollElement;
@@ -41,7 +41,7 @@ import static com.brandon3055.brandonscore.client.gui.modulargui.lib.GuiAlign.Te
 /**
  * Created by brandon3055 on 10/07/2017.
  */
-public class GuiPartPageList extends MGuiElementBase<GuiPartPageList> {
+public class GuiPartPageList extends GuiElement<GuiPartPageList> {
     public static PropertyGroup dirPathProps = new PropertyGroup("page_list.dir_path");
     public static PropertyGroup dirButtonProps = new PropertyGroup("page_list.dir_path.dir_buttons");
     public static PropertyGroup headerProps = new PropertyGroup("page_list.header");
@@ -109,7 +109,7 @@ public class GuiPartPageList extends MGuiElementBase<GuiPartPageList> {
         tex.setTexXGetter(() -> extended ? 0 : 9);
         toggleView.addChild(tex);
         toggleView.addAndFireReloadCallback(guiButton -> guiButton.setYPos(yPos() + (NAV_BAR_SIZE - toggleView.ySize()) / 2));
-        toggleView.setListener(() -> extended = !extended);
+        toggleView.onPressed(() -> extended = !extended);
         tex.setXPosMod(() -> maxXPos() - 10).translate(0, 2);
         toggleView.setXPosMod(() -> maxXPos() - 11);
         addChild(toggleView);
@@ -129,7 +129,7 @@ public class GuiPartPageList extends MGuiElementBase<GuiPartPageList> {
         tex.setXPosMod(() -> maxXPos() - extendedXSize() + 6).translate(0, 2);
         backButton.setXPosMod(() -> maxXPos() - extendedXSize() + 4);
         addChild(backButton);
-        backButton.setListener(() -> {
+        backButton.onPressed(() -> {
             controller.goBack();
             reloadPageButtons(true);
         });
@@ -150,7 +150,7 @@ public class GuiPartPageList extends MGuiElementBase<GuiPartPageList> {
         tex.setXPosMod(() -> maxXPos() - extendedXSize() + 10 + 6).translate(0, 2);
         forwardButton.setXPosMod(() -> maxXPos() - extendedXSize() + 10 + 4);
         addChild(forwardButton);
-        forwardButton.setListener(() -> {
+        forwardButton.onPressed(() -> {
             controller.goForward();
             reloadPageButtons(true);
         });
@@ -205,7 +205,7 @@ public class GuiPartPageList extends MGuiElementBase<GuiPartPageList> {
         searchSettings.addChild(settingsTex);
         searchSettings.setXPosMod(() -> searchBox.maxXPos() + 2);
         searchSettings.addAndFireReloadCallback(guiButton -> guiButton.setYPos(searchBox.yPos()));
-        searchSettings.setListener(() -> {
+        searchSettings.onPressed(() -> {
             GuiPopUpDialogBase dialog = new GuiPopUpDialogBase(this);
             dialog.setSize(searchBox.xSize(), (SearchMode.values().length * 13) + 5);
             dialog.addChild(new StyledGuiRect("user_dialogs").setPosAndSize(dialog));
@@ -218,7 +218,7 @@ public class GuiPartPageList extends MGuiElementBase<GuiPartPageList> {
                 button.setText(I18n.format(mode.getUnlocalizedName()));
                 button.setPos(dialog.xPos() + 3, y).setSize(dialog.xSize() - 6, 12);
                 button.setToggleMode(true).setToggleStateSupplier(() -> PIConfig.searchMode == mode);
-                button.setListener(() -> changeSearchMode(mode));
+                button.onPressed(() -> changeSearchMode(mode));
                 dialog.addChild(button);
                 y += 13;
             }
@@ -433,7 +433,7 @@ public class GuiPartPageList extends MGuiElementBase<GuiPartPageList> {
             newButton.setXPosMod((guiButton, integer) -> xPos() + 1);
             newButton.addToGroup("TREE_BUTTON_GROUP");
             DocumentationPage thisPage = page;
-            newButton.setListener(() -> {
+            newButton.onPressed(() -> {
                 resetCustomFilter();
                 controller.openPage(thisPage.getPageURI(), false);
             });
@@ -462,9 +462,6 @@ public class GuiPartPageList extends MGuiElementBase<GuiPartPageList> {
         bodyRender.render(this, xPos() + DIR_BAR_SIZE, yPos() + NAV_BAR_SIZE + TITLE_BAR_SIZE, xSize() - DIR_BAR_SIZE + 1, ySize() - NAV_BAR_SIZE - FOOTER_SIZE - TITLE_BAR_SIZE);
         footerRender.render(this, xPos(), yPos() + ySize() - FOOTER_SIZE, xSize() + 1, FOOTER_SIZE);
 
-//        DocumentationPage selected = TabManager.getActiveTab().getDocPage();
-//        String page = "//" + (selected == null ? "null-Page" : selected.getDisplayName());
-//        drawCustomString(fontRenderer, page, xPos() + DIR_BAR_SIZE, yPos() + NAV_BAR_SIZE + TITLE_BAR_SIZE - fontRenderer.FONT_HEIGHT, xSize() - DIR_BAR_SIZE, 0xFFFFFF, CENTER, NORMAL, false, true, false); //Todo style and stuff
         String navTitle = I18n.format("pi.gui.navigation.title");
         int width = fontRenderer.getStringWidth(navTitle);
         drawCustomString(fontRenderer, navTitle, xPos() + xSize() / 2F - width / 2F, yPos() + NAV_BAR_SIZE - fontRenderer.FONT_HEIGHT - 1, xSize() - 20, 0xFFFFFF, LEFT, NORMAL, false, true, false); //Todo style and stuff
@@ -472,19 +469,20 @@ public class GuiPartPageList extends MGuiElementBase<GuiPartPageList> {
     }
 
     @Override
-    public boolean mouseClicked(int mouseX, int mouseY, int mouseButton) throws IOException {
+    public boolean mouseClicked(double mouseX, double mouseY, int mouseButton) {
         if (!searchBox.isMouseOver(mouseX, mouseY)) {
             searchBox.setFocused(false);
         }
         return super.mouseClicked(mouseX, mouseY, mouseButton);
     }
 
+    //TODO test back button
     @Override
-    protected boolean keyTyped(char typedChar, int keyCode) throws IOException {
+    public boolean charTyped(char typedChar, int keyCode) {
         if (keyCode == 14 && !backButton.isDisabled() && backButton.isEnabled()) {
             backButton.onPressed(backButton.xPos() + 1, backButton.yPos() + 1, 0);
         }
-        return super.keyTyped(typedChar, keyCode);
+        return super.charTyped(typedChar, keyCode);
     }
 
     public void setFullyExtended() {

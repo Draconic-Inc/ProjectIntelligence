@@ -1,7 +1,7 @@
 package com.brandon3055.projectintelligence.client;
 
 import com.brandon3055.brandonscore.client.ProcessHandlerClient;
-import com.brandon3055.brandonscore.client.gui.modulargui.MGuiElementBase;
+import com.brandon3055.brandonscore.client.gui.modulargui.GuiElement;
 import com.brandon3055.brandonscore.client.gui.modulargui.baseelements.GuiButton;
 import com.brandon3055.brandonscore.client.gui.modulargui.baseelements.GuiPopUpDialogBase;
 import com.brandon3055.brandonscore.client.gui.modulargui.guielements.GuiLabel;
@@ -19,10 +19,13 @@ import com.brandon3055.projectintelligence.client.gui.swing.PIEditor;
 import com.brandon3055.projectintelligence.docmanagement.DocumentationManager;
 import com.google.common.collect.ImmutableList;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.Monitor;
 import net.minecraft.client.resources.I18n;
-import net.minecraft.entity.EntityList;
-import net.minecraft.entity.player.EntityPlayer;
-import org.lwjgl.opengl.Display;
+import net.minecraft.entity.EntityType;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.item.SpawnEggItem;
+import net.minecraft.util.datafix.fixes.SpawnEggNames;
+
 
 import javax.annotation.Nullable;
 import javax.swing.*;
@@ -60,7 +63,8 @@ public class PIGuiHelper {
      * next time the gui is opened.
      * <p>
      * Supports multiple calls. Errors will be added to a list to be displayed.
-     * @param error The error message to display to the user
+     *
+     * @param error    The error message to display to the user
      * @param noRepeat If true the error will only be displayed if there is no identical error already in the list.
      */
     public static void displayError(String error, boolean noRepeat) {
@@ -72,21 +76,21 @@ public class PIGuiHelper {
         GuiProjectIntelligence.updateErrorDialog = true;
     }
 
-    public static void displayLinkConfirmDialog(MGuiElementBase parent, String link) {
+    public static void displayLinkConfirmDialog(GuiElement parent, String link) {
         URI uri;
         try {
             uri = new URI(link);
         }
         catch (URISyntaxException e) {
             e.printStackTrace();
-            PIGuiHelper.displayError("Failed to open link due to unknown error!\n"+e.getMessage());
+            PIGuiHelper.displayError("Failed to open link due to unknown error!\n" + e.getMessage());
             return;
         }
         GuiPopUpDialogBase dialog = new GuiPopUpDialogBase(parent);
         dialog.setXSize(300);
         dialog.setDragBar(12);
         dialog.setCloseOnCapturedClick(true);
-        MGuiElementBase background;
+        GuiElement background;
         dialog.addChild(background = new StyledGuiRect("user_dialogs"));
 
         GuiLabel infoLabel = new GuiLabel(I18n.format("pi.md.link_confirmation.txt"));
@@ -109,14 +113,14 @@ public class PIGuiHelper {
         yesButton.setText(I18n.format("pi.button.yes"));
         yesButton.setSize(80, 15);
         yesButton.setPos(dialog.xPos() + 15, urlLabel.maxYPos() + 10);
-        yesButton.setListener(() -> Utils.openWebLink(uri));
+        yesButton.onPressed(() -> Utils.openWebLink(uri));
         dialog.addChild(yesButton);
 
         GuiButton copyButton = new StyledGuiButton("user_dialogs." + StyleHandler.StyleType.BUTTON_STYLE.getName());
         copyButton.setText(I18n.format("pi.button.copy_to_clipboard"));
         copyButton.setSize(108, 15);
         copyButton.setRelPos(yesButton, 81, 0);
-        copyButton.setListener(() -> Utils.setClipboardString(link));
+        copyButton.onPressed(() -> Utils.setClipboardString(link));
         dialog.addChild(copyButton);
 
         GuiButton cancelButton = new StyledGuiButton("user_dialogs." + StyleHandler.StyleType.BUTTON_STYLE.getName());
@@ -139,15 +143,27 @@ public class PIGuiHelper {
 
     //region Editor Helpers
     public static void displayEditor() {
-        if (editor == null) {
+        new Thread(() -> {
+//            System.setProperty("java.awt.headless", "false");
             editor = new PIEditor();
             editor.reload();
-        }
 
-        editor.setVisible(true);
-        editor.setExtendedState(JFrame.NORMAL);
-        editor.toFront();
-        centerWindowOnMC(editor);
+            editor.setVisible(true);
+            editor.setExtendedState(JFrame.NORMAL);
+            editor.toFront();
+//            centerWindowOnMC(editor);
+        }).start();
+
+//        if (editor == null) {
+////            System.setProperty("java.awt.headless", "false");
+//            editor = new PIEditor();
+//            editor.reload();
+//        }
+//
+//        editor.setVisible(true);
+//        editor.setExtendedState(JFrame.NORMAL);
+//        editor.toFront();
+//        centerWindowOnMC(editor);
     }
 
     public static void closeEditor() {
@@ -156,9 +172,12 @@ public class PIGuiHelper {
         }
     }
 
+    //TODO Test This
     public static void centerWindowOnMC(Component window) {
-        int centerX = Display.getX() + (Display.getWidth() / 2);
-        int centerY = Display.getY() + (Display.getHeight() / 2);
+        Monitor monitor = Minecraft.getInstance().mainWindow.func_224796_s();
+        if (monitor == null) return;
+        int centerX = monitor.getVirtualPosX() + (monitor.getDefaultVideoMode().getWidth() / 2);
+        int centerY = monitor.getVirtualPosY() + (monitor.getDefaultVideoMode().getHeight() / 2);
         window.setLocation(centerX - (window.getWidth() / 2), Math.max(0, centerY - (window.getHeight() / 2)));
     }
 
@@ -179,8 +198,8 @@ public class PIGuiHelper {
 
     public static synchronized LinkedList<String> getEntitySelectionList() {
         if (entitySelectionList.isEmpty()) {
-            for (EntityList.EntityEggInfo info : EntityList.ENTITY_EGGS.values()) {
-                entitySelectionList.add(info.spawnedID.toString());
+            for (EntityType type : SpawnEggItem.EGGS.keySet()) {
+                entitySelectionList.add(type.getRegistryName().toString());
             }
             Collections.sort(entitySelectionList);
         }
@@ -192,7 +211,7 @@ public class PIGuiHelper {
         return playerInventory;
     }
 
-    public static void updatePlayerInventory(EntityPlayer player) {
+    public static void updatePlayerInventory(PlayerEntity player) {
         playerInventory.clear();
         player.inventory.mainInventory.stream().filter(stack -> !stack.isEmpty()).forEach(stack -> playerInventory.add(new StackReference(stack).toString()));
         player.inventory.armorInventory.stream().filter(stack -> !stack.isEmpty()).forEach(stack -> playerInventory.add(new StackReference(stack).toString()));
@@ -201,12 +220,12 @@ public class PIGuiHelper {
 
     public static void openContentChooser(@Nullable ContentInfo contentInfo, SelectMode mode, Consumer<ContentInfo> action, ContentType... types) {
         ProcessHandlerClient.syncTask(() -> {
-            if (Minecraft.getMinecraft().currentScreen instanceof GuiContentSelect) {
+            if (Minecraft.getInstance().currentScreen instanceof GuiContentSelect) {
                 return;
             }
-            GuiContentSelect gui = new GuiContentSelect(Minecraft.getMinecraft().currentScreen, mode, contentInfo, types);
+            GuiContentSelect gui = new GuiContentSelect(Minecraft.getInstance().currentScreen, mode, contentInfo, types);
             gui.setSelectCallBack(action);
-            Minecraft.getMinecraft().displayGuiScreen(gui);
+            Minecraft.getInstance().displayGuiScreen(gui);
         });
     }
 

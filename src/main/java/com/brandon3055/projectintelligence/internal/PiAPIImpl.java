@@ -7,10 +7,10 @@ import com.brandon3055.projectintelligence.client.keybinding.KeyInputHandler;
 import com.brandon3055.projectintelligence.docmanagement.DocumentationManager;
 import com.brandon3055.projectintelligence.docmanagement.DocumentationPage;
 import com.google.common.collect.ImmutableList;
-import net.minecraft.client.gui.GuiScreen;
+import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.settings.KeyBinding;
+import net.minecraft.fluid.Fluid;
 import net.minecraft.item.ItemStack;
-import net.minecraftforge.fluids.Fluid;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
@@ -25,22 +25,22 @@ public class PiAPIImpl implements IPiAPI {
     public static final PiAPIImpl INSTANCE = new PiAPIImpl();
 
     @Override
-    public void openGui(@Nullable GuiScreen parentScreen) {
+    public void openGui(@Nullable Screen parentScreen) {
         ProjectIntelligence.proxy.openMainGui(parentScreen, null, null);
     }
 
     @Override
-    public void openGui(@Nullable GuiScreen parentScreen, String pageURI) {
+    public void openGui(@Nullable Screen parentScreen, String pageURI) {
         ProjectIntelligence.proxy.openMainGui(parentScreen, null, pageURI);
     }
 
     @Override
-    public void openGui(@Nullable GuiScreen parentScreen, List<String> pageURIs) {
+    public void openGui(@Nullable Screen parentScreen, List<String> pageURIs) {
         ProjectIntelligence.proxy.openMainGui(parentScreen, pageURIs);
     }
 
     @Override
-    public void openModPage(@Nullable GuiScreen parentScreen, String modid) {
+    public void openModPage(@Nullable Screen parentScreen, String modid) {
         ProjectIntelligence.proxy.openMainGui(parentScreen, modid, null);
     }
 

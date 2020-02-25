@@ -12,13 +12,12 @@ import com.brandon3055.projectintelligence.docmanagement.DocumentationPage;
 import com.brandon3055.projectintelligence.internal.PiAPIImpl;
 import com.brandon3055.projectintelligence.registry.PluginLoader;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiScreen;
+import net.minecraft.client.gui.screen.Screen;
 import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.fml.common.event.FMLInitializationEvent;
-import net.minecraftforge.fml.common.event.FMLLoadCompleteEvent;
-import net.minecraftforge.fml.common.event.FMLPostInitializationEvent;
-import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
-import net.minecraftforge.fml.relauncher.ReflectionHelper;
+import net.minecraftforge.fml.ModList;
+import net.minecraftforge.fml.common.ObfuscationReflectionHelper;
+import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
+import net.minecraftforge.fml.event.lifecycle.FMLLoadCompleteEvent;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
@@ -27,27 +26,19 @@ import java.util.List;
 public class ClientProxy extends CommonProxy {
 
     @Override
-    public void preInit(FMLPreInitializationEvent event) {
+    public void preInit(FMLCommonSetupEvent event) {
         super.preInit(event);
         PIConfig.initialize();
         StyleHandler.initialize();
         DocumentationManager.initialize();
-        ReflectionHelper.setPrivateValue(PiAPI.class, null, PiAPIImpl.INSTANCE, "INSTANCE");
-        PluginLoader.preInit(event.getAsmData());
-    }
+        //TODO Check on this
+        ObfuscationReflectionHelper.setPrivateValue(PiAPI.class, null, PiAPIImpl.INSTANCE, "INSTANCE");
+        PluginLoader.preInit(ModList.get().getAllScanData());
 
-    @Override
-    public void init(FMLInitializationEvent event) {
-        super.init(event);
         MinecraftForge.EVENT_BUS.register(new KeyInputHandler());
         MinecraftForge.EVENT_BUS.register(new ClientEventHandler());
         MinecraftForge.EVENT_BUS.register(new GuiEventHandler());
         KeyInputHandler.init();
-    }
-
-    @Override
-    public void postInit(FMLPostInitializationEvent event) {
-        super.postInit(event);
     }
 
     @Override
@@ -57,9 +48,9 @@ public class ClientProxy extends CommonProxy {
     }
 
     @Override
-    public void openMainGui(GuiScreen parentScreen, @Nullable String modid, @Nullable String page) {
+    public void openMainGui(Screen parentScreen, @Nullable String modid, @Nullable String page) {
         if (!(parentScreen instanceof GuiProjectIntelligence)) {
-            Minecraft.getMinecraft().displayGuiScreen(new GuiProjectIntelligence(parentScreen));
+            Minecraft.getInstance().displayGuiScreen(new GuiProjectIntelligence(parentScreen));
         }
 
         //This is first launch and no documentation has been downloaded yet so return to avoid displaying errors
@@ -88,14 +79,14 @@ public class ClientProxy extends CommonProxy {
     }
 
     @Override
-    public void openMainGui(GuiScreen parentScreen, List<String> pageURIs) {
+    public void openMainGui(Screen parentScreen, List<String> pageURIs) {
         if (pageURIs.isEmpty()) return;
         GuiProjectIntelligence gui = new GuiProjectIntelligence(parentScreen);
         if (parentScreen instanceof GuiProjectIntelligence) {
             gui = (GuiProjectIntelligence) parentScreen;
         }
         else {
-            Minecraft.getMinecraft().displayGuiScreen(gui);
+            Minecraft.getInstance().displayGuiScreen(gui);
         }
 
         List<String> validPages = new ArrayList<>();

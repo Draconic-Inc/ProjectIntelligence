@@ -30,10 +30,10 @@ public class LanguageManager {
 
     static {
         List<String> langs = new LinkedList<>();
-        net.minecraft.client.resources.LanguageManager langManager = Minecraft.getMinecraft().getLanguageManager();
+        net.minecraft.client.resources.LanguageManager langManager = Minecraft.getInstance().getLanguageManager();
         langManager.getLanguages().forEach(language -> {
-            langs.add(language.getLanguageCode());
-            LANG_NAME_MAP.put(language.getLanguageCode(), language.toString());
+            langs.add(language.getCode());
+            LANG_NAME_MAP.put(language.getCode(), language.toString());
         });
         Collections.sort(langs);
         ALL_LANGUAGES = new LinkedHashSet<>(langs);
@@ -398,8 +398,8 @@ public class LanguageManager {
      * @return the current minecraft language.
      */
     private static String mcLanguage() {
-        net.minecraft.client.resources.LanguageManager langManager = Minecraft.getMinecraft().getLanguageManager();
-        return langManager.getCurrentLanguage().getLanguageCode();
+        net.minecraft.client.resources.LanguageManager langManager = Minecraft.getInstance().getLanguageManager();
+        return langManager.getCurrentLanguage().getCode();
     }
 
     //endregion

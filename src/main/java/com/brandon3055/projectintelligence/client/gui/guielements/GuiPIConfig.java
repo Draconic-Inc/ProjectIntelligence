@@ -1,7 +1,7 @@
 package com.brandon3055.projectintelligence.client.gui.guielements;
 
 import codechicken.lib.math.MathHelper;
-import com.brandon3055.brandonscore.client.gui.modulargui.MGuiElementBase;
+import com.brandon3055.brandonscore.client.gui.modulargui.GuiElement;
 import com.brandon3055.brandonscore.client.gui.modulargui.baseelements.GuiButton;
 import com.brandon3055.brandonscore.client.gui.modulargui.baseelements.GuiPopUpDialogBase;
 import com.brandon3055.brandonscore.client.gui.modulargui.baseelements.GuiScrollElement;
@@ -16,10 +16,10 @@ import com.brandon3055.projectintelligence.client.gui.PIPartRenderer;
 import com.brandon3055.projectintelligence.docmanagement.DocumentationManager;
 import com.brandon3055.projectintelligence.docmanagement.LanguageManager;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.audio.PositionedSoundRecord;
-import net.minecraft.client.gui.GuiScreen;
+import net.minecraft.client.audio.SimpleSound;
+import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.resources.I18n;
-import net.minecraft.init.SoundEvents;
+import net.minecraft.util.SoundEvents;
 import net.minecraft.util.text.TextFormatting;
 
 import java.io.File;
@@ -37,7 +37,7 @@ public class GuiPIConfig extends GuiPopUpDialogBase<GuiPIConfig> {
     private GuiScrollElement configList;
     private GuiStyleEditor styleEditor;
 
-    public GuiPIConfig(MGuiElementBase parent, GuiStyleEditor styleEditor) {
+    public GuiPIConfig(GuiElement parent, GuiStyleEditor styleEditor) {
         super(parent);
         this.styleEditor = styleEditor;
         setSize(200, 200);
@@ -49,7 +49,7 @@ public class GuiPIConfig extends GuiPopUpDialogBase<GuiPIConfig> {
     public void reloadConfigProperties() {
         configList.clearElements();
         //Basic Settings
-        configList.addElement(new GuiLabel(TextFormatting.UNDERLINE + I18n.format("pi.config.basic_config")).setYSize(12).setShadow(false).setTextColGetter(hovering -> StyleHandler.getInt("user_dialogs." + TEXT_COLOUR.getName())));
+        configList.addElement(new GuiLabel(TextFormatting.UNDERLINE + I18n.format("pi.config.basic_config")).setYSize(12).setShadow(false).setHoverableTextCol(hovering -> StyleHandler.getInt("user_dialogs." + TEXT_COLOUR.getName())));
 
         addConfig(new ConfigProperty(this, "pi.config.open_style_settings").setAction(() -> styleEditor.toggleShown(true, 550)).setCloseOnClick(true));
 
@@ -73,7 +73,7 @@ public class GuiPIConfig extends GuiPopUpDialogBase<GuiPIConfig> {
 
 
         //Advanced Settings
-        configList.addElement(new GuiLabel(TextFormatting.UNDERLINE + I18n.format("pi.config.advanced_config")).setYSize(12).setShadow(false).setTextColGetter(hovering -> StyleHandler.getInt("user_dialogs." + TEXT_COLOUR.getName())));
+        configList.addElement(new GuiLabel(TextFormatting.UNDERLINE + I18n.format("pi.config.advanced_config")).setYSize(12).setShadow(false).setHoverableTextCol(hovering -> StyleHandler.getInt("user_dialogs." + TEXT_COLOUR.getName())));
 
 
         //region Edit Mode Settings
@@ -107,7 +107,7 @@ public class GuiPIConfig extends GuiPopUpDialogBase<GuiPIConfig> {
             addConfig(new ConfigProperty(this, "pi.config.open_editor").setAction(PIGuiHelper::displayEditor));
         }
 
-        if (GuiScreen.isShiftKeyDown()) {
+        if (Screen.hasShiftDown()) {
             addConfig(new ConfigProperty(this, () -> "Reset PI and clear image cache").setAction(PIConfig::deleteConfigAndReload));
         }
 
@@ -144,11 +144,11 @@ public class GuiPIConfig extends GuiPopUpDialogBase<GuiPIConfig> {
 
         // Window Title
         addChild(new GuiLabel(TextFormatting.UNDERLINE + I18n.format("pi.config.pi_configuration.title"))//
-                .setPos(this).setSize(xSize(), 10).translate(4, 3).setTextColGetter(hovering -> StyleHandler.getInt("user_dialogs." + TEXT_COLOUR.getName())).setShadow(false).setAlignment(GuiAlign.CENTER));
+                .setPos(this).setSize(xSize(), 10).translate(4, 3).setHoverableTextCol(hovering -> StyleHandler.getInt("user_dialogs." + TEXT_COLOUR.getName())).setShadow(false).setAlignment(GuiAlign.CENTER));
 
         //Close Button
         GuiButton close = new StyledGuiButton("user_dialogs.button_style").setPos(this).translate(xSize() - 14, 3).setSize(11, 11);
-        close.setListener(this::close);
+        close.onPressed(this::close);
         close.setHoverText(I18n.format("pi.button.close"));
         close.addChild(new GuiTexture(64, 16, 5, 5, PITextures.PI_PARTS).setRelPos(3, 3));
         addChild(close);
@@ -156,8 +156,8 @@ public class GuiPIConfig extends GuiPopUpDialogBase<GuiPIConfig> {
         //List Background
         GuiBorderedRect listBackground;
         addChild(listBackground = new GuiBorderedRect().setRelPos(4, 16).setSize(xSize() - 8, ySize() - 20));
-        listBackground.setFillColourGetter(hovering -> StyleHandler.getInt("user_dialogs.sub_elements." + COLOUR.getName()));
-        listBackground.setBorderColourGetter(hovering -> StyleHandler.getInt("user_dialogs.sub_elements." + BORDER.getName()));
+        listBackground.setFillColourL(hovering -> StyleHandler.getInt("user_dialogs.sub_elements." + COLOUR.getName()));
+        listBackground.setBorderColourL(hovering -> StyleHandler.getInt("user_dialogs.sub_elements." + BORDER.getName()));
 
         //Config List
         configList = new GuiScrollElement();
@@ -182,15 +182,15 @@ public class GuiPIConfig extends GuiPopUpDialogBase<GuiPIConfig> {
     }
 
     @Override
-    protected boolean keyTyped(char typedChar, int keyCode) throws IOException {
+    protected boolean keyPressed(int keyCode, int scanCode, int modifiers) {
         if (keyCode == 1) {
             close();
             return true;
         }
-        return super.keyTyped(typedChar, keyCode);
+        return super.keyPressed(keyCode, scanCode, modifiers);
     }
 
-    public static class ConfigProperty extends MGuiElementBase<ConfigProperty> {
+    public static class ConfigProperty extends GuiElement<ConfigProperty> {
         public PIPartRenderer buttonRenderer = new PIPartRenderer(buttonProps).setButtonRender(true);
         private boolean playSound = true;
         private boolean closeOnClick = false;
@@ -252,7 +252,7 @@ public class GuiPIConfig extends GuiPopUpDialogBase<GuiPIConfig> {
         }
 
         @Override
-        public boolean mouseClicked(int mouseX, int mouseY, int mouseButton) throws IOException {
+        public boolean mouseClicked(double mouseX, double mouseY, int button) {
             if (isMouseOver(mouseX, mouseY)) {
                 if (clickAction != null) {
                     clickAction.run();
@@ -261,11 +261,11 @@ public class GuiPIConfig extends GuiPopUpDialogBase<GuiPIConfig> {
                     gui.close();
                 }
                 if (playSound) {
-                    mc.getSoundHandler().playSound(PositionedSoundRecord.getMasterRecord(SoundEvents.UI_BUTTON_CLICK, 1.0F));
+                    mc.getSoundHandler().play(SimpleSound.master(SoundEvents.UI_BUTTON_CLICK, 1.0F));
                 }
                 return true;
             }
-            return super.mouseClicked(mouseX, mouseY, mouseButton);
+            return super.mouseClicked(mouseX, mouseY, button);
         }
 
         @Override
@@ -294,7 +294,8 @@ public class GuiPIConfig extends GuiPopUpDialogBase<GuiPIConfig> {
         GuiTextField filter = new GuiTextField();
         langSelect.addChild(filter);
         filter.setSize(langSelect.xSize() - 4, 14).setPos(langSelect.xPos() + 2, langSelect.maxYPos() - 16);
-        filter.setListener((event, eventSource) -> langSelect.reloadElement());
+//        filter.setListener((event, eventSource) -> langSelect.reloadElement());
+        filter.setChangeListener(() -> langSelect.reloadElement());
         langSelect.setSelectionFilter(item -> {
             String ft = filter.getText().toLowerCase();
             return ft.isEmpty() || item.toLowerCase().contains(ft) || LanguageManager.LANG_NAME_MAP.getOrDefault(item, "").toLowerCase().contains(ft);

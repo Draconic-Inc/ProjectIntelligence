@@ -8,17 +8,19 @@ import com.brandon3055.projectintelligence.client.gui.guielements.*;
 import com.brandon3055.projectintelligence.client.keybinding.KeyInputHandler;
 import com.brandon3055.projectintelligence.docmanagement.PIUpdateManager;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiScreen;
+import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.resources.I18n;
+import net.minecraft.client.util.InputMappings;
+import net.minecraft.util.text.TranslationTextComponent;
 
 import java.io.IOException;
 
 /**
  * Created by brandon3055 on 7/25/2018.
  */
-public class GuiProjectIntelligence extends GuiScreen {
+public class GuiProjectIntelligence extends Screen {
 
-    private GuiScreen parent;
+    private Screen parent;
     private PIGuiContainer container = new PIGuiContainer(this, DisplayController.MASTER_CONTROLLER);
     public static boolean requiresEditReload = false;
 
@@ -29,7 +31,8 @@ public class GuiProjectIntelligence extends GuiScreen {
         this(null);
     }
 
-    public GuiProjectIntelligence(GuiScreen parent) {
+    public GuiProjectIntelligence(Screen parent) {
+        super(new TranslationTextComponent("pi.gui.project_intelligence.title"));
         this.parent = parent;
         container.setMenuElement(new GuiPartMenu(container, () -> updateSizeAndPos(true)));
         container.initContainer();
@@ -42,13 +45,13 @@ public class GuiProjectIntelligence extends GuiScreen {
         GuiNotifications notificationUI = new GuiNotifications(container, downloadsUI);
         errorDialog = new GuiErrorDialog(container.getPartContainer());
 
-        container.getManager().add(downloadsUI, 800);
-        container.getManager().add(notificationUI, 810);
+        container.getManager().addChild(downloadsUI, 800, false);
+        container.getManager().addChild(notificationUI, 810, false);
     }
 
     @Override
-    public void initGui() {
-        super.initGui();
+    protected void init() {
+        super.init();
         container.onGuiInit();
         updateSizeAndPos(false);
 
@@ -56,26 +59,26 @@ public class GuiProjectIntelligence extends GuiScreen {
             GuiPopupDialogs dialog = GuiPopupDialogs.createDialog(container.getPartContainer(), GuiPopupDialogs.DialogType.OK_CANCEL_OPTION, I18n.format("pi.internet_access_info.txt"));
             dialog.setCloseOnOutsideClick(false);
             dialog.cancelButton.setText(I18n.format("pi.button.more_information"));
-            dialog.setOkListener((guiButton, pressed) -> {
+            dialog.setOkListener(() -> {
                 PIConfig.downloadsAllowed = true;
                 PIConfig.save();
                 PIUpdateManager.performFullUpdateCheck();
                 checkFirstLaunch();
             });
-            dialog.setCancelListener((guiButton, pressed) -> {
+            dialog.setCancelListener(() -> {
                 GuiPopupDialogs dialog2 = GuiPopupDialogs.createDialog(container.getPartContainer(), GuiPopupDialogs.DialogType.OK_CANCEL_OPTION, I18n.format("pi.internet_access_more_info.txt"));
                 dialog2.setCloseOnOutsideClick(false);
                 dialog2.cancelButton.setText(I18n.format("pi.button.deny_access"));
-                dialog2.setOkListener((guiButton2, pressed2) -> {
+                dialog2.setOkListener(() -> {
                     PIConfig.downloadsAllowed = true;
                     PIConfig.save();
                     PIUpdateManager.performFullUpdateCheck();
                     checkFirstLaunch();
                 });
-                dialog2.setCancelListener((guiButton2, pressed2) -> {
+                dialog2.setCancelListener(() -> {
                     GuiPopupDialogs dialog3 = GuiPopupDialogs.createDialog(container.getPartContainer(), GuiPopupDialogs.DialogType.OK_OPTION, I18n.format("pi.internet_access_denied.txt"));
                     dialog3.setCloseOnOutsideClick(false);
-                    dialog3.setOkListener((guiButton3, pressed3) -> {
+                    dialog3.setOkListener(() -> {
                         closeGui();
                     });
                     dialog3.showCenter(850);
@@ -91,18 +94,23 @@ public class GuiProjectIntelligence extends GuiScreen {
         }
     }
 
+    @Override
+    public void init(Minecraft p_init_1_, int p_init_2_, int p_init_3_) {
+        super.init(p_init_1_, p_init_2_, p_init_3_);
+    }
+
     private void checkFirstLaunch() {
         if (!PIConfig.showTutorialLater && !PIConfig.tutorialDisplayed) {
             GuiPIIntroduction guiIntro = new GuiPIIntroduction(container);
-            container.getManager().add(guiIntro, 820);
+            container.getManager().addChild(guiIntro, 820, false);
         }
     }
 
     private void closeGui() {
         container.dispose();
-        mc.displayGuiScreen(parent);
-        if (mc.currentScreen == null) {
-            mc.setIngameFocus();
+        minecraft.displayGuiScreen(parent);
+        if (minecraft.currentScreen == null) {
+            minecraft.setGameFocused(true);
         }
     }
 
@@ -168,78 +176,97 @@ public class GuiProjectIntelligence extends GuiScreen {
     }
 
     public static GuiPartMenu getMenuPart() {
-        GuiScreen screen = Minecraft.getMinecraft().currentScreen;
+        Screen screen = Minecraft.getInstance().currentScreen;
         if (screen instanceof GuiProjectIntelligence) {
             return ((GuiProjectIntelligence) screen).container.getMenu();
         }
         return null;
     }
 
-    //region Pass-Through
+    //region Mouse & Key
 
     @Override
-    protected void mouseClicked(int mouseX, int mouseY, int mouseButton) throws IOException {
-        if (container.mouseClicked(mouseX, mouseY, mouseButton)) {
-            return;
+    public boolean mouseClicked(double mouseX, double mouseY, int button) {
+        if (container.mouseClicked(mouseX, mouseY, button)) {
+            return true;
         }
-        else if (!container.getPartContainer().isMouseOver(mouseX, mouseY)) {
+
+        return super.mouseClicked(mouseX, mouseY, button);
+    }
+
+    @Override
+    public boolean mouseReleased(double mouseX, double mouseY, int button) {
+        if (container.mouseReleased(mouseX, mouseY, button)) {
+            return requiresEditReload;
+        }
+
+        return super.mouseReleased(mouseX, mouseY, button);
+    }
+
+    @Override
+    public void mouseMoved(double mouseX, double mouseY) {
+        container.mouseMoved(mouseX, mouseY);
+    }
+
+    @Override
+    public boolean mouseDragged(double mouseX, double mouseY, int clickedMouseButton, double dragX, double dragY) {
+        if (container.mouseDragged(mouseX, mouseY, clickedMouseButton, dragX, dragY)) {
+            return true;
+        }
+
+        return super.mouseDragged(mouseX, mouseY, clickedMouseButton, dragX, dragY);
+    }
+
+    @Override
+    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+        if (container.keyPressed(keyCode, scanCode, modifiers)) {
+            return true;
+        }
+        return super.keyPressed(keyCode, scanCode, modifiers);
+    }
+
+    @Override
+    public boolean keyReleased(int keyCode, int scanCode, int modifiers) {
+        if (container.keyReleased(keyCode, scanCode, modifiers)) {
+            return true;
+        }
+        return super.keyReleased(keyCode, scanCode, modifiers);
+    }
+
+    @Override
+    public boolean charTyped(char charTyped, int charCode) {
+        boolean captured = container.charTyped(charTyped, charCode);
+        InputMappings.Input key = InputMappings.Type.MOUSE.getOrMakeInput(charCode);
+        if (!captured && KeyInputHandler.openPI.isActiveAndMatches(key)) {
             closeGui();
-            return;
         }
-
-        super.mouseClicked(mouseX, mouseY, mouseButton);
-    }
-
-    @Override
-    protected void mouseReleased(int mouseX, int mouseY, int state) {
-        if (container.mouseReleased(mouseX, mouseY, state)) {
-            return;
-        }
-
-        super.mouseReleased(mouseX, mouseY, state);
-    }
-
-    @Override
-    protected void mouseClickMove(int mouseX, int mouseY, int clickedMouseButton, long timeSinceLastClick) {
-        if (container.mouseClickMove(mouseX, mouseY, clickedMouseButton, timeSinceLastClick)) {
-            return;
-        }
-
-        super.mouseClickMove(mouseX, mouseY, clickedMouseButton, timeSinceLastClick);
-    }
-
-    @Override
-    protected void keyTyped(char typedChar, int keyCode) throws IOException {
-        boolean captured = container.keyTyped(typedChar, keyCode);
-
-        if (!captured && KeyInputHandler.openPI.isActiveAndMatches(keyCode)) {
-            closeGui();
-        }
-        else if (!captured && keyCode == 59) {
+        else if (!captured && charCode == 59) {
             GuiPIIntroduction guiIntro = new GuiPIIntroduction(container);
-            container.getManager().add(guiIntro, 820);
+            container.getManager().addChild(guiIntro, 820, false);
         }
+        return captured;
     }
 
     @Override
-    public void handleMouseInput() throws IOException {
-        if (container.handleMouseInput()) {
-            return;
+    public boolean mouseScrolled(double mouseX, double mouseY, double scrollAmount) {
+        if (container.mouseScrolled(mouseX, mouseY, scrollAmount)) {
+            return true;
         }
-
-        super.handleMouseInput();
+        return super.mouseScrolled(mouseX, mouseY, scrollAmount);
     }
 
+    //endregion
+
     @Override
-    public void drawScreen(int mouseX, int mouseY, float partialTicks) {
+    public void render(int mouseX, int mouseY, float partialTicks) {
         container.renderElements(mouseX, mouseY, partialTicks);
-        super.drawScreen(mouseX, mouseY, partialTicks);
+        super.render(mouseX, mouseY, partialTicks);
         container.renderOverlayLayer(mouseX, mouseY, partialTicks);
     }
 
     @Override
-    public void updateScreen() {
-        super.updateScreen();
+    public void tick() {
+        super.tick();
         container.updateScreen();
         if (requiresEditReload) {
             container.getManager().reloadElements();

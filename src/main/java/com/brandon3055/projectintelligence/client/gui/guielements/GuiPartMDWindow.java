@@ -1,7 +1,7 @@
 package com.brandon3055.projectintelligence.client.gui.guielements;
 
 import codechicken.lib.math.MathHelper;
-import com.brandon3055.brandonscore.client.gui.modulargui.MGuiElementBase;
+import com.brandon3055.brandonscore.client.gui.modulargui.GuiElement;
 import com.brandon3055.brandonscore.client.gui.modulargui.baseelements.GuiButton;
 import com.brandon3055.brandonscore.client.gui.modulargui.baseelements.GuiScrollElement;
 import com.brandon3055.brandonscore.client.gui.modulargui.baseelements.GuiSlideControl;
@@ -22,8 +22,8 @@ import com.brandon3055.projectintelligence.docmanagement.ModStructurePage;
 import com.brandon3055.projectintelligence.docmanagement.RootPage;
 import com.brandon3055.projectintelligence.utils.LogHelper;
 import com.google.common.collect.Lists;
+import com.mojang.blaze3d.platform.GlStateManager;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.resources.I18n;
 import net.minecraft.util.text.TextFormatting;
 
@@ -38,7 +38,7 @@ import static com.brandon3055.brandonscore.client.gui.modulargui.baseelements.Gu
 /**
  * Created by brandon3055 on 10/07/2017.
  */
-public class GuiPartMDWindow extends MGuiElementBase<GuiPartMDWindow> {
+public class GuiPartMDWindow extends GuiElement<GuiPartMDWindow> {
     public static PropertyGroup headerProps = new PropertyGroup("md_window.header");
     public static PropertyGroup bodyProps = new PropertyGroup("md_window.body");
     public static PropertyGroup scrollProps = new PropertyGroup("md_window.scroll_bar");
@@ -110,7 +110,7 @@ public class GuiPartMDWindow extends MGuiElementBase<GuiPartMDWindow> {
     }
 
     @Override
-    public <C extends MGuiElementBase> C removeChild(C child) {
+    public <C extends GuiElement> C removeChild(C child) {
         if (pageElementMap.containsKey(child)) {
             removeChild(pageElementMap.remove(child));
         }
@@ -124,7 +124,7 @@ public class GuiPartMDWindow extends MGuiElementBase<GuiPartMDWindow> {
         bodyRenderer.render(this, xPos(), yPos() + tabBarSize, xSize(), ySize() - tabBarSize);
 
         TabData selectedData = controller.getActiveTab();
-        MGuiElementBase selectedTab = tabMap.get(selectedData);
+        GuiElement selectedTab = tabMap.get(selectedData);
 
         if (selectedTab != null) {
             selectedTab.preDraw(minecraft, mouseX, mouseY, partialTicks);
@@ -132,7 +132,7 @@ public class GuiPartMDWindow extends MGuiElementBase<GuiPartMDWindow> {
             selectedTab.postDraw(minecraft, mouseX, mouseY, partialTicks);
         }
 
-        for (MGuiElementBase element : childElements) {
+        for (GuiElement element : childElements) {
             if (element.isEnabled()) {
                 if (element instanceof PageTab && selectedData == ((PageTab) element).tabData) {
                     continue;
@@ -151,7 +151,7 @@ public class GuiPartMDWindow extends MGuiElementBase<GuiPartMDWindow> {
         }
     }
 
-    public static class PageTab extends MGuiElementBase<PageTab> {
+    public static class PageTab extends GuiElement<PageTab> {
         public PIPartRenderer scrollRenderer = new PIPartRenderer(scrollProps);
         public PIPartRenderer scrollSlideRenderer = new PIPartRenderer(scrollSliderProps);
 
@@ -183,7 +183,7 @@ public class GuiPartMDWindow extends MGuiElementBase<GuiPartMDWindow> {
             super.addChildElements();
 
             closeButton = new GuiButton().setXPosMod((guiButton, integer) -> maxXPos() - 11).setYPos(yPos() + 2).setSize(9, 9);
-            closeButton.setListener(() -> controller.closeTab(tabData));
+            closeButton.onPressed(() -> controller.closeTab(tabData));
             closeButton.setHoverText(I18n.format("pi.button.close"));
             closeButton.addChild(new GuiTexture(64, 16, 5, 5, PITextures.PI_PARTS).setRelPos(0, 2).setXPosMod((guiButton, integer) -> maxXPos() - 9));
             addChild(closeButton);
@@ -255,13 +255,15 @@ public class GuiPartMDWindow extends MGuiElementBase<GuiPartMDWindow> {
             shouldReloadMD = true;
         }
 
+
+
         @Override
-        public boolean mouseClicked(int mouseX, int mouseY, int mouseButton) throws IOException {
-            boolean clickCaptured = super.mouseClicked(mouseX, mouseY, mouseButton);
+        public boolean mouseClicked(double mouseX, double mouseY, int button) {
+            boolean clickCaptured = super.mouseClicked(mouseX, mouseY, button);
             if (!clickCaptured && isMouseOver(mouseX, mouseY)) {
                 isDragging = true;
                 closeButton.setEnabled(false);
-                dragOffset = mouseX - xPos();
+                dragOffset = (int) (mouseX - xPos());
                 if (controller.getActiveTab() != tabData) {
                     controller.switchTab(tabData);
                     GuiButton.playGenericClick(mc);
@@ -271,30 +273,32 @@ public class GuiPartMDWindow extends MGuiElementBase<GuiPartMDWindow> {
             return clickCaptured;
         }
 
+
         @Override
-        public boolean mouseClickMove(int mouseX, int mouseY, int clickedMouseButton, long timeSinceLastClick) {
+        public boolean mouseDragged(double mouseX, double mouseY, int clickedMouseButton, double dragX, double dragY) {
             if (isDragging) {
                 int tabWidth = Math.min(130, mdWindow.xSize() / controller.getOpenTabs().size());
                 int xPos = mdWindow.xPos() + (controller.getOpenTabs().indexOf(tabData) * tabWidth);
-                int dragAmount = xPos - (mouseX - dragOffset);
+                double dragAmount = xPos - (mouseX - dragOffset);
                 if (Math.abs(dragAmount) > (xSize() * 0.5)) {
                     controller.dragTab(tabData, dragAmount > 0 ? -1 : 1);
                 }
             }
-            return super.mouseClickMove(mouseX, mouseY, clickedMouseButton, timeSinceLastClick);
+            return super.mouseDragged(mouseX, mouseY, clickedMouseButton, dragX, dragY);
         }
 
         @Override
-        public boolean mouseReleased(int mouseX, int mouseY, int state) {
+        public boolean mouseReleased(double mouseX, double mouseY, int button) {
             isDragging = false;
             closeButton.setEnabled(controller.getOpenTabs().size() > 1);
-            return super.mouseReleased(mouseX, mouseY, state);
+            return super.mouseReleased(mouseX, mouseY, button);
         }
 
         @Override
-        public boolean handleMouseScroll(int mouseX, int mouseY, int scrollDirection) {
+        public boolean handleMouseScroll(double mouseX, double mouseY, double scrollDirection) {
             return super.handleMouseScroll(mouseX, mouseY, scrollDirection);
         }
+
 
         public void updateSizePosition(boolean animated) {
             int tabWidth = Math.min(130, mdWindow.xSize() / controller.getOpenTabs().size());
@@ -335,7 +339,7 @@ public class GuiPartMDWindow extends MGuiElementBase<GuiPartMDWindow> {
             mdWindow.tabRenderer.setTabRender(selected ? 2 : 0).render(this, renderX, yPos(), xSize(), ySize());
 
             drawCustomString(fontRenderer, name, renderX + 3, yPos() + 3, xSize() - (closeButton.isEnabled() ? 10 : 3), bodyProps.textColour(), GuiAlign.LEFT, GuiAlign.TextRotation.NORMAL, false, true, false);
-            GlStateManager.color(1, 1, 1, 1);
+            GlStateManager.color4f(1, 1, 1, 1);
 
             if (isDragging) {
                 zOffset -= 10;

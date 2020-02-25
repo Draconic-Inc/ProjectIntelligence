@@ -1,7 +1,8 @@
 package com.brandon3055.projectintelligence.utils;
 
 import codechicken.lib.reflect.ObfMapping;
-import com.brandon3055.brandonscore.utils.Utils;
+import com.brandon3055.brandonscore.BrandonsCore;
+import com.brandon3055.brandonscore.utils.MathUtils;
 import com.brandon3055.projectintelligence.ProjectIntelligence;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -34,7 +35,7 @@ public class LogHelper {
     //Standard log entries.
 
     public static void dev(Object object) {
-        if (!ObfMapping.obfuscated) {
+        if (BrandonsCore.inDev) {
             log(Level.INFO, "[DEV]: " + object);
         }
     }
@@ -74,7 +75,7 @@ public class LogHelper {
     //log with format.
 
     public static void dev(String object, Object... format) {
-        if (!ObfMapping.obfuscated) {
+        if (BrandonsCore.inDev) {
             log(Level.INFO, "[DEV]: " + String.format(object, format));
         }
     }
@@ -181,7 +182,7 @@ public class LogHelper {
     //Log with trace element.
 
     public static void bigDev(String format, Object... data) {
-        if (!ObfMapping.obfuscated) {
+        if (BrandonsCore.inDev) {
             StackTraceElement[] trace = Thread.currentThread().getStackTrace();
             dev("****************************************");
             dev("* " + format, data);
@@ -273,7 +274,7 @@ public class LogHelper {
     }
 
     public static void startTimer(String name) {
-        if (!ObfMapping.obfuscated) {
+        if (BrandonsCore.inDev) {
             if (timerRunning) {
                 LogHelper.error("The timer is already running!");
                 return;
@@ -286,7 +287,7 @@ public class LogHelper {
     }
 
     public static void stopTimer() {
-        if (!ObfMapping.obfuscated) {
+        if (BrandonsCore.inDev) {
             if (!timerRunning) {
                 LogHelper.error("The timer was not running!!!");
                 return;
@@ -299,10 +300,10 @@ public class LogHelper {
             long s = ms * 1000;
 
             if (ns > s) {
-                value = Utils.round(ns / (double) s, 1000) + "s";
+                value = MathUtils.round(ns / (double) s, 1000) + "s";
             }
             else if (ns > 1000) {
-                value = Utils.round(ns / (double) ms, 10000) + "ms";
+                value = MathUtils.round(ns / (double) ms, 10000) + "ms";
             }
             else {
                 value = ns + "ns";

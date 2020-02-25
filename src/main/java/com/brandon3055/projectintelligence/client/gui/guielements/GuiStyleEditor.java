@@ -1,7 +1,7 @@
 package com.brandon3055.projectintelligence.client.gui.guielements;
 
 import codechicken.lib.colour.Colour;
-import com.brandon3055.brandonscore.client.gui.modulargui.MGuiElementBase;
+import com.brandon3055.brandonscore.client.gui.modulargui.GuiElement;
 import com.brandon3055.brandonscore.client.gui.modulargui.baseelements.GuiButton;
 import com.brandon3055.brandonscore.client.gui.modulargui.baseelements.GuiPopUpDialogBase;
 import com.brandon3055.brandonscore.client.gui.modulargui.baseelements.GuiScrollElement;
@@ -17,14 +17,14 @@ import com.brandon3055.projectintelligence.client.StyleHandler.BooleanProperty;
 import com.brandon3055.projectintelligence.client.StyleHandler.ColourProperty;
 import com.brandon3055.projectintelligence.client.StyleHandler.IntegerProperty;
 import com.brandon3055.projectintelligence.client.StyleHandler.StyleProperty;
+import com.mojang.blaze3d.platform.GlStateManager;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.audio.PositionedSoundRecord;
-import net.minecraft.client.gui.GuiScreen;
-import net.minecraft.client.renderer.GlStateManager;
+import net.minecraft.client.audio.SimpleSound;
+import net.minecraft.client.audio.SoundSource;
+import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.resources.I18n;
-import net.minecraft.init.SoundEvents;
+import net.minecraft.util.SoundEvents;
 import net.minecraft.util.text.TextFormatting;
-import org.lwjgl.input.Mouse;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -42,7 +42,7 @@ public class GuiStyleEditor extends GuiPopUpDialogBase<GuiStyleEditor> {
     private GuiScrollElement presetList;
     private String highlight = "";
 
-    public GuiStyleEditor(MGuiElementBase parent) {
+    public GuiStyleEditor(GuiElement parent) {
         super(parent);
         setSize(200, 250);
         setDragBar(12);
@@ -58,11 +58,11 @@ public class GuiStyleEditor extends GuiPopUpDialogBase<GuiStyleEditor> {
         //Background / Heading/ Close button
         addChild(new StyledGuiRect("user_dialogs").setPosAndSize(this));
         addChild(new GuiLabel(TextFormatting.UNDERLINE + I18n.format("pi.style.edit_style_properties.txt"))//
-                .setPos(this).setSize(xSize(), 10).translate(4, 3).setTextColGetter(hovering -> StyleHandler.getColour("user_dialogs." + TEXT_COLOUR.getName()).rgb())//
+                .setPos(this).setSize(xSize(), 10).translate(4, 3).setHoverableTextCol(hovering -> StyleHandler.getColour("user_dialogs." + TEXT_COLOUR.getName()).rgb())//
                 .setShadow(false).setAlignment(GuiAlign.CENTER));
 
         GuiButton close = new StyledGuiButton("user_dialogs.button_style").setPos(this).translate(xSize() - 14, 3).setSize(11, 11);
-        close.setListener(this::close);
+        close.onPressed(this::close);
         close.setHoverText(I18n.format("pi.button.close"));
         close.addChild(new GuiTexture(64, 16, 5, 5, PITextures.PI_PARTS).setRelPos(3, 3));
         addChild(close);
@@ -71,16 +71,16 @@ public class GuiStyleEditor extends GuiPopUpDialogBase<GuiStyleEditor> {
         //Presets
         int selOffst = 20;
         addChild(new GuiLabel(I18n.format("pi.style.load_preset.txt")).setPos(this).setSize(xSize(), 10).translate(4, selOffst)//
-                .setTextColGetter(hovering -> StyleHandler.getColour("user_dialogs." + TEXT_COLOUR.getName()).rgb())//
+                .setHoverableTextCol(hovering -> StyleHandler.getColour("user_dialogs." + TEXT_COLOUR.getName()).rgb())//
                 .setShadow(false).setAlignment(GuiAlign.LEFT).addToGroup("PRESETS"));
 
         GuiBorderedRect presetBackground;
         addChild(presetBackground = new GuiBorderedRect().setPos(this).translate(4, selOffst += 10).setSize(xSize() - 8, ySize() - 48 - selOffst).addToGroup("PRESETS"));
-        presetBackground.setFillColourGetter(hovering -> StyleHandler.getInt("user_dialogs.sub_elements." + COLOUR.getName()));
-        presetBackground.setBorderColourGetter(hovering -> StyleHandler.getInt("user_dialogs.sub_elements." + BORDER.getName()));
+        presetBackground.setFillColourL(hovering -> StyleHandler.getInt("user_dialogs.sub_elements." + COLOUR.getName()));
+        presetBackground.setBorderColourL(hovering -> StyleHandler.getInt("user_dialogs.sub_elements." + BORDER.getName()));
 
         addChild(new GuiLabel(I18n.format("pi.style.save_overwrite_preset.txt")).setPos(xPos() + 4, presetBackground.maxYPos() + 3).setSize(xSize() - 10, 10)//
-                .setTextColGetter(hovering -> StyleHandler.getColour("user_dialogs." + TEXT_COLOUR.getName()).rgb())//
+                .setHoverableTextCol(hovering -> StyleHandler.getColour("user_dialogs." + TEXT_COLOUR.getName()).rgb())//
                 .setShadow(false).setAlignment(GuiAlign.LEFT).addToGroup("PRESETS"));
 
         GuiTextField saveName = new GuiTextField().setPos(xPos() + 4, presetBackground.maxYPos() + 13).setSize(xSize() - 50, 14).addToGroup("PRESETS");
@@ -88,21 +88,21 @@ public class GuiStyleEditor extends GuiPopUpDialogBase<GuiStyleEditor> {
 
         GuiButton savePreset = new StyledGuiButton("user_dialogs.button_style").setText(I18n.format("pi.button.save")).setPos(saveName.maxXPos() + 1, saveName.yPos()).setSize(41, 14).addToGroup("PRESETS");
         savePreset.setHoverText(I18n.format("pi.style.save_preset.info"));
-        savePreset.setListener(() -> {
+        savePreset.onPressed(() -> {
             if (saveName.getText().isEmpty()) {
                 GuiPopupDialogs.createDialog(this, GuiPopupDialogs.DialogType.OK_OPTION, I18n.format("pi.style.save_no_name.txt"), "").showCenter(displayZLevel + 50);
                 return;
             }
             if (StyleHandler.getCustomPresets().contains(saveName.getText())) {
-                GuiPopupDialogs.createDialog(this, GuiPopupDialogs.DialogType.YES_NO_OPTION, I18n.format("pi.style.save_overwrite.txt"), "").setYesListener((event1, eventSource1) -> {
+                GuiPopupDialogs.createDialog(this, GuiPopupDialogs.DialogType.YES_NO_OPTION, I18n.format("pi.style.save_overwrite.txt"), "").setYesListener(() -> {
                     StyleHandler.savePreset(saveName.getText());
-                    saveName.forceSetText("");
+                    saveName.setTextQuietly("");
                     reloadElement();
                 }).showCenter(displayZLevel + 50);
                 return;
             }
             StyleHandler.savePreset(saveName.getText());
-            saveName.forceSetText("");
+            saveName.setTextQuietly("");
             reloadElement();
         });
         addChild(savePreset);
@@ -110,7 +110,7 @@ public class GuiStyleEditor extends GuiPopUpDialogBase<GuiStyleEditor> {
 
         GuiButton openEditor = new StyledGuiButton("user_dialogs.button_style").setText(I18n.format("pi.button.open_style_editor")).setPos(xPos() + 4, maxYPos() - 18).setSize(xSize() - 8, 14);
         openEditor.addToGroup("PRESETS");
-        openEditor.setListener(() -> setChildGroupEnabled("EDITOR_TREE", true).setChildGroupEnabled("PRESETS", false));
+        openEditor.onPressed(() -> setChildGroupEnabled("EDITOR_TREE", true).setChildGroupEnabled("PRESETS", false));
         addChild(openEditor);
 
         presetList = new GuiScrollElement();
@@ -142,7 +142,7 @@ public class GuiStyleEditor extends GuiPopUpDialogBase<GuiStyleEditor> {
 
         GuiButton closeEditor = new StyledGuiButton("user_dialogs.button_style").setText(I18n.format("pi.button.close_style_editor")).setPos(xPos() + 3, maxYPos() - 15).setSize(xSize() - 6, 12);
         closeEditor.addToGroup("EDITOR_TREE");
-        closeEditor.setListener(() -> setChildGroupEnabled("EDITOR_TREE", false).setChildGroupEnabled("PRESETS", true));
+        closeEditor.onPressed(() -> setChildGroupEnabled("EDITOR_TREE", false).setChildGroupEnabled("PRESETS", true));
         addChild(closeEditor);
 
         setChildGroupEnabled("EDITOR_TREE", false);
@@ -155,19 +155,18 @@ public class GuiStyleEditor extends GuiPopUpDialogBase<GuiStyleEditor> {
 
         for (String preset : StyleHandler.getCustomPresets()) {
             GuiButton button = new StyledGuiButton("user_dialogs.sub_elements.button_style").setShadow(false).setText(preset).setYSize(12).setAlignment(GuiAlign.LEFT);
-            button.setListener(() -> {
+            button.onPressed(() -> {
                 if (StyleHandler.unsavedChanges) {
                     GuiPopupDialogs.createDialog(this, GuiPopupDialogs.DialogType.OK_CANCEL_OPTION, I18n.format("pi.style.confirm_load_unsaved.txt") + "\n" + preset, "")//
-                            .setOkListener((event1, eventSource1) -> StyleHandler.loadPreset(preset, true)).showCenter(displayZLevel + 50);
-                }
-                else {
+                            .setOkListener(() -> StyleHandler.loadPreset(preset, true)).showCenter(displayZLevel + 50);
+                } else {
                     StyleHandler.loadPreset(preset, true);
                 }
             });
 
             GuiButton delete = new StyledGuiButton("user_dialogs.button_style").setSize(9, 9);
-            delete.setListener(() -> GuiPopupDialogs.createDialog(this, GuiPopupDialogs.DialogType.YES_NO_OPTION, I18n.format("pi.style.delete_preset_confirm.txt") + "\n" + preset, I18n.format("pi.style.confirm_delete.txt"))//
-                    .setYesListener((event1, eventSource1) -> {
+            delete.onPressed(() -> GuiPopupDialogs.createDialog(this, GuiPopupDialogs.DialogType.YES_NO_OPTION, I18n.format("pi.style.delete_preset_confirm.txt") + "\n" + preset, I18n.format("pi.style.confirm_delete.txt"))//
+                    .setYesListener(() -> {
                         StyleHandler.deletePreset(preset);
                         reloadElement();
                     }).showCenter(displayZLevel + 50));
@@ -181,13 +180,12 @@ public class GuiStyleEditor extends GuiPopUpDialogBase<GuiStyleEditor> {
 
         for (String preset : StyleHandler.getDefaultPresets()) {
             GuiButton button = new StyledGuiButton("user_dialogs.sub_elements.button_style").setShadow(false).setText(I18n.format("pi.style.default." + preset)).setYSize(12).setAlignment(GuiAlign.LEFT);
-            button.addChild(new GuiLabel(I18n.format("pi.style.builtin")).setShadow(false).setYSize(12).bindSize(button, false).setAlignment(GuiAlign.RIGHT).setTextColGetter(hovering -> StyleHandler.getInt("user_dialogs.sub_elements.button_style.text_colour")));
-            button.setListener(() -> {
+            button.addChild(new GuiLabel(I18n.format("pi.style.builtin")).setShadow(false).setYSize(12).bindSize(button, false).setAlignment(GuiAlign.RIGHT).setHoverableTextCol(hovering -> StyleHandler.getInt("user_dialogs.sub_elements.button_style.text_colour")));
+            button.onPressed(() -> {
                 if (StyleHandler.unsavedChanges) {
                     GuiPopupDialogs.createDialog(this, GuiPopupDialogs.DialogType.OK_CANCEL_OPTION, I18n.format("pi.style.confirm_load_unsaved.txt") + "\n" + preset, "")//
-                            .setOkListener((event1, eventSource1) -> StyleHandler.loadPreset(preset, false)).showCenter(displayZLevel + 50);
-                }
-                else {
+                            .setOkListener(() -> StyleHandler.loadPreset(preset, false)).showCenter(displayZLevel + 50);
+                } else {
                     StyleHandler.loadPreset(preset, false);
                 }
             });
@@ -205,15 +203,15 @@ public class GuiStyleEditor extends GuiPopUpDialogBase<GuiStyleEditor> {
     }
 
     @Override
-    protected boolean keyTyped(char typedChar, int keyCode) throws IOException {
+    protected boolean keyPressed(int keyCode, int scanCode, int modifiers) {
         if (keyCode == 1) {
             close();
             return true;
         }
-        return super.keyTyped(typedChar, keyCode);
+        return super.keyPressed(keyCode, scanCode, modifiers);
     }
 
-    public class StyleSetting extends MGuiElementBase<StyleSetting> {
+    public class StyleSetting extends GuiElement<StyleSetting> {
 
         private StyleProperty property;
         private List<StyleProperty> subProps = new LinkedList<>();
@@ -237,7 +235,7 @@ public class GuiStyleEditor extends GuiPopUpDialogBase<GuiStyleEditor> {
         }
 
         @Override
-        public boolean isMouseOver(int mouseX, int mouseY) {
+        public boolean isMouseOver(double mouseX, double mouseY) {
             return GuiHelper.isInRect(xPos(), yPos(), xSize(), propSize, mouseX, mouseY) && super.isMouseOver(mouseX, mouseY);//(getParent() == null || getParent().isMouseOver(mouseX, mouseY));
         }
 
@@ -245,13 +243,12 @@ public class GuiStyleEditor extends GuiPopUpDialogBase<GuiStyleEditor> {
         public void addChildElements() {
             if (hasSubs) {
                 showHide = new GuiButton().setYPos(1).setXPosMod((guiButton, integer) -> maxXPos() - 12).setSize(11, 10);
-                showHide.setListener(() -> {
+                showHide.onPressed(() -> {
                     if (subsShown) {
                         subsShown = false;
                         removeChildByGroup("SUB_PROPS");
                         setYSize(propSize);
-                    }
-                    else {
+                    } else {
                         subsShown = true;
                         for (StyleProperty subProp : subProps) {
                             StyleSetting child = new StyleSetting(subProp).setXPos(xPos() + 10).setXSize(xSize() - 10);
@@ -272,13 +269,10 @@ public class GuiStyleEditor extends GuiPopUpDialogBase<GuiStyleEditor> {
             if (property.isColour()) {
                 tt.add(I18n.format("pi.style.set_colour.txt"));
                 tt.add(TextFormatting.DARK_GRAY + I18n.format("pi.style.right_click_options.txt"));
-            }
-            else if (property.isInteger()) {
+            } else if (property.isInteger()) {
                 tt.add(I18n.format("pi.style.set_value.txt"));
                 tt.add(TextFormatting.DARK_GRAY + I18n.format("pi.style.right_click_options.txt"));
-            }
-            else if (property.isBoolean()) { tt.add(I18n.format("pi.style.set_boolean.txt")); }
-            else if (hasSubs) tt.add(I18n.format("pi.style.set_edit_sub_values.txt"));
+            } else if (property.isBoolean()) { tt.add(I18n.format("pi.style.set_boolean.txt")); } else if (hasSubs) tt.add(I18n.format("pi.style.set_edit_sub_values.txt"));
 
             if (property.tip != null) {
                 tt.add(property.tip);
@@ -292,7 +286,7 @@ public class GuiStyleEditor extends GuiPopUpDialogBase<GuiStyleEditor> {
         private void sortSubs() {
             int y = yPos() + propSize;
             boolean hasSubs = false;
-            for (MGuiElementBase elementBase : getChildGroup("SUB_PROPS")) {
+            for (GuiElement elementBase : getChildGroup("SUB_PROPS")) {
                 y += elementBase.setYPos(y).ySize();
                 hasSubs = true;
             }
@@ -301,7 +295,7 @@ public class GuiStyleEditor extends GuiPopUpDialogBase<GuiStyleEditor> {
         }
 
         @Override
-        public void ySizeChanged(MGuiElementBase elementChanged) {
+        public void ySizeChanged(GuiElement elementChanged) {
             if (elementChanged != this) {
                 sortSubs();
             }
@@ -309,15 +303,15 @@ public class GuiStyleEditor extends GuiPopUpDialogBase<GuiStyleEditor> {
         }
 
         @Override
-        public boolean mouseClicked(int mouseX, int mouseY, int mouseButton) throws IOException {
+        public boolean mouseClicked(double mouseX, double mouseY, int button) {
             editTree.setSmoothScroll(false, 20);
 
-            if (super.mouseClicked(mouseX, mouseY, mouseButton)) {
+            if (super.mouseClicked(mouseX, mouseY, button)) {
                 return true;
             }
 
             boolean mouseOver = GuiHelper.isInRect(xPos(), yPos(), xSize(), propSize, mouseX, mouseY);
-            if (mouseOver && mouseButton == 0) {
+            if (mouseOver && button == 0) {
                 if (property.isColour()) {
                     StyleHandler.setHighlight("");
                     GuiPickColourDialog pickColour = new GuiPickColourDialog(this);
@@ -325,9 +319,8 @@ public class GuiStyleEditor extends GuiPopUpDialogBase<GuiStyleEditor> {
                     pickColour.setIncludeAlpha(((ColourProperty) property).alpha);
                     pickColour.setColourChangeListener(integer -> ((ColourProperty) property).set(pickColour.getColour()));
                     pickColour.showCenter(displayZLevel + 10);
-                    mc.getSoundHandler().playSound(PositionedSoundRecord.getMasterRecord(SoundEvents.UI_BUTTON_CLICK, 1.0F));
-                }
-                else if (property.isInteger()) {
+                    mc.getSoundHandler().play(SimpleSound.master(SoundEvents.UI_BUTTON_CLICK, 1.0F));
+                } else if (property.isInteger()) {
                     GuiTextFieldDialog textDialog = new GuiTextFieldDialog(this);
                     textDialog.setYSize(25);
                     textDialog.setDragBar(5);
@@ -338,38 +331,35 @@ public class GuiStyleEditor extends GuiPopUpDialogBase<GuiStyleEditor> {
                     textDialog.showCenter(displayZLevel + 10);
                     textDialog.textField.setYSize(20).translate(0, 5);
                     textDialog.okButton.setYSize(20).translate(0, 5);
-                    mc.getSoundHandler().playSound(PositionedSoundRecord.getMasterRecord(SoundEvents.UI_BUTTON_CLICK, 1.0F));
-                }
-                else if (property.isBoolean()) {
+                    mc.getSoundHandler().play(SimpleSound.master(SoundEvents.UI_BUTTON_CLICK, 1.0F));
+                } else if (property.isBoolean()) {
                     ((BooleanProperty) property).set(!((BooleanProperty) property).get());
-                    mc.getSoundHandler().playSound(PositionedSoundRecord.getMasterRecord(SoundEvents.UI_BUTTON_CLICK, 1.0F));
+                    mc.getSoundHandler().play(SimpleSound.master(SoundEvents.UI_BUTTON_CLICK, 1.0F));
+                } else if (showHide != null) {
+                    showHide.onPressed(mouseX, mouseY, button);
                 }
-                else if (showHide != null) {
-                    showHide.onPressed(mouseX, mouseY, mouseButton);
-                }
-            }
-            else if (mouseOver && mouseButton == 1 && property.isInteger()) {
+            } else if (mouseOver && button == 1 && property.isInteger()) {
                 GuiPopUpDialogBase context = new GuiPopUpDialogBase(this);
-                context.setPos(mouseX, mouseY).setSize(100, property.isColour() ? 79 : 27).normalizePosition();
+                context.setPos((int) mouseX, (int) mouseY).setSize(100, property.isColour() ? 79 : 27).normalizePosition();
                 context.setCloseOnScroll(true);
                 context.addChild(new GuiBorderedRect().setPosAndSize(context).setColours(0xFF404040, 0xFF909090));
 
                 int rely = 0;
                 GuiButton copy = new GuiButton(I18n.format("pi.button.copy_value")).setAlignment(GuiAlign.LEFT).setRelPos(1, rely += 1).setSize(98, 12).setBorderColours(0, 0xFF707070);
-                copy.setListener(() -> {
-                    GuiScreen.setClipboardString(String.valueOf(((IntegerProperty) property).get()));
+                copy.onPressed(() -> {
+                    Utils.setClipboardString(String.valueOf(((IntegerProperty) property).get()));
                     context.close();
                 });
                 context.addChild(copy);
 
                 GuiButton paste = new GuiButton(I18n.format("pi.button.paste_value")).setAlignment(GuiAlign.LEFT).setRelPos(1, rely += 13).setSize(98, 12).setBorderColours(0, 0xFF707070);
-                paste.setListener(() -> {
+                paste.onPressed(() -> {
                     try {
-                        long value = Long.decode(GuiScreen.getClipboardString());
+                        long value = Long.decode(Utils.getClipboardString());
                         ((IntegerProperty) property).set((int) value);
                     }
                     catch (NumberFormatException e) {
-                        PIGuiHelper.displayError("Invalid value found in clipboard! " + GuiScreen.getClipboardString() + " Must be an integer");
+                        PIGuiHelper.displayError("Invalid value found in clipboard! " + Utils.getClipboardString() + " Must be an integer");
                     }
                     context.close();
                 });
@@ -377,39 +367,38 @@ public class GuiStyleEditor extends GuiPopUpDialogBase<GuiStyleEditor> {
 
                 if (property.isColour()) {
                     GuiButton copyHex = new GuiButton(I18n.format("pi.button.copy_hex_value")).setAlignment(GuiAlign.LEFT).setRelPos(1, rely += 13).setSize(98, 12).setBorderColours(0, 0xFF707070);
-                    copyHex.setListener(() -> {
+                    copyHex.onPressed(() -> {
                         int value = ((IntegerProperty) property).get();
-                        GuiScreen.setClipboardString(Integer.toHexString(value));
+                        Utils.setClipboardString(Integer.toHexString(value));
                         context.close();
                     });
                     context.addChild(copyHex);
 
                     GuiButton pasteHex = new GuiButton(I18n.format("pi.button.paste_hex_value")).setAlignment(GuiAlign.LEFT).setRelPos(1, rely += 13).setSize(98, 12).setBorderColours(0, 0xFF707070);
-                    pasteHex.setListener(() -> {
+                    pasteHex.onPressed(() -> {
                         try {
-                            String value = GuiScreen.getClipboardString();
+                            String value = Utils.getClipboardString();
                             if (value.startsWith("#") || value.toLowerCase().startsWith("0x")) {
                                 ((IntegerProperty) property).set((int) (long) Long.decode(value));
-                            }
-                            else {
+                            } else {
                                 ((IntegerProperty) property).set((int) Long.parseLong(value, 16));
                             }
                         }
                         catch (NumberFormatException e) {
-                            PIGuiHelper.displayError("Invalid value found in clipboard! " + GuiScreen.getClipboardString() + " Must be a hex value");
+                            PIGuiHelper.displayError("Invalid value found in clipboard! " + Utils.getClipboardString() + " Must be a hex value");
                         }
                         context.close();
                     });
                     context.addChild(pasteHex);
 
                     GuiButton lighten = new GuiButton(I18n.format("pi.button.lighten")).setAlignment(GuiAlign.LEFT).setRelPos(1, rely += 13).setSize(98, 12).setBorderColours(0, 0xFF707070);
-                    lighten.setListener(() -> {
+                    lighten.onPressed(() -> {
                         Colour colour = ((ColourProperty) property).getColour();
                         ((ColourProperty) property).set(changeShade(colour.argb(), 0.05));
                     });
                     context.addChild(lighten);
                     GuiButton darken = new GuiButton(I18n.format("pi.button.darken")).setAlignment(GuiAlign.LEFT).setRelPos(1, rely + 13).setSize(98, 12).setBorderColours(0, 0xFF707070);
-                    darken.setListener(() -> {
+                    darken.onPressed(() -> {
                         Colour colour = ((ColourProperty) property).getColour();
                         ((ColourProperty) property).set(changeShade(colour.argb(), -0.05));
                     });
@@ -431,7 +420,7 @@ public class GuiStyleEditor extends GuiPopUpDialogBase<GuiStyleEditor> {
             //Dropdown Items
             if (subsShown) {
                 int i = yPos();
-                for (MGuiElementBase e : childElements) if (e.yPos() > i) i = e.yPos();
+                for (GuiElement e : childElements) if (e.yPos() > i) i = e.yPos();
                 drawBorderedRect(xPos() + 4, yPos() + propSize - 2, 3, (i - yPos()) - 4, 2, 0, 0xFF000000);
             }
             drawBorderedRect(xPos() - 3, yPos() + 4, 3, 3, 2, 0, 0xFF000000);
@@ -443,7 +432,7 @@ public class GuiStyleEditor extends GuiPopUpDialogBase<GuiStyleEditor> {
             drawString(fontRenderer, I18n.format("pi.style." + property.getType().getName() + ".prop"), xPos() + 12, yPos() + 2, 0);
 
             //Draw Graphic
-            GlStateManager.color(1, 1, 1, 1);
+            GlStateManager.color4f(1, 1, 1, 1);
             bindTexture(PITextures.PI_PARTS);
             int xIndex = property.isColour() ? 32 : property.isInteger() ? 40 : property.isBoolean() ? 48 : 56;
             drawTexturedModalRect(xPos() + 3, yPos() + 3, xIndex, 16, 5, 7);
@@ -454,15 +443,13 @@ public class GuiStyleEditor extends GuiPopUpDialogBase<GuiStyleEditor> {
                 zOffset += 10;
                 drawBorderedRect(maxXPos() - 22, yPos() + 1, 10, 10, 1, ((ColourProperty) property).getColour().argb(), 0xFF000000);
                 zOffset -= 10;
-            }
-            else if (property.isInteger()) {
+            } else if (property.isInteger()) {
                 drawCustomString(fontRenderer, String.valueOf(((IntegerProperty) property).get()), maxXPos() - 45, yPos() + 2.5F, 33, 0xFFAA00, GuiAlign.RIGHT, GuiAlign.TextRotation.NORMAL, false, true, true);
-            }
-            else if (property.isBoolean()) {
+            } else if (property.isBoolean()) {
                 drawString(fontRenderer, String.valueOf(((BooleanProperty) property).get()), maxXPos() - 38, yPos() + 2.5F, ((BooleanProperty) property).get() ? 0x00FF00 : 0xFF0000, ((BooleanProperty) property).get());
             }
 
-            GlStateManager.color(1, 1, 1, 1);
+            GlStateManager.color4f(1, 1, 1, 1);
             super.renderElement(minecraft, mouseX, mouseY, partialTicks);
         }
 
@@ -476,8 +463,7 @@ public class GuiStyleEditor extends GuiPopUpDialogBase<GuiStyleEditor> {
                 tt.add(TextFormatting.GREEN + "G: " + (colour.g & 0xFF));
                 tt.add(TextFormatting.BLUE + "B: " + (colour.b & 0xFF));
                 tt.add(I18n.format("pi.style." + (((colour.a & 0xFF) < 255) ? ((colour.a & 0xFF) == 0) ? "transparent" : "semi_transparent" : "opaque") + ".txt"));
-            }
-            else if ((property.isInteger() && !property.isColour()) && GuiHelper.isInRect(maxXPos() - 45, yPos() + 1, 33, 10, mouseX, mouseY)) {
+            } else if ((property.isInteger() && !property.isColour()) && GuiHelper.isInRect(maxXPos() - 45, yPos() + 1, 33, 10, mouseX, mouseY)) {
                 tt.add(I18n.format("pi.style.integer_value.txt"));
                 tt.add(((IntegerProperty) property).get() + "");
             }
@@ -498,12 +484,12 @@ public class GuiStyleEditor extends GuiPopUpDialogBase<GuiStyleEditor> {
             return super.onUpdate();
         }
 
-        private int getMouseX() {
-            return Mouse.getEventX() * screenWidth / mc.displayWidth;
-        }
-
-        private int getMouseY() {
-            return screenHeight - Mouse.getEventY() * screenHeight / mc.displayHeight - 1;
-        }
+//        private int getMouseX() {
+//            return Mouse.getEventX() * screenWidth / mc.displayWidth;
+//        }
+//
+//        private int getMouseY() {
+//            return screenHeight - Mouse.getEventY() * screenHeight / mc.displayHeight - 1;
+//        }
     }
 }

@@ -1,12 +1,12 @@
 package com.brandon3055.projectintelligence.client.gui;
 
 import com.brandon3055.brandonscore.client.ResourceHelperBC;
-import com.brandon3055.brandonscore.client.gui.modulargui.MGuiElementBase;
+import com.brandon3055.brandonscore.client.gui.modulargui.GuiElement;
 import com.brandon3055.projectintelligence.client.PITextures;
 import com.brandon3055.projectintelligence.client.StyleHandler.PropertyGroup;
+import com.mojang.blaze3d.platform.GlStateManager;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.BufferBuilder;
-import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 
@@ -47,19 +47,19 @@ public class PIPartRenderer {
         return this;
     }
 
-    public void render(MGuiElementBase parent, boolean mouseOver) {
+    public void render(GuiElement parent, boolean mouseOver) {
         render(parent, parent.xPos(), parent.yPos(), parent.xSize(), parent.ySize(), mouseOver);
     }
 
-    public void render(MGuiElementBase parent) {
+    public void render(GuiElement parent) {
         render(parent, parent.xPos(), parent.yPos(), parent.xSize(), parent.ySize(), false);
     }
 
-    public void render(MGuiElementBase parent, int x, int y, int width, int height) {
+    public void render(GuiElement parent, int x, int y, int width, int height) {
         render(parent, x, y, width, height, false);
     }
 
-    public void render(MGuiElementBase parent, int x, int y, int width, int height, boolean mouseOver) {
+    public void render(GuiElement parent, int x, int y, int width, int height, boolean mouseOver) {
         boolean vanillaTex = props.hasPropVanillaTex() && props.vanillaTex();
         boolean thickBorders = props.hasPropThickBorders() && props.thickBorders();
         int colour = props.hasPropColourHover() && mouseOver ? props.colourHover() : props.colour();
@@ -77,7 +77,7 @@ public class PIPartRenderer {
                 int texV = 48 + ((mouseOver ? 2 : 1) * 20);
                 ResourceHelperBC.bindTexture(PITextures.PI_PARTS);
                 parent.drawTiledTextureRectWithTrim(x, y, width, height, 2, 2, 2, 2, 0, texV, 200, 20);
-                GlStateManager.color(1, 1, 1, 1);
+                GlStateManager.color4f(1, 1, 1, 1);
                 parent.drawBorderedRect(x, y, width, height, 1, 0, border);
             }
             else {
@@ -90,7 +90,7 @@ public class PIPartRenderer {
 
                 drawTiledTextureRectWithTrim(parent, x, y, width, height, top() ? 4 : 0, left() ? 4 : 0, bottom() ? 4 : 0, right() ? 4 : 0, texU, texV, texW, texH);
 
-                GlStateManager.color(1, 1, 1, 1);
+                GlStateManager.color4f(1, 1, 1, 1);
                 if (squareTex) {
                     drawShadedRect(parent, x, y, width, height, 1, 0, border, border, border);
                 }
@@ -123,7 +123,7 @@ public class PIPartRenderer {
         }
     }
 
-    public void drawShadedRect(MGuiElementBase element, int x, int y, int width, int height, int bw, int fill, int topLeftColour, int bottomRightColour, int cornerMixColour) {
+    public void drawShadedRect(GuiElement element, int x, int y, int width, int height, int bw, int fill, int topLeftColour, int bottomRightColour, int cornerMixColour) {
         //Fill
         element.drawColouredRect(x + (left() ? bw : 0), y + (top() ? bw : 0), width - (left() ? bw : 0) - (right() ? bw : 0), height - (top() ? bw : 0) - (bottom() ? bw : 0), fill);
         //Top
@@ -152,7 +152,7 @@ public class PIPartRenderer {
         }
     }
 
-    private void drawTiledTextureRectWithTrim(MGuiElementBase element, int xPos, int yPos, int xSize, int ySize, int topTrim, int leftTrim, int bottomTrim, int rightTrim, int texU, int texV, int texWidth, int texHeight) {
+    private void drawTiledTextureRectWithTrim(GuiElement element, int xPos, int yPos, int xSize, int ySize, int topTrim, int leftTrim, int bottomTrim, int rightTrim, int texU, int texV, int texWidth, int texHeight) {
         int trimWidth = texWidth - leftTrim - rightTrim;
         int trimHeight = texHeight - topTrim - bottomTrim;
         if (xSize <= texWidth) trimWidth = Math.min(trimWidth, xSize - rightTrim);
@@ -207,7 +207,7 @@ public class PIPartRenderer {
         tessellator.draw();
     }
 
-    private void bufferTexturedModalRect(MGuiElementBase element, BufferBuilder buffer, int x, int y, int textureX, int textureY, int width, int height) {
+    private void bufferTexturedModalRect(GuiElement element, BufferBuilder buffer, int x, int y, int textureX, int textureY, int width, int height) {
         double zLevel = element.getRenderZLevel();
         buffer.pos((double) (x), (double) (y + height), zLevel).tex((double) ((float) (textureX) * 0.00390625F), (double) ((float) (textureY + height) * 0.00390625F)).endVertex();
         buffer.pos((double) (x + width), (double) (y + height), zLevel).tex((double) ((float) (textureX + width) * 0.00390625F), (double) ((float) (textureY + height) * 0.00390625F)).endVertex();
@@ -236,7 +236,7 @@ public class PIPartRenderer {
         return new StyledElement(this);
     }
 
-    public static class StyledElement extends MGuiElementBase<StyledElement> {
+    public static class StyledElement extends GuiElement<StyledElement> {
 
         private Supplier<Boolean> hoverStateSupplier = null;
         private PIPartRenderer renderer;

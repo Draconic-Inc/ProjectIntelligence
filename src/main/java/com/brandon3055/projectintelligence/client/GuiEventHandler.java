@@ -4,20 +4,21 @@ import com.brandon3055.brandonscore.integration.JeiHelper;
 import com.brandon3055.projectintelligence.api.PiAPI;
 import com.brandon3055.projectintelligence.client.gui.GuiInGuiRenderer;
 import com.brandon3055.projectintelligence.client.keybinding.KeyInputHandler;
+import com.mojang.blaze3d.platform.GlStateManager;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiScreen;
-import net.minecraft.client.gui.inventory.GuiContainer;
-import net.minecraft.client.renderer.GlStateManager;
-import net.minecraft.inventory.Slot;
+import net.minecraft.client.gui.screen.Screen;
+import net.minecraft.client.gui.screen.inventory.ContainerScreen;
+import net.minecraft.client.util.InputMappings;
+import net.minecraft.inventory.container.Slot;
 import net.minecraft.item.ItemStack;
+import net.minecraft.world.gen.feature.IFeatureConfig;
 import net.minecraftforge.client.event.GuiContainerEvent;
 import net.minecraftforge.client.event.GuiOpenEvent;
 import net.minecraftforge.client.event.GuiScreenEvent;
 import net.minecraftforge.client.event.RenderTooltipEvent;
-import net.minecraftforge.fml.common.eventhandler.EventPriority;
-import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
-import net.minecraftforge.fml.common.gameevent.TickEvent;
-import org.lwjgl.input.Keyboard;
+import net.minecraftforge.event.TickEvent;
+import net.minecraftforge.eventbus.api.EventPriority;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
 
 import java.io.IOException;
 import java.util.List;
@@ -29,23 +30,23 @@ public class GuiEventHandler {
 
     @SubscribeEvent
     public void onGuiOpen(GuiOpenEvent event) {
-        GuiScreen gui = event.getGui();
+        Screen gui = event.getGui();
         GuiInGuiRenderer.instance.guiOpened(gui);
     }
 
     @SubscribeEvent
     public void onGuiInit(GuiScreenEvent.InitGuiEvent.Post event) {
-        GuiScreen gui = event.getGui();
+        Screen gui = event.getGui();
         GuiInGuiRenderer.instance.guiInit(gui);
     }
 
     @SubscribeEvent(priority = EventPriority.LOW)
     public void onDrawForground(GuiContainerEvent.DrawForeground event) {
         if (event.isCanceled()) return;
-        GuiContainer gui = event.getGuiContainer();
+        ContainerScreen gui = event.getGuiContainer();
         GlStateManager.disableLighting();
         GlStateManager.pushMatrix();
-        GlStateManager.translate(-gui.getGuiLeft(), -gui.getGuiTop(), 0);
+        GlStateManager.translated(-gui.getGuiLeft(), -gui.getGuiTop(), 0);
         GuiInGuiRenderer.instance.drawScreen(gui);
         GlStateManager.popMatrix();
     }
@@ -53,9 +54,9 @@ public class GuiEventHandler {
     @SubscribeEvent(priority = EventPriority.LOW)
     public void onDrawScreenEventPost(GuiScreenEvent.DrawScreenEvent.Post event) {
         if (event.isCanceled()) return;
-        GuiScreen gui = event.getGui();
+        Screen gui = event.getGui();
         GlStateManager.disableLighting();
-        if (!(gui instanceof GuiContainer)) {
+        if (!(gui instanceof ContainerScreen)) {
             GuiInGuiRenderer.instance.drawScreen(gui);
         }
         GuiInGuiRenderer.instance.drawScreenPost(gui);
@@ -63,7 +64,7 @@ public class GuiEventHandler {
 
     @SubscribeEvent()
     public void onToolTip(RenderTooltipEvent.Pre event) {
-        if (GuiInGuiRenderer.instance.blockToolTip(Minecraft.getMinecraft().currentScreen)) {
+        if (GuiInGuiRenderer.instance.blockToolTip(Minecraft.getInstance().currentScreen)) {
             event.setCanceled(true);
         }
     }
@@ -77,38 +78,67 @@ public class GuiEventHandler {
     }
 
     @SubscribeEvent(priority = EventPriority.HIGHEST) //Should prevent other buttons getting in the way of the close button in the event it conflicts with other mods.
-    public void onMouseInput(GuiScreenEvent.MouseInputEvent.Pre event) {
-        GuiScreen gui = event.getGui();
-        try {
-            if (GuiInGuiRenderer.instance.handleMouseInput(gui)) {
-                event.setCanceled(true);
-            }
+    public void onMouseClicked(GuiScreenEvent.MouseClickedEvent.Pre event) {
+        Screen gui = event.getGui();
+        if (GuiInGuiRenderer.instance.handleMouseClicked(gui, event)) {
+            event.setCanceled(true);
         }
-        catch (IOException ignored) {
+    }
+
+    @SubscribeEvent(priority = EventPriority.HIGHEST)
+    public void onMouseReleased(GuiScreenEvent.MouseReleasedEvent.Pre event) {
+        Screen gui = event.getGui();
+        if (GuiInGuiRenderer.instance.handleMouseReleased(gui, event)) {
+            event.setCanceled(true);
+        }
+    }
+
+    @SubscribeEvent(priority = EventPriority.HIGHEST)
+    public void onMouseDrag(GuiScreenEvent.MouseDragEvent.Pre event) {
+        Screen gui = event.getGui();
+        if (GuiInGuiRenderer.instance.handleMouseDrag(gui, event)) {
+            event.setCanceled(true);
         }
     }
 
     @SubscribeEvent
-    public void onKeyboardInput(GuiScreenEvent.KeyboardInputEvent.Pre event) {
-        GuiScreen gui = event.getGui();
+    public void onKeyboardPress(GuiScreenEvent.KeyboardKeyPressedEvent.Pre event) {
+        Screen gui = event.getGui();
 
-        if (Keyboard.getEventKeyState() && handleKeyPress(gui, Keyboard.getEventKey())) {
+        if (handleKeyPress(gui, event.getKeyCode())) {
             event.setCanceled(true);
             return;
         }
 
-        try {
-            if (GuiInGuiRenderer.instance.handleKeyboardInput(gui)) {
-                event.setCanceled(true);
-            }
+        if (GuiInGuiRenderer.instance.handleKeyboardPress(gui, event)) {
+            event.setCanceled(true);
         }
-        catch (IOException ignored) {}
     }
 
-    private boolean handleKeyPress(GuiScreen gui, int key) {
+    @SubscribeEvent
+    public void onKeyboardReleased(GuiScreenEvent.KeyboardKeyReleasedEvent.Pre event) {
+        Screen gui = event.getGui();
+
+        if (GuiInGuiRenderer.instance.handleKeyboardRelease(gui, event)) {
+            event.setCanceled(true);
+        }
+    }
+
+    @SubscribeEvent
+    public void onKeyboardChar(GuiScreenEvent.KeyboardCharTypedEvent.Pre event) {
+        Screen gui = event.getGui();
+
+        if (GuiInGuiRenderer.instance.handleKeyboardChar(gui, event)) {
+            event.setCanceled(true);
+        }
+    }
+
+    private boolean handleKeyPress(Screen gui, int keyCode) {
+        if (keyCode == -1) return false;
+        InputMappings.Input key = InputMappings.Type.MOUSE.getOrMakeInput(keyCode);
         if (KeyInputHandler.etGUI.isActiveAndMatches(key)) {
-            if (gui instanceof GuiContainer) {
-                GuiContainer container = (GuiContainer) gui;
+            if (gui instanceof ContainerScreen) {
+                ContainerScreen container = (ContainerScreen) gui;
                 Slot slot = container.getSlotUnderMouse();
                 ItemStack stack;
                 if (slot != null) {

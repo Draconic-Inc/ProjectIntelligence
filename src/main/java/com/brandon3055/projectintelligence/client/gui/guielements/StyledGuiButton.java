@@ -5,8 +5,8 @@ import com.brandon3055.brandonscore.client.gui.modulargui.baseelements.GuiButton
 import com.brandon3055.projectintelligence.client.PITextures;
 import com.brandon3055.projectintelligence.client.StyleHandler;
 import com.brandon3055.projectintelligence.client.gui.PIPartRenderer;
+import com.mojang.blaze3d.platform.GlStateManager;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.GlStateManager;
 
 import static com.brandon3055.projectintelligence.client.StyleHandler.StyleType.*;
 
@@ -73,7 +73,7 @@ public class StyledGuiButton extends GuiButton {
 
             ResourceHelperBC.bindTexture(PITextures.PI_PARTS);
             drawTiledTextureRectWithTrim(xPos(), yPos(), xSize(), ySize(), 2, 2, 2, 2, 0, texV, 200, 20);
-            GlStateManager.color(1, 1, 1, 1);
+            GlStateManager.color4f(1, 1, 1, 1);
             drawBorderedRect(xPos(), yPos(), xSize(), ySize(), 1, 0, mouseOver ? borderHover : border);
         }
         else {

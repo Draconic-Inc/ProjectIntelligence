@@ -6,8 +6,8 @@ import com.brandon3055.projectintelligence.api.IGuiDocHandler;
 import com.brandon3055.projectintelligence.api.IGuiDocRegistry;
 import com.brandon3055.projectintelligence.api.IPageSupplier;
 import com.brandon3055.projectintelligence.utils.LogHelper;
-import net.minecraft.client.gui.GuiScreen;
-import net.minecraft.client.gui.inventory.GuiContainer;
+import net.minecraft.client.gui.screen.Screen;
+import net.minecraft.client.gui.screen.inventory.ContainerScreen;
 
 import java.awt.*;
 import java.util.List;
@@ -21,9 +21,9 @@ public class GuiDocRegistry implements IGuiDocRegistry {
 
     public static final GuiDocRegistry INSTANCE = new GuiDocRegistry();
 
-    private IGuiDocHandler<GuiScreen> DEFAULT_HANDLER = new DefaultHandlerImpl();
-    private Map<Class<? extends GuiScreen>, IGuiDocHandler> guiHandlerMap = new HashMap<>();
-    private Map<Class<? extends GuiScreen>, List<IPageSupplier>> pageSupplierMap = new HashMap<>();
+    private IGuiDocHandler<Screen> DEFAULT_HANDLER = new DefaultHandlerImpl();
+    private Map<Class<? extends Screen>, IGuiDocHandler> guiHandlerMap = new HashMap<>();
+    private Map<Class<? extends Screen>, List<IPageSupplier>> pageSupplierMap = new HashMap<>();
 
     //Public registry methods exposed via the API
 
@@ -36,7 +36,7 @@ public class GuiDocRegistry implements IGuiDocRegistry {
      * @since PI 1.0.0
      */
     @Override
-    public boolean hasGuiHandler(Class<? extends GuiScreen> guiClass) {
+    public boolean hasGuiHandler(Class<? extends Screen> guiClass) {
         return guiHandlerMap.containsKey(guiClass);
     }
 
@@ -49,8 +49,8 @@ public class GuiDocRegistry implements IGuiDocRegistry {
      * @since PI 1.0.0
      */
     @Override
-    public <T extends GuiScreen> void registerGuiHandler(Class<T> guiClass, IGuiDocHandler<T> handler) {
-        if (guiClass == GuiContainer.class || guiClass == GuiScreen.class) {
+    public <T extends Screen> void registerGuiHandler(Class<T> guiClass, IGuiDocHandler<T> handler) {
+        if (guiClass == ContainerScreen.class || guiClass == Screen.class) {
             throw new UnsupportedOperationException("You can not assign a gui handler to any of the base gui classes!");
         }
 
@@ -70,7 +70,7 @@ public class GuiDocRegistry implements IGuiDocRegistry {
      * @since PI 1.0.0
      */
     @Override
-    public <T extends GuiScreen> void registerGuiDocPages(Class<T> guiClass, String... pageURI) {
+    public <T extends Screen> void registerGuiDocPages(Class<T> guiClass, String... pageURI) {
         registerGuiDocPages(guiClass, Arrays.asList(pageURI));
     }
 
@@ -83,7 +83,7 @@ public class GuiDocRegistry implements IGuiDocRegistry {
      * @since PI 1.0.0
      */
     @Override
-    public <T extends GuiScreen> void registerGuiDocPages(Class<T> guiClass, Collection<String> pageURIs) {
+    public <T extends Screen> void registerGuiDocPages(Class<T> guiClass, Collection<String> pageURIs) {
         registerGuiDocPages(guiClass, new StrictPageSupplier<>(guiClass, pageURIs));
     }
 
@@ -99,7 +99,7 @@ public class GuiDocRegistry implements IGuiDocRegistry {
      * @since PI 1.0.0
      */
     @Override
-    public <T extends GuiScreen> void registerGuiDocPages(Class<T> guiClass, IPageSupplier<T> pageSupplier) {
+    public <T extends Screen> void registerGuiDocPages(Class<T> guiClass, IPageSupplier<T> pageSupplier) {
         pageSupplierMap.computeIfAbsent(guiClass, c -> new ArrayList<>()).add(pageSupplier);
     }
 
@@ -107,17 +107,17 @@ public class GuiDocRegistry implements IGuiDocRegistry {
 
     //Internal methods
 
-    public boolean doesGuiHaveDoc(GuiScreen screen) {
+    public boolean doesGuiHaveDoc(Screen screen) {
         return !getPagesFor(screen).isEmpty();
     }
 
-    public GuiDocHelper getDocHelper(GuiScreen screen) {
+    public GuiDocHelper getDocHelper(Screen screen) {
         IGuiDocHandler handler = getBestHandlerFor(screen);
         List<String> pages = getPagesFor(screen);
         return new GuiDocHelper(screen, pages, handler);
     }
 
-    private IGuiDocHandler getBestHandlerFor(GuiScreen screen) {
+    private IGuiDocHandler getBestHandlerFor(Screen screen) {
         Class clazz = screen.getClass();
 
         while (clazz != null) {
@@ -128,14 +128,14 @@ public class GuiDocRegistry implements IGuiDocRegistry {
             clazz = clazz.getSuperclass();
         }
 
-        if (!(screen instanceof GuiContainer)) {
-            LogHelper.warn("Using default IGuiDocHandler for GuiScreen: " + screen.getClass().getName() + ". Default handler works best with GuiContainer's please consider adding a custom IGuiDocHandler for your screen.");
+        if (!(screen instanceof ContainerScreen)) {
+            LogHelper.warn("Using default IGuiDocHandler for Screen: " + screen.getClass().getName() + ". Default handler works best with GuiContainer's please consider adding a custom IGuiDocHandler for your screen.");
         }
         return DEFAULT_HANDLER;
     }
 
     @SuppressWarnings("unchecked")
-    private List<String> getPagesFor(GuiScreen screen) {
+    private List<String> getPagesFor(Screen screen) {
         List<String> pages = new ArrayList<>();
         Class clazz = screen.getClass();
 
@@ -157,12 +157,12 @@ public class GuiDocRegistry implements IGuiDocRegistry {
     @SuppressWarnings("unchecked")
     public static class GuiDocHelper {
         public final IGuiDocHandler docHandler;
-        private GuiScreen gui;
+        private Screen gui;
         private List<String> pages;
-        private static Map<Class<? extends GuiScreen>, Boolean> docVisible = new HashMap<>();
-        private static Map<Class<? extends GuiScreen>, Integer> selectedPage = new HashMap<>();
+        private static Map<Class<? extends Screen>, Boolean> docVisible = new HashMap<>();
+        private static Map<Class<? extends Screen>, Integer> selectedPage = new HashMap<>();
 
-        public GuiDocHelper(GuiScreen gui, List<String> pages, IGuiDocHandler docHandler) {
+        public GuiDocHelper(Screen gui, List<String> pages, IGuiDocHandler docHandler) {
             this.gui = gui;
             this.pages = pages;
             this.docHandler = docHandler;
@@ -224,7 +224,7 @@ public class GuiDocRegistry implements IGuiDocRegistry {
         }
     }
 
-    private static class StrictPageSupplier<T extends GuiScreen> implements IPageSupplier<T> {
+    private static class StrictPageSupplier<T extends Screen> implements IPageSupplier<T> {
         private Class<T> guiClass;
         private Collection<String> pageURIs;
 

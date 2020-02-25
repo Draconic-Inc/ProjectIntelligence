@@ -4,17 +4,15 @@ import com.brandon3055.brandonscore.lib.StackReference;
 import com.brandon3055.projectintelligence.client.PIGuiHelper;
 import com.google.gson.JsonObject;
 import net.minecraft.client.resources.I18n;
-import net.minecraft.entity.EntityList;
+import net.minecraft.entity.EntityType;
+import net.minecraft.fluid.Fluid;
 import net.minecraft.item.ItemStack;
-import net.minecraft.util.JsonUtils;
+import net.minecraft.util.JSONUtils;
 import net.minecraft.util.ResourceLocation;
-import net.minecraftforge.fluids.Fluid;
-import net.minecraftforge.fluids.FluidRegistry;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.fluids.FluidStack;
-import net.minecraftforge.fml.common.registry.EntityEntry;
-import net.minecraftforge.fml.common.registry.ForgeRegistries;
-import net.minecraftforge.fml.relauncher.Side;
-import net.minecraftforge.fml.relauncher.SideOnly;
+import net.minecraftforge.registries.ForgeRegistries;
 
 import javax.annotation.Nullable;
 import java.util.Locale;
@@ -28,23 +26,20 @@ public class ContentRelation {
 
     public final Type type;
     public final String contentString;
-    public final boolean ignoreMeta;
     public final boolean includeNBT;
     private Object content = null;
     private boolean unavalible = false;
 
-    public ContentRelation(Type type, String contentString, boolean ignoreMeta, boolean includeNBT) {
+    public ContentRelation(Type type, String contentString, boolean includeNBT) {
         this.type = type;
         this.contentString = contentString;
-        this.ignoreMeta = ignoreMeta;
         this.includeNBT = includeNBT;
     }
 
     ContentRelation(JsonObject object) {
         type = Type.valueOf(object.get("type").getAsString());
         contentString = object.get("content").getAsString();
-        ignoreMeta = JsonUtils.getBoolean(object, "ignore_meta", false);
-        includeNBT = JsonUtils.getBoolean(object, "include_nbt", false);
+        includeNBT = JSONUtils.getBoolean(object, "include_nbt", false);
     }
 
     @Nullable
@@ -52,7 +47,7 @@ public class ContentRelation {
         if (unavalible || type != FLUID) return null;
 
         if (content == null) {
-            content = FluidRegistry.getFluid(contentString);
+            content = ForgeRegistries.FLUIDS.getValue(new ResourceLocation(contentString));
             if (content == null) {
                 unavalible = true;
             }
@@ -73,7 +68,7 @@ public class ContentRelation {
     }
 
     @Nullable
-    public EntityEntry getEntity() {
+    public EntityType getEntity() {
         if (unavalible || type != ENTITY) return null;
 
         if (content == null) {
@@ -83,7 +78,7 @@ public class ContentRelation {
             }
         }
 
-        return (EntityEntry) content;
+        return (EntityType) content;
     }
 
     private void loadStack() {
@@ -103,7 +98,7 @@ public class ContentRelation {
         if (type == STACK && !unavalible) {
             ItemStack stack = getStack();
             if (stack != null) {
-                if (stack.getItem() != test.getItem() || (!ignoreMeta && stack.getItemDamage() != test.getItemDamage())) {
+                if (stack.getItem() != test.getItem()) {
                     return false;
                 }
                 else return !includeNBT || !ItemStack.areItemStackTagsEqual(stack, test);
@@ -116,7 +111,7 @@ public class ContentRelation {
         if (type == FLUID && !unavalible) {
             Fluid fluid = getFluid();
             if (fluid != null) {
-                return fluid.getName().equals(test.getName());
+                return fluid.getRegistryName().equals(test.getRegistryName());
             }
         }
         return false;
@@ -126,16 +121,13 @@ public class ContentRelation {
         JsonObject obj = new JsonObject();
         obj.addProperty("type", type.name());
         obj.addProperty("content", contentString);
-        if (ignoreMeta) {
-            obj.addProperty("ignore_meta", true);
-        }
         if (includeNBT) {
             obj.addProperty("include_nbt", true);
         }
         return obj;
     }
 
-    @SideOnly(Side.CLIENT)
+    @OnlyIn(Dist.CLIENT)
     public String getLocalizedName() {
         if (unavalible) return "";
 
@@ -143,13 +135,13 @@ public class ContentRelation {
             case STACK:
                 ItemStack stack = getStack();
                 if (stack != null) {
-                    return stack.getDisplayName();
+                    return stack.getDisplayName().getFormattedText();
                 }
                 break;
             case ENTITY:
-                EntityEntry entry = getEntity();
-                if (entry != null){
-                    String name = EntityList.getTranslationName(entry.getRegistryName());
+                EntityType type = getEntity();
+                if (type != null){
+                    String name = type.getName().getFormattedText();
                     if (name != null) {
                         return I18n.format(name);
                     }
@@ -158,7 +150,7 @@ public class ContentRelation {
             case FLUID:
                 Fluid fluid = getFluid();
                 if (fluid != null) {
-                    return fluid.getLocalizedName(new FluidStack(fluid, 1000));
+                    return new FluidStack(fluid, 1000).getDisplayName().getFormattedText();
                 }
                 break;
         }
@@ -179,7 +171,7 @@ public class ContentRelation {
 
     @Override
     public String toString() {
-        return type.name().toLowerCase(Locale.ENGLISH) + "|" + contentString + (type == STACK ? (", ignMeta: " + ignoreMeta + ", incNBT: " + includeNBT) : "");
+        return type.name().toLowerCase(Locale.ENGLISH) + "|" + contentString + (type == STACK ? (", incNBT: " + includeNBT) : "");
     }
 
     public enum Type {

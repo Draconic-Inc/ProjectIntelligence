@@ -1,6 +1,6 @@
 package com.brandon3055.projectintelligence.client.gui.guielements;
 
-import com.brandon3055.brandonscore.client.gui.modulargui.MGuiElementBase;
+import com.brandon3055.brandonscore.client.gui.modulargui.GuiElement;
 import com.brandon3055.brandonscore.client.gui.modulargui.baseelements.GuiButton;
 import com.brandon3055.brandonscore.client.gui.modulargui.baseelements.GuiPopUpDialogBase;
 import com.brandon3055.brandonscore.client.gui.modulargui.baseelements.GuiScrollElement;
@@ -20,7 +20,7 @@ public class GuiErrorDialog extends GuiPopUpDialogBase<GuiErrorDialog> {
 
     private GuiScrollElement errorList;
 
-    public GuiErrorDialog(MGuiElementBase parant) {
+    public GuiErrorDialog(GuiElement parant) {
         super(parant);
         setSize(320, 250);
         setDragBar(12);
@@ -39,7 +39,7 @@ public class GuiErrorDialog extends GuiPopUpDialogBase<GuiErrorDialog> {
         addChild(new GuiLabel(I18n.format("pi.config.pi_errors.title")).setRelPos(this, 4, 0).setSize(xSize(), 14).setTextColour(0).setAlignment(LEFT).setShadow(false));
 
         GuiButton close = new GuiButton("Close").setSize(50, 12).setFillColours(0xFF900000, 0xFFFF0000).setRelPos(xSize() - 51, 1);
-        close.setListener(() -> {
+        close.onPressed(() -> {
             PIGuiHelper.errorCache.clear();
             close();
         });
@@ -75,11 +75,6 @@ public class GuiErrorDialog extends GuiPopUpDialogBase<GuiErrorDialog> {
     @Override
     public boolean onUpdate() {
         return super.onUpdate();
-    }
-
-    @Override
-    protected boolean keyTyped(char typedChar, int keyCode) throws IOException {
-        return super.keyTyped(typedChar, keyCode);
     }
 
 }

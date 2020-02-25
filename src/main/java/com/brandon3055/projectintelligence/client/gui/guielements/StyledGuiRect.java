@@ -1,18 +1,18 @@
 package com.brandon3055.projectintelligence.client.gui.guielements;
 
 import com.brandon3055.brandonscore.client.ResourceHelperBC;
-import com.brandon3055.brandonscore.client.gui.modulargui.MGuiElementBase;
+import com.brandon3055.brandonscore.client.gui.modulargui.GuiElement;
 import com.brandon3055.projectintelligence.client.PITextures;
 import com.brandon3055.projectintelligence.client.StyleHandler;
 import com.brandon3055.projectintelligence.client.StyleHandler.StyleType;
+import com.mojang.blaze3d.platform.GlStateManager;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.GlStateManager;
 
 /**
  * Created by brandon3055 on 14/08/2017.
  */
 @Deprecated
-public class StyledGuiRect extends MGuiElementBase<StyledGuiRect> {
+public class StyledGuiRect extends GuiElement<StyledGuiRect> {
 
     private String prop;
     private boolean allowBorderSize;
@@ -43,7 +43,7 @@ public class StyledGuiRect extends MGuiElementBase<StyledGuiRect> {
             }
             ResourceHelperBC.bindTexture(PITextures.VANILLA_GUI);
             drawTiledTextureRectWithTrim(xPos(), yPos(), xSize(), ySize(), 4, 4, 4, 4, 0, thickBorders ? 0 : 128, 256, 128);
-            GlStateManager.color(1, 1, 1, 1);
+            GlStateManager.color4f(1, 1, 1, 1);
             drawBorderedRect(xPos(), yPos(), xSize(), ySize(), 1, 0, border);
         }
         else {

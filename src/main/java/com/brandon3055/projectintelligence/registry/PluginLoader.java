@@ -3,11 +3,14 @@ package com.brandon3055.projectintelligence.registry;
 import com.brandon3055.projectintelligence.api.IModPlugin;
 import com.brandon3055.projectintelligence.api.ModPlugin;
 import com.brandon3055.projectintelligence.utils.LogHelper;
-import net.minecraftforge.fml.common.discovery.ASMDataTable;
+import jdk.internal.org.objectweb.asm.Type;
+import net.minecraftforge.fml.ModList;
+import net.minecraftforge.forgespi.language.ModFileScanData;
+
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
+import java.util.Objects;
 
 /**
  * Created by brandon3055 on 22/09/18.
@@ -15,18 +18,8 @@ import java.util.Set;
 public class PluginLoader {
     private static List<IModPlugin> plugins = new ArrayList<>();
 
-    public static void preInit(ASMDataTable asmDataTable) {
-        Set<ASMDataTable.ASMData> asmDataSet = asmDataTable.getAll(ModPlugin.class.getCanonicalName());
-        for (ASMDataTable.ASMData asmData : asmDataSet) {
-            try {
-                Class<?> asmClass = Class.forName(asmData.getClassName());
-                Class<? extends IModPlugin> asmInstanceClass = asmClass.asSubclass(IModPlugin.class);
-                IModPlugin instance = asmInstanceClass.newInstance();
-                plugins.add(instance);
-            } catch (ClassNotFoundException | InstantiationException | IllegalAccessException | LinkageError e) {
-                LogHelper.error("Failed to load: {}", asmData.getClassName(), e);
-            }
-        }
+    public static void preInit(List<ModFileScanData> asmDataTable) {
+        plugins.addAll(generateClassInstances(ModPlugin.class, IModPlugin.class));
     }
 
     public static void loadComplete() {
@@ -34,5 +27,35 @@ public class PluginLoader {
             LogHelper.dev("Loading mod plugin: " + plugin);
             plugin.registerModGUIs(GuiDocRegistry.INSTANCE);
         }
+    }
+
+
+    @SuppressWarnings("SameParameterValue")
+    private static <T> List<T> generateClassInstances(Class annotationClass, Class<T> baseClass) {
+        Type type = Type.getType(annotationClass);
+        List<String> annotatedClassNames = new ArrayList<>();
+
+        for (ModFileScanData scanData : ModList.get().getAllScanData()) {
+            Iterable<ModFileScanData.AnnotationData> annotations = scanData.getAnnotations();
+            for (ModFileScanData.AnnotationData data : annotations) {
+                if (Objects.equals(data.getAnnotationType(), type)) {
+                    String memberName = data.getMemberName();
+                    annotatedClassNames.add(memberName);
+                }
+            }
+        }
+
+        List<T> instances = new ArrayList<>();
+        for (String name : annotatedClassNames) {
+            try {
+                Class<?> asmClass = Class.forName(name);
+                Class<? extends T> asmInstanceClass = asmClass.asSubclass(baseClass);
+                T instance = asmInstanceClass.newInstance();
+                instances.add(instance);
+            } catch (ClassNotFoundException | InstantiationException | IllegalAccessException | LinkageError e) {
+                LogHelper.error("An error occurred while loading class: {}", name, e);
+            }
+        }
+        return instances;
     }
 }

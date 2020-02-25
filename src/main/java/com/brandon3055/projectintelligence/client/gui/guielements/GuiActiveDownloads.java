@@ -1,14 +1,14 @@
 package com.brandon3055.projectintelligence.client.gui.guielements;
 
 import com.brandon3055.brandonscore.client.gui.modulargui.IModularGui;
-import com.brandon3055.brandonscore.client.gui.modulargui.MGuiElementBase;
+import com.brandon3055.brandonscore.client.gui.modulargui.GuiElement;
 import com.brandon3055.brandonscore.lib.FileDownloadManager;
 import com.brandon3055.brandonscore.lib.PairKV;
-import com.brandon3055.brandonscore.utils.Utils;
+import com.brandon3055.brandonscore.utils.MathUtils;
 import com.brandon3055.projectintelligence.client.StyleHandler;
 import com.brandon3055.projectintelligence.docmanagement.PIUpdateManager;
+import com.mojang.blaze3d.platform.GlStateManager;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.resources.I18n;
 
 import java.io.File;
@@ -21,7 +21,7 @@ import static com.brandon3055.projectintelligence.docmanagement.PIUpdateManager.
 /**
  * Created by brandon3055 on 7/21/2018.
  */
-public class GuiActiveDownloads extends MGuiElementBase<GuiActiveDownloads> {
+public class GuiActiveDownloads extends GuiElement<GuiActiveDownloads> {
 
     private int completionTimeOut = 0;
     private IModularGui parent;
@@ -50,7 +50,7 @@ public class GuiActiveDownloads extends MGuiElementBase<GuiActiveDownloads> {
 
         String status = I18n.format(PIUpdateManager.updateStage.getUnlocalizedName());
         if (PIUpdateManager.updateStage != INACTIVE && PIUpdateManager.updateStage != RELOAD_DOCUMENTATION) {
-            status += " " + Utils.round(overallProgress * 100D, 100) + "%";
+            status += " " + MathUtils.round(overallProgress * 100D, 100) + "%";
         }
         drawCenteredString(fontRenderer, status, xPos() + (xSize() / 2F), yPos() + 12, textColour, false);
 
@@ -61,7 +61,7 @@ public class GuiActiveDownloads extends MGuiElementBase<GuiActiveDownloads> {
             for (DLInfo info : downloads.values()) {
                 int colour = info.failed ? 0xAA0000 : info.progress == 1 ? 0x55FF55 : 0xFFFF55;
 
-                String progress = Utils.round(info.progress * 100, 100) + "%";
+                String progress = MathUtils.round(info.progress * 100, 100) + "%";
                 int pw = fontRenderer.getStringWidth(progress) + 3;
                 drawString(fontRenderer, progress, maxXPos() - pw, y, colour);
 
@@ -76,7 +76,7 @@ public class GuiActiveDownloads extends MGuiElementBase<GuiActiveDownloads> {
                 y += 9;
             }
         }
-        GlStateManager.color(1, 1, 1, 1);
+        GlStateManager.color4f(1, 1, 1, 1);
     }
 
     @Override

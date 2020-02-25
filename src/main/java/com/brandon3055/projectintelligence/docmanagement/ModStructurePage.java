@@ -4,7 +4,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
-import net.minecraft.util.JsonUtils;
+import net.minecraft.util.JSONUtils;
 
 import javax.annotation.Nullable;
 import java.io.File;
@@ -74,32 +74,32 @@ public class ModStructurePage extends DocumentationPage {
 
     @Nullable
     public static ModStructurePage generateFromJson(JsonObject jObj, boolean isPackDoc) {
-        if (!JsonUtils.isString(jObj, "mod_id") || !JsonUtils.isString(jObj, "mod_version")) {
+        if (!JSONUtils.isString(jObj, "mod_id") || !JSONUtils.isString(jObj, "mod_version")) {
             return null;
         }
 
-        ModStructurePage page = new ModStructurePage(null, JsonUtils.getString(jObj, "mod_id"), JsonUtils.getString(jObj, "mod_version"), isPackDoc);
+        ModStructurePage page = new ModStructurePage(null, JSONUtils.getString(jObj, "mod_id"), JSONUtils.getString(jObj, "mod_version"), isPackDoc);
         page.loadFromJson(jObj);
         return page;
     }
 
     @Override
     public void loadFromJson(JsonObject jObj) {
-        verified = JsonUtils.getBoolean(jObj, "verified", false);
-        markdownFile = JsonUtils.getString(jObj, "file", "");
+        verified = JSONUtils.getBoolean(jObj, "verified", false);
+        markdownFile = JSONUtils.getString(jObj, "file", "");
 
-        if (JsonUtils.isJsonArray(jObj, "mod_aliases")) {
+        if (JSONUtils.isJsonArray(jObj, "mod_aliases")) {
             modAliases.clear();
-            for (JsonElement element : JsonUtils.getJsonArray(jObj, "mod_aliases")) {
-                if (JsonUtils.isString(element)) {
+            for (JsonElement element : JSONUtils.getJsonArray(jObj, "mod_aliases")) {
+                if (JSONUtils.isString(element)) {
                     modAliases.add(element.getAsJsonPrimitive().getAsString());
                 }
             }
         }
 
-        if (JsonUtils.isJsonArray(jObj, "relations")) {
+        if (JSONUtils.isJsonArray(jObj, "relations")) {
             relations.clear();
-            for (JsonElement element : JsonUtils.getJsonArray(jObj, "relations")) {
+            for (JsonElement element : JSONUtils.getJsonArray(jObj, "relations")) {
                 if (element.isJsonObject()) {
                     ContentRelation relation = ContentRelation.fromJson(element.getAsJsonObject());
                     if (relation != null) {
@@ -109,18 +109,18 @@ public class ModStructurePage extends DocumentationPage {
             }
         }
 
-        if (JsonUtils.isJsonArray(jObj, "icons")) {
+        if (JSONUtils.isJsonArray(jObj, "icons")) {
             icons.clear();
-            for (JsonElement element : JsonUtils.getJsonArray(jObj, "icons")) {
+            for (JsonElement element : JSONUtils.getJsonArray(jObj, "icons")) {
                 if (element.isJsonObject()) {
                     icons.add(element.getAsJsonObject());
                 }
             }
         }
-        cycle_icons = JsonUtils.getBoolean(jObj, "cycle_icons", false);
+        cycle_icons = JSONUtils.getBoolean(jObj, "cycle_icons", false);
 
-        if (JsonUtils.isJsonArray(jObj, "pages")) {
-            loadSubPages(JsonUtils.getJsonArray(jObj, "pages"));
+        if (JSONUtils.isJsonArray(jObj, "pages")) {
+            loadSubPages(JSONUtils.getJsonArray(jObj, "pages"));
         }
 
         generatePageURIs();

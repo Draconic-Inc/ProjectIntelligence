@@ -3,7 +3,7 @@ package com.brandon3055.projectintelligence.client.gui;
 import codechicken.lib.math.MathHelper;
 import com.brandon3055.brandonscore.client.gui.modulargui.GuiElementManager;
 import com.brandon3055.brandonscore.client.gui.modulargui.IModularGui;
-import com.brandon3055.brandonscore.client.gui.modulargui.MGuiElementBase;
+import com.brandon3055.brandonscore.client.gui.modulargui.GuiElement;
 import com.brandon3055.brandonscore.client.gui.modulargui.baseelements.GuiButton;
 import com.brandon3055.brandonscore.client.gui.modulargui.baseelements.GuiPopUpDialogBase;
 import com.brandon3055.brandonscore.client.gui.modulargui.baseelements.GuiScrollElement;
@@ -24,12 +24,11 @@ import com.brandon3055.projectintelligence.docmanagement.DocumentationPage;
 import com.brandon3055.projectintelligence.docmanagement.RootPage;
 import com.brandon3055.projectintelligence.registry.GuiDocRegistry.GuiDocHelper;
 import com.google.common.collect.Lists;
+import com.mojang.blaze3d.platform.GlStateManager;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiScreen;
-import net.minecraft.client.gui.ScaledResolution;
-import net.minecraft.client.model.ModelBook;
-import net.minecraft.client.renderer.GlStateManager;
+import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.renderer.RenderHelper;
+import net.minecraft.client.renderer.entity.model.BookModel;
 import net.minecraft.client.resources.I18n;
 
 import java.awt.*;
@@ -42,7 +41,7 @@ import static com.brandon3055.brandonscore.client.gui.modulargui.baseelements.Gu
 /**
  * Created by brandon3055 on 7/25/2018.
  */
-public class PIGuiOverlay implements IModularGui<GuiScreen> {
+public class PIGuiOverlay implements IModularGui<Screen> {
 
     private static final StyleHandler.PropertyGroup windowProps = new StyleHandler.PropertyGroup("gui_docs");
     private static final StyleHandler.PropertyGroup settingsProps = new StyleHandler.PropertyGroup("gui_docs.settings_button");
@@ -56,57 +55,67 @@ public class PIGuiOverlay implements IModularGui<GuiScreen> {
     private int screenWidth;
     private int screenHeight;
     private GuiElementManager manager = new GuiElementManager(this);
-    private GuiScreen gui;
+    private Screen gui;
     private GuiDocHelper guiDocHelper;
     private DocElement docElement;
 
-    public PIGuiOverlay(GuiScreen gui, GuiDocHelper guiDocHelper) {
+    public PIGuiOverlay(Screen gui, GuiDocHelper guiDocHelper) {
         this.gui = gui;
         this.guiDocHelper = guiDocHelper;
         onGuiInit();
     }
 
     public void onGuiInit() {
-        this.mc = Minecraft.getMinecraft();
-        ScaledResolution scaledresolution = new ScaledResolution(mc);
-        this.screenWidth = scaledresolution.getScaledWidth();
-        this.screenHeight = scaledresolution.getScaledHeight();
+        this.mc = Minecraft.getInstance();
+        this.screenWidth = mc.mainWindow.getScaledWidth();
+        this.screenHeight = mc.mainWindow.getScaledHeight();
         manager.onGuiInit(mc, screenWidth, screenHeight);
     }
 
     @Override
     public void addElements(GuiElementManager manager) {
         if (docElement != null) {
-            manager.remove(docElement);
+            manager.removeChild(docElement);
         }
 
         docElement = new DocElement(this, guiDocHelper);
-        manager.add(docElement, 200);
+        manager.addChild(docElement, 200, false);
     }
 
     //region Gui Method Pass-through
 
-    public boolean mouseClicked(int mouseX, int mouseY, int mouseButton) throws IOException {
+    public boolean mouseClicked(double mouseX, double mouseY, int mouseButton) {
         return manager.mouseClicked(mouseX, mouseY, mouseButton);
     }
 
-    public boolean mouseReleased(int mouseX, int mouseY, int state) {
+    public boolean mouseReleased(double mouseX, double mouseY, int state) {
         return manager.mouseReleased(mouseX, mouseY, state);
     }
 
-    public boolean mouseClickMove(int mouseX, int mouseY, int clickedMouseButton, long timeSinceLastClick) {
-        return manager.mouseClickMove(mouseX, mouseY, clickedMouseButton, timeSinceLastClick);
+    public boolean mouseDragged(double mouseX, double mouseY, int clickedMouseButton, double dragX, double dragY) {
+        return manager.mouseDragged(mouseX, mouseY, clickedMouseButton, dragX, dragY);
+    }
+//
+//        public boolean mouseClickMove(double mouseX, double mouseY, int clickedMouseButton, long timeSinceLastClick) {
+//        return manager.mouseClickMove(mouseX, mouseY, clickedMouseButton, timeSinceLastClick);
+//    }
+
+
+
+    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+        return manager.keyPressed(keyCode, scanCode, modifiers);
     }
 
-    public boolean keyTyped(char typedChar, int keyCode) throws IOException {
-        return manager.keyTyped(typedChar, keyCode);
+    public boolean keyReleased(int keyCode, int scanCode, int modifiers) {
+        return manager.keyReleased(keyCode, scanCode, modifiers);
     }
 
-    public boolean handleMouseInput() throws IOException {
-        return manager.handleMouseInput();
+    public boolean charTyped(char charTyped, int charCode) {
+        return manager.charTyped(charTyped, charCode);
     }
 
     public void renderElements(int mouseX, int mouseY, float partialTicks) {
+        GlStateManager.enableDepthTest();
         manager.renderElements(mc, mouseX, mouseY, partialTicks);
     }
 
@@ -123,7 +132,7 @@ public class PIGuiOverlay implements IModularGui<GuiScreen> {
     //region IModular Gui
 
     @Override
-    public GuiScreen getScreen() {
+    public Screen getScreen() {
         return gui;
     }
 
@@ -172,8 +181,8 @@ public class PIGuiOverlay implements IModularGui<GuiScreen> {
 
     //endregion
 
-    private static class DocElement extends MGuiElementBase<DocElement> {
-        private static final ModelBook MODEL_BOOK = new ModelBook();
+    private static class DocElement extends GuiElement<DocElement> {
+        private static final BookModel MODEL_BOOK = new BookModel();
         private PIPartRenderer windowRenderer = new PIPartRenderer(windowProps).setSquareTex(false);
         private PIPartRenderer scrollRenderer = new PIPartRenderer(scrollProps);
         private PIPartRenderer scrollSlideRenderer = new PIPartRenderer(scrollSliderProps);
@@ -212,7 +221,7 @@ public class PIGuiOverlay implements IModularGui<GuiScreen> {
             heading.setAlignment(GuiAlign.CENTER);
             heading.setTrim(true);
             heading.setShadow(false);
-            heading.setListener(this::showPageList);
+            heading.onPressed(this::showPageList);
             addChild(heading);
 
             prevPage = new GuiButton().setSize(10, 10).setHoverText(I18n.format("pi.button.prev_page"));
@@ -221,7 +230,7 @@ public class PIGuiOverlay implements IModularGui<GuiScreen> {
             tex.setPostDrawCallback(IDrawCallback::resetColour);
             prevPage.addChild(tex);
             addChild(prevPage);
-            prevPage.setListener(() -> changePage(true));
+            prevPage.onPressed(() -> changePage(true));
 
             nextPage = new GuiButton().setSize(10, 10).setHoverText(I18n.format("pi.button.next_page"));
             tex = new GuiTexture(9, 24, 6, 8, PITextures.PI_PARTS).setPos(2, 1);
@@ -229,7 +238,7 @@ public class PIGuiOverlay implements IModularGui<GuiScreen> {
             tex.setPostDrawCallback(IDrawCallback::resetColour);
             nextPage.addChild(tex);
             addChild(nextPage);
-            nextPage.setListener(() -> changePage(false));
+            nextPage.onPressed(() -> changePage(false));
 
             openInPI = new GuiButton().setSize(10, 10).setHoverText(I18n.format("pi.button.open_in_pi_main"));
             tex = new GuiTexture(32, 25, 7, 7, PITextures.PI_PARTS).setPos(2, 1);
@@ -237,7 +246,7 @@ public class PIGuiOverlay implements IModularGui<GuiScreen> {
             tex.setPostDrawCallback(IDrawCallback::resetColour);
             openInPI.addChild(tex);
             addChild(openInPI);
-            openInPI.setListener(() -> PiAPI.openGui(overlay.gui, guiDocHelper.getPages()));
+            openInPI.onPressed(() -> PiAPI.openGui(overlay.gui, guiDocHelper.getPages()));
 
             settings = new GuiButton().setSize(8, 8).setHoverText(I18n.format("pi.config.open_style_settings"));
             GuiTexture settingsTex = new GuiTexture(16, 0, 8, 8, PITextures.PI_PARTS);
@@ -245,7 +254,7 @@ public class PIGuiOverlay implements IModularGui<GuiScreen> {
             settingsTex.setPreDrawCallback((minecraft, mouseX, mouseY, partialTicks, mouseOver) -> settingsProps.glColour(mouseOver));
             settingsTex.setPostDrawCallback(IDrawCallback::resetColour);
             settings.addChild(settingsTex);
-            settings.setListener(this::showSettings);
+            settings.onPressed(this::showSettings);
             addChild(settings);
 
             close = new GuiButton().setSize(8, 8).setHoverText(I18n.format("pi.button.close"));
@@ -254,7 +263,7 @@ public class PIGuiOverlay implements IModularGui<GuiScreen> {
             closeTex.setPreDrawCallback((minecraft, mouseX, mouseY, partialTicks, mouseOver) -> closeProps.glColour(mouseOver));
             closeTex.setPostDrawCallback(IDrawCallback::resetColour);
             close.addChild(closeTex);
-            close.setListener(() -> guiDocHelper.setDocVisible(!guiDocHelper.isDocVisible()));
+            close.onPressed(() -> guiDocHelper.setDocVisible(!guiDocHelper.isDocVisible()));
             addChild(close);
 
             scrollBar = new GuiSlideControl(VERTICAL);
@@ -366,9 +375,9 @@ public class PIGuiOverlay implements IModularGui<GuiScreen> {
             if (d < 1 && guiDocHelper.enableButton()) {
                 renderBook();
                 GlStateManager.pushMatrix();
-                GlStateManager.translate(xPos() + (animRect.width / 2D) * (1D - d), yPos() + (animRect.height / 2D) * (1D - d), 0);
-                GlStateManager.scale(d, d, 1);
-                GlStateManager.translate(-xPos(), -yPos(), 0);
+                GlStateManager.translated(xPos() + (animRect.width / 2D) * (1D - d), yPos() + (animRect.height / 2D) * (1D - d), 0);
+                GlStateManager.scaled(d, d, 1);
+                GlStateManager.translated(-xPos(), -yPos(), 0);
 //                zOffset += 500;
             }
 
@@ -392,16 +401,16 @@ public class PIGuiOverlay implements IModularGui<GuiScreen> {
 
             bindTexture(PITextures.BOOK);
             GlStateManager.pushMatrix();
-            GlStateManager.translate(xPos, yPos, 100);
-            GlStateManager.scale(scale, scale, scale);
-            GlStateManager.rotate(-(90 * hoverAnim), 0, 1, 0);
-            GlStateManager.rotate(-30 * hoverAnim, 0, 0, 1);
+            GlStateManager.translated(xPos, yPos, 100);
+            GlStateManager.scaled(scale, scale, scale);
+            GlStateManager.rotated(-(90 * hoverAnim), 0, 1, 0);
+            GlStateManager.rotated(-30 * hoverAnim, 0, 0, 1);
 
             RenderHelper.enableStandardItemLighting();
             GlStateManager.enableRescaleNormal();
-            MODEL_BOOK.render(null, 0, pageAnim % 1, 0, hoverAnim, 0, 0.1F);
+            MODEL_BOOK.render(0, pageAnim % 1, 0, hoverAnim, 0, 0.1F);
             GlStateManager.disableRescaleNormal();
-            RenderHelper.disableStandardItemLighting();
+            RenderHelper.enableGUIStandardItemLighting();
             GlStateManager.popMatrix();
         }
 
@@ -415,7 +424,7 @@ public class PIGuiOverlay implements IModularGui<GuiScreen> {
         }
 
         @Override
-        public boolean mouseClicked(int mouseX, int mouseY, int mouseButton) throws IOException {
+        public boolean mouseClicked(double mouseX, double mouseY, int mouseButton) {
             if (isMouseOver(mouseX, mouseY)) {
                 if (!guiDocHelper.isDocVisible() && guiDocHelper.enableButton()) {
                     GuiButton.playGenericClick(mc);
@@ -459,7 +468,7 @@ public class PIGuiOverlay implements IModularGui<GuiScreen> {
                 button.setTrim(true);
                 button.setPos(dialog.xPos() + 3, y).setSize(dialog.xSize() - 6, 10);
                 button.setToggleMode(true).setToggleStateSupplier(() -> guiDocHelper.getSelected().equals(pageURI));
-                button.setListener(() -> {
+                button.onPressed(() -> {
                     guiDocHelper.setSelected(pageURI);
                     reloadDoc();
                 });

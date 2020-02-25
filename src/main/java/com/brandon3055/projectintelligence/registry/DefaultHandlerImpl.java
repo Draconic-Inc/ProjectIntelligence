@@ -1,20 +1,20 @@
 package com.brandon3055.projectintelligence.registry;
 
 import com.brandon3055.projectintelligence.api.IGuiDocHandler;
-import net.minecraft.client.gui.GuiScreen;
-import net.minecraft.client.gui.inventory.GuiContainer;
+import net.minecraft.client.gui.screen.Screen;
+import net.minecraft.client.gui.screen.inventory.ContainerScreen;
 
 import java.awt.*;
 
 /**
  * Created by brandon3055 on 7/26/2018.
  */
-public class DefaultHandlerImpl implements IGuiDocHandler<GuiScreen> {
+public class DefaultHandlerImpl implements IGuiDocHandler<Screen> {
 
     @Override
-    public Rectangle getCollapsedArea(GuiScreen gui) {
-        if (gui instanceof GuiContainer) {
-            GuiContainer guiC = (GuiContainer) gui;
+    public Rectangle getCollapsedArea(Screen gui) {
+        if (gui instanceof ContainerScreen) {
+            ContainerScreen guiC = (ContainerScreen) gui;
             return new Rectangle(guiC.getGuiLeft() - 25, guiC.getGuiTop() + 3, 25, 25);
         }
         else {
@@ -23,9 +23,9 @@ public class DefaultHandlerImpl implements IGuiDocHandler<GuiScreen> {
     }
 
     @Override
-    public Rectangle getExpandedArea(GuiScreen gui) {
-        if (gui instanceof GuiContainer) {
-            GuiContainer guiC = (GuiContainer) gui;
+    public Rectangle getExpandedArea(Screen gui) {
+        if (gui instanceof ContainerScreen) {
+            ContainerScreen guiC = (ContainerScreen) gui;
             int availWidth = guiC.getGuiLeft();
             if (availWidth < 160) {
                 int width = Math.max(200, guiC.getXSize());

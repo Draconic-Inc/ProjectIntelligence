@@ -2,6 +2,7 @@ package com.brandon3055.projectintelligence.client;
 
 import codechicken.lib.colour.Colour;
 import codechicken.lib.colour.ColourARGB;
+import com.brandon3055.brandonscore.api.TimeKeeper;
 import com.brandon3055.brandonscore.handlers.FileHandler;
 import com.brandon3055.projectintelligence.utils.LogHelper;
 import com.google.common.collect.ImmutableMap;
@@ -9,7 +10,7 @@ import com.google.gson.*;
 import com.google.gson.internal.Streams;
 import com.google.gson.stream.JsonWriter;
 import net.minecraft.client.resources.I18n;
-import net.minecraft.util.JsonUtils;
+import net.minecraft.util.JSONUtils;
 import net.minecraft.util.text.TextFormatting;
 import org.apache.commons.io.IOUtils;
 
@@ -411,7 +412,7 @@ public class StyleHandler {
     private static int getHighlightColour(int colour, boolean alpha) {
         Colour in = new ColourARGB(colour);
         Colour out = new ColourARGB(0xFF00FF00);
-        double d = (Math.sin(ClientEventHandler.elapsedTicks / 10D) + 1D) / 2D;
+        double d = (Math.sin(TimeKeeper.getClientTick() / 10D) + 1D) / 2D;
         double r = ((in.r & 0xFF) * d) + ((out.r & 0xFF) * (1D - d));
         double g = ((in.g & 0xFF) * d) + ((out.g & 0xFF) * (1D - d));
         double b = ((in.b & 0xFF) * d) + ((out.b & 0xFF) * (1D - d));
@@ -465,7 +466,7 @@ public class StyleHandler {
             }
 
             JsonObject jObj = element.getAsJsonObject();
-            unsavedChanges = JsonUtils.getBoolean(jObj, "unsavedChanges", false);
+            unsavedChanges = JSONUtils.getBoolean(jObj, "unsavedChanges", false);
             rootPropertyMap.forEach((s, property) -> property.load(jObj));
         }
         catch (Exception e) {
@@ -656,7 +657,7 @@ public class StyleHandler {
 
         @Override
         public void load(JsonObject jObj) {
-            value = JsonUtils.getBoolean(jObj, type.getName(), value);
+            value = JSONUtils.getBoolean(jObj, type.getName(), value);
             super.load(jObj);
         }
 
@@ -687,7 +688,7 @@ public class StyleHandler {
 
         @Override
         public void load(JsonObject jObj) {
-            value = JsonUtils.getInt(jObj, type.getName(), value);
+            value = JSONUtils.getInt(jObj, type.getName(), value);
             super.load(jObj);
         }
 
