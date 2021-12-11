@@ -5,7 +5,7 @@ import com.brandon3055.brandonscore.client.gui.modulargui.GuiElement;
 import com.brandon3055.projectintelligence.client.PITextures;
 import com.brandon3055.projectintelligence.client.StyleHandler;
 import com.brandon3055.projectintelligence.client.StyleHandler.StyleType;
-import com.mojang.blaze3d.platform.GlStateManager;
+import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.Minecraft;
 
 /**
@@ -43,7 +43,7 @@ public class StyledGuiRect extends GuiElement<StyledGuiRect> {
             }
             ResourceHelperBC.bindTexture(PITextures.VANILLA_GUI);
             drawTiledTextureRectWithTrim(xPos(), yPos(), xSize(), ySize(), 4, 4, 4, 4, 0, thickBorders ? 0 : 128, 256, 128);
-            GlStateManager.color4f(1, 1, 1, 1);
+            RenderSystem.color4f(1, 1, 1, 1);
             drawBorderedRect(xPos(), yPos(), xSize(), ySize(), 1, 0, border);
         }
         else {

@@ -74,32 +74,32 @@ public class ModStructurePage extends DocumentationPage {
 
     @Nullable
     public static ModStructurePage generateFromJson(JsonObject jObj, boolean isPackDoc) {
-        if (!JSONUtils.isString(jObj, "mod_id") || !JSONUtils.isString(jObj, "mod_version")) {
+        if (!JSONUtils.isStringValue(jObj, "mod_id") || !JSONUtils.isStringValue(jObj, "mod_version")) {
             return null;
         }
 
-        ModStructurePage page = new ModStructurePage(null, JSONUtils.getString(jObj, "mod_id"), JSONUtils.getString(jObj, "mod_version"), isPackDoc);
+        ModStructurePage page = new ModStructurePage(null, JSONUtils.getAsString(jObj, "mod_id"), JSONUtils.getAsString(jObj, "mod_version"), isPackDoc);
         page.loadFromJson(jObj);
         return page;
     }
 
     @Override
     public void loadFromJson(JsonObject jObj) {
-        verified = JSONUtils.getBoolean(jObj, "verified", false);
-        markdownFile = JSONUtils.getString(jObj, "file", "");
+        verified = JSONUtils.getAsBoolean(jObj, "verified", false);
+        markdownFile = JSONUtils.getAsString(jObj, "file", "");
 
-        if (JSONUtils.isJsonArray(jObj, "mod_aliases")) {
+        if (JSONUtils.isArrayNode(jObj, "mod_aliases")) {
             modAliases.clear();
-            for (JsonElement element : JSONUtils.getJsonArray(jObj, "mod_aliases")) {
-                if (JSONUtils.isString(element)) {
+            for (JsonElement element : JSONUtils.getAsJsonArray(jObj, "mod_aliases")) {
+                if (JSONUtils.isStringValue(element)) {
                     modAliases.add(element.getAsJsonPrimitive().getAsString());
                 }
             }
         }
 
-        if (JSONUtils.isJsonArray(jObj, "relations")) {
+        if (JSONUtils.isArrayNode(jObj, "relations")) {
             relations.clear();
-            for (JsonElement element : JSONUtils.getJsonArray(jObj, "relations")) {
+            for (JsonElement element : JSONUtils.getAsJsonArray(jObj, "relations")) {
                 if (element.isJsonObject()) {
                     ContentRelation relation = ContentRelation.fromJson(element.getAsJsonObject());
                     if (relation != null) {
@@ -109,18 +109,18 @@ public class ModStructurePage extends DocumentationPage {
             }
         }
 
-        if (JSONUtils.isJsonArray(jObj, "icons")) {
+        if (JSONUtils.isArrayNode(jObj, "icons")) {
             icons.clear();
-            for (JsonElement element : JSONUtils.getJsonArray(jObj, "icons")) {
+            for (JsonElement element : JSONUtils.getAsJsonArray(jObj, "icons")) {
                 if (element.isJsonObject()) {
                     icons.add(element.getAsJsonObject());
                 }
             }
         }
-        cycle_icons = JSONUtils.getBoolean(jObj, "cycle_icons", false);
+        cycle_icons = JSONUtils.getAsBoolean(jObj, "cycle_icons", false);
 
-        if (JSONUtils.isJsonArray(jObj, "pages")) {
-            loadSubPages(JSONUtils.getJsonArray(jObj, "pages"));
+        if (JSONUtils.isArrayNode(jObj, "pages")) {
+            loadSubPages(JSONUtils.getAsJsonArray(jObj, "pages"));
         }
 
         generatePageURIs();

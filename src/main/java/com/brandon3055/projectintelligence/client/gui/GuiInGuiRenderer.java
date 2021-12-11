@@ -1,17 +1,15 @@
 package com.brandon3055.projectintelligence.client.gui;
 
-import com.brandon3055.brandonscore.client.gui.modulargui.GuiElement;
-import com.brandon3055.brandonscore.client.gui.modulargui.guielements.MGuiEffectRenderer;
 import com.brandon3055.projectintelligence.registry.GuiDocRegistry;
 import com.brandon3055.projectintelligence.registry.GuiDocRegistry.GuiDocHelper;
-import com.mojang.blaze3d.platform.GlStateManager;
+import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screen.Screen;
+import net.minecraft.client.renderer.Rectangle2d;
 import net.minecraftforge.client.event.GuiScreenEvent;
 
 import javax.annotation.Nullable;
 import java.awt.*;
-import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 
@@ -46,11 +44,11 @@ public class GuiInGuiRenderer {
         if (isActiveScreen(gui) && overlay != null) {
             int mouseX = (int) getMouseX(gui);
             int mouseY = (int) getMouseY(gui);
-            GlStateManager.color4f(1, 1, 1, 1);
-            GlStateManager.translated(0, 0, 500);
-            overlay.renderElements(mouseX, mouseY, gui.getMinecraft().getRenderPartialTicks());
-            overlay.renderOverlayLayer(mouseX, mouseY, gui.getMinecraft().getRenderPartialTicks());
-            GlStateManager.translated(0, 0, -500);
+            RenderSystem.color4f(1, 1, 1, 1);
+            RenderSystem.translated(0, 0, 500);
+            overlay.renderElements(mouseX, mouseY, gui.getMinecraft().getDeltaFrameTime());
+            overlay.renderOverlayLayer(mouseX, mouseY, gui.getMinecraft().getDeltaFrameTime());
+            RenderSystem.translated(0, 0, -500);
         }
     }
 
@@ -58,10 +56,10 @@ public class GuiInGuiRenderer {
         if (isActiveScreen(gui) && overlay != null) {
             int mouseX = (int) getMouseX(gui);
             int mouseY = (int) getMouseY(gui);
-            GlStateManager.color4f(1, 1, 1, 1);
-            GlStateManager.translated(0, 0, 500);
-            overlay.renderOverlayLayer(mouseX, mouseY, gui.getMinecraft().getRenderPartialTicks());
-            GlStateManager.translated(0, 0, -500);
+            RenderSystem.color4f(1, 1, 1, 1);
+            RenderSystem.translated(0, 0, 500);
+            overlay.renderOverlayLayer(mouseX, mouseY, gui.getMinecraft().getDeltaFrameTime());
+            RenderSystem.translated(0, 0, -500);
         }
     }
 
@@ -129,21 +127,22 @@ public class GuiInGuiRenderer {
 
     //TODO Test these getters
     public double getMouseX(Screen gui) {
-        return gui.getMinecraft().mouseHelper.getMouseX() * gui.width / gui.getMinecraft().mainWindow.getWidth();
+        return gui.getMinecraft().mouseHandler.xpos() * gui.width / gui.getMinecraft().getWindow().getWidth();
     }
 
     public double getMouseY(Screen gui) {
-        return gui.width - gui.getMinecraft().mouseHelper.getMouseY() * gui.height / gui.getMinecraft().mainWindow.getHeight() - 1;
+        return gui.width - gui.getMinecraft().mouseHandler.ypos() * gui.height / gui.getMinecraft().getWindow().getHeight() - 1;
     }
 
     public boolean blockToolTip(Screen currentScreen) {
         return isActiveScreen(currentScreen) && overlay != null && overlay.isMouseOver(getMouseX(currentScreen), getMouseY(currentScreen));
     }
 
-    public List<Rectangle> getJeiExclusionAreas() {
-        Screen screen = Minecraft.getInstance().currentScreen;
+    public List<Rectangle2d> getJeiExclusionAreas() {
+        Screen screen = Minecraft.getInstance().screen;
         if (isActiveScreen(screen) && overlay != null && overlay.getDocBounds() != null) {
-            return Collections.singletonList(new Rectangle(overlay.getDocBounds())); //TODO remove redundant copy once JEI's fix is live.
+            Rectangle rect = overlay.getDocBounds();
+            return Collections.singletonList(new Rectangle2d(rect.x, rect.y, rect.width, rect.height)); //TODO remove redundant copy once JEI's fix is live.
         }
 
         return Collections.emptyList();

@@ -49,14 +49,14 @@ public class GuiPIConfig extends GuiPopUpDialogBase<GuiPIConfig> {
     public void reloadConfigProperties() {
         configList.clearElements();
         //Basic Settings
-        configList.addElement(new GuiLabel(TextFormatting.UNDERLINE + I18n.format("pi.config.basic_config")).setYSize(12).setShadow(false).setHoverableTextCol(hovering -> StyleHandler.getInt("user_dialogs." + TEXT_COLOUR.getName())));
+        configList.addElement(new GuiLabel(TextFormatting.UNDERLINE + I18n.get("pi.config.basic_config")).setYSize(12).setShadow(false).setHoverableTextCol(hovering -> StyleHandler.getInt("user_dialogs." + TEXT_COLOUR.getName())));
 
         addConfig(new ConfigProperty(this, "pi.config.open_style_settings").setAction(() -> styleEditor.toggleShown(true, 550)).setCloseOnClick(true));
 
-        addConfig(new ConfigProperty(this, () -> "pi.config.set_pi_language", () -> (LanguageManager.isCustomUserLanguageSet() ? "" : I18n.format("pi.lang.mc_default") + " ") + LanguageManager.LANG_NAME_MAP.get(LanguageManager.getUserLanguage())).setHoverText(I18n.format("pi.config.set_pi_language.info"), TextFormatting.GRAY + I18n.format("pi.config.set_pi_language_note.info")).setAction(this::openLanguageSelector));
+        addConfig(new ConfigProperty(this, () -> "pi.config.set_pi_language", () -> (LanguageManager.isCustomUserLanguageSet() ? "" : I18n.get("pi.lang.mc_default") + " ") + LanguageManager.LANG_NAME_MAP.get(LanguageManager.getUserLanguage())).setHoverText(I18n.get("pi.config.set_pi_language.info"), TextFormatting.GRAY + I18n.get("pi.config.set_pi_language_note.info")).setAction(this::openLanguageSelector));
 
-        addConfig(new ConfigProperty(this, () -> "pi.config.max_tabs", () -> String.valueOf(PIConfig.maxTabs)).setHoverText(I18n.format("pi.config.max_tabs.info")).setAction(() -> {
-            GuiTextFieldDialog dialog = new GuiTextFieldDialog(this, I18n.format("pi.config.max_tabs.title"));
+        addConfig(new ConfigProperty(this, () -> "pi.config.max_tabs", () -> String.valueOf(PIConfig.maxTabs)).setHoverText(I18n.get("pi.config.max_tabs.info")).setAction(() -> {
+            GuiTextFieldDialog dialog = new GuiTextFieldDialog(this, I18n.get("pi.config.max_tabs.title"));
             dialog.setXSize(200).setMaxLength(4096);
             dialog.addChild(new StyledGuiRect("user_dialogs").setPosAndSize(dialog));
             dialog.setTitleColour(StyleHandler.getInt("user_dialogs." + StyleHandler.StyleType.TEXT_COLOUR.getName()));
@@ -69,11 +69,11 @@ public class GuiPIConfig extends GuiPopUpDialogBase<GuiPIConfig> {
             dialog.showCenter(displayZLevel + 50);
         }));
 
-        addConfig(new ConfigProperty(this, () -> "pi.config.et_fluid", () -> PIConfig.etCheckFluid + "").setAction(() -> PIConfig.etCheckFluid = !PIConfig.etCheckFluid).setHoverText(I18n.format("pi.config.et_fluid.info")));
+        addConfig(new ConfigProperty(this, () -> "pi.config.et_fluid", () -> PIConfig.etCheckFluid + "").setAction(() -> PIConfig.etCheckFluid = !PIConfig.etCheckFluid).setHoverText(I18n.get("pi.config.et_fluid.info")));
 
 
         //Advanced Settings
-        configList.addElement(new GuiLabel(TextFormatting.UNDERLINE + I18n.format("pi.config.advanced_config")).setYSize(12).setShadow(false).setHoverableTextCol(hovering -> StyleHandler.getInt("user_dialogs." + TEXT_COLOUR.getName())));
+        configList.addElement(new GuiLabel(TextFormatting.UNDERLINE + I18n.get("pi.config.advanced_config")).setYSize(12).setShadow(false).setHoverableTextCol(hovering -> StyleHandler.getInt("user_dialogs." + TEXT_COLOUR.getName())));
 
 
         //region Edit Mode Settings
@@ -96,12 +96,12 @@ public class GuiPIConfig extends GuiPopUpDialogBase<GuiPIConfig> {
         }));
 
         if (PIConfig.editMode()) {
-            addConfig(new ConfigProperty(this, () -> "pi.config.edit_repo_loc", () -> PIConfig.editingRepoLoc.isEmpty() ? "[Not Set]" : PIConfig.editingRepoLoc).setHoverText(I18n.format("pi.config.edit_repo_loc.info")).setAction(() -> {
+            addConfig(new ConfigProperty(this, () -> "pi.config.edit_repo_loc", () -> PIConfig.editingRepoLoc.isEmpty() ? "[Not Set]" : PIConfig.editingRepoLoc).setHoverText(I18n.get("pi.config.edit_repo_loc.info")).setAction(() -> {
                 displayRepoSetDialog();
             }));
         }
 
-        addConfig(new ConfigProperty(this, () -> PIConfig.editMode() ? "pi.config.reload_from_disk" : "pi.config.reload_documentation").setHoverText(PIConfig.editMode() ? I18n.format("pi.config.reload_from_disk.info") : I18n.format("pi.config.reload_documentation.info")).setAction(DocumentationManager::checkAndReloadDocFiles));
+        addConfig(new ConfigProperty(this, () -> PIConfig.editMode() ? "pi.config.reload_from_disk" : "pi.config.reload_documentation").setHoverText(PIConfig.editMode() ? I18n.get("pi.config.reload_from_disk.info") : I18n.get("pi.config.reload_documentation.info")).setAction(DocumentationManager::checkAndReloadDocFiles));
 
         if (PIConfig.editMode()) {
             addConfig(new ConfigProperty(this, "pi.config.open_editor").setAction(PIGuiHelper::displayEditor));
@@ -116,7 +116,7 @@ public class GuiPIConfig extends GuiPopUpDialogBase<GuiPIConfig> {
     }
 
     private void displayRepoSetDialog() {
-        GuiTextFieldDialog dialog = new GuiTextFieldDialog(this, I18n.format("pi.config.edit_repo_select_title"));
+        GuiTextFieldDialog dialog = new GuiTextFieldDialog(this, I18n.get("pi.config.edit_repo_select_title"));
         dialog.setXSize(280).setMaxLength(4096);
         dialog.addChild(new StyledGuiRect("user_dialogs").setPosAndSize(dialog));
         dialog.setTitleColour(StyleHandler.getInt("user_dialogs." + StyleHandler.StyleType.TEXT_COLOUR.getName()));
@@ -143,13 +143,13 @@ public class GuiPIConfig extends GuiPopUpDialogBase<GuiPIConfig> {
         addChild(new StyledGuiRect("user_dialogs").setPosAndSize(this));
 
         // Window Title
-        addChild(new GuiLabel(TextFormatting.UNDERLINE + I18n.format("pi.config.pi_configuration.title"))//
+        addChild(new GuiLabel(TextFormatting.UNDERLINE + I18n.get("pi.config.pi_configuration.title"))//
                 .setPos(this).setSize(xSize(), 10).translate(4, 3).setHoverableTextCol(hovering -> StyleHandler.getInt("user_dialogs." + TEXT_COLOUR.getName())).setShadow(false).setAlignment(GuiAlign.CENTER));
 
         //Close Button
         GuiButton close = new StyledGuiButton("user_dialogs.button_style").setPos(this).translate(xSize() - 14, 3).setSize(11, 11);
         close.onPressed(this::close);
-        close.setHoverText(I18n.format("pi.button.close"));
+        close.setHoverText(I18n.get("pi.button.close"));
         close.addChild(new GuiTexture(64, 16, 5, 5, PITextures.PI_PARTS).setRelPos(3, 3));
         addChild(close);
 
@@ -261,7 +261,7 @@ public class GuiPIConfig extends GuiPopUpDialogBase<GuiPIConfig> {
                     gui.close();
                 }
                 if (playSound) {
-                    mc.getSoundHandler().play(SimpleSound.master(SoundEvents.UI_BUTTON_CLICK, 1.0F));
+                    mc.getSoundManager().play(SimpleSound.forUI(SoundEvents.UI_BUTTON_CLICK, 1.0F));
                 }
                 return true;
             }
@@ -274,7 +274,7 @@ public class GuiPIConfig extends GuiPopUpDialogBase<GuiPIConfig> {
             buttonRenderer.render(this, mouseOver);
 
             if (unlocalizedNameSupplier != null) {
-                drawString(fontRenderer, TextFormatting.UNDERLINE + I18n.format(unlocalizedNameSupplier.get()), xPos() + 4, yPos() + 3, buttonProps.textColour());
+                drawString(fontRenderer, TextFormatting.UNDERLINE + I18n.get(unlocalizedNameSupplier.get()), xPos() + 4, yPos() + 3, buttonProps.textColour());
             }
             if (valueSupplier != null) {
                 drawString(fontRenderer, valueSupplier.get(), xPos() + 4, yPos() + 15, buttonProps.textColourHover());
@@ -302,7 +302,7 @@ public class GuiPIConfig extends GuiPopUpDialogBase<GuiPIConfig> {
         });
 
         //Add Items
-        String doTrans = I18n.format("pi.lang.disable_override");
+        String doTrans = I18n.get("pi.lang.disable_override");
         if (LanguageManager.isCustomUserLanguageSet()) {
             langSelect.addItem(doTrans);
         }

@@ -1,13 +1,13 @@
 package com.brandon3055.projectintelligence.client.gui.guielements;
 
-import com.brandon3055.brandonscore.client.gui.modulargui.IModularGui;
 import com.brandon3055.brandonscore.client.gui.modulargui.GuiElement;
+import com.brandon3055.brandonscore.client.gui.modulargui.IModularGui;
 import com.brandon3055.brandonscore.lib.FileDownloadManager;
-import com.brandon3055.brandonscore.lib.PairKV;
+import com.brandon3055.brandonscore.lib.Pair;
 import com.brandon3055.brandonscore.utils.MathUtils;
 import com.brandon3055.projectintelligence.client.StyleHandler;
 import com.brandon3055.projectintelligence.docmanagement.PIUpdateManager;
-import com.mojang.blaze3d.platform.GlStateManager;
+import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.resources.I18n;
 
@@ -46,9 +46,9 @@ public class GuiActiveDownloads extends GuiElement<GuiActiveDownloads> {
         this.setXSize(200);
         super.renderElement(minecraft, mouseX, mouseY, partialTicks);
 
-        drawCenteredString(fontRenderer, I18n.format("pi.update_manager.title"), xPos() + (xSize() / 2F), yPos() + 2, textColour, false);
+        drawCenteredString(fontRenderer, I18n.get("pi.update_manager.title"), xPos() + (xSize() / 2F), yPos() + 2, textColour, false);
 
-        String status = I18n.format(PIUpdateManager.updateStage.getUnlocalizedName());
+        String status = I18n.get(PIUpdateManager.updateStage.getUnlocalizedName());
         if (PIUpdateManager.updateStage != INACTIVE && PIUpdateManager.updateStage != RELOAD_DOCUMENTATION) {
             status += " " + MathUtils.round(overallProgress * 100D, 100) + "%";
         }
@@ -62,21 +62,21 @@ public class GuiActiveDownloads extends GuiElement<GuiActiveDownloads> {
                 int colour = info.failed ? 0xAA0000 : info.progress == 1 ? 0x55FF55 : 0xFFFF55;
 
                 String progress = MathUtils.round(info.progress * 100, 100) + "%";
-                int pw = fontRenderer.getStringWidth(progress) + 3;
+                int pw = (int) fontRenderer.getSplitter().stringWidth(progress) + 3;
                 drawString(fontRenderer, progress, maxXPos() - pw, y, colour);
 
-                File file = PIUpdateManager.tempFileToFileMap.getOrDefault(info.file, new PairKV<>("", info.file)).getValue();
+                File file = PIUpdateManager.tempFileToFileMap.getOrDefault(info.file, new Pair<>("", info.file)).value();
                 String fileName = file.getName();
                 int fileWidth = xSize() - pw - 6;
-                if (fontRenderer.getStringWidth(fileName) > fileWidth){
-                    fileName = fontRenderer.trimStringToWidth(fileName, fileWidth - 4) + "..";
+                if (fontRenderer.getSplitter().stringWidth(fileName) > fileWidth){
+                    fileName = fontRenderer.plainSubstrByWidth(fileName, fileWidth - 4) + "..";
                 }
                 drawString(fontRenderer, fileName, xPos() + 4, y, colour);
 
                 y += 9;
             }
         }
-        GlStateManager.color4f(1, 1, 1, 1);
+        RenderSystem.color4f(1, 1, 1, 1);
     }
 
     @Override

@@ -22,7 +22,8 @@ import com.brandon3055.projectintelligence.docmanagement.LanguageManager.PageLan
 import com.brandon3055.projectintelligence.docmanagement.ModStructurePage;
 import com.brandon3055.projectintelligence.utils.LogHelper;
 import com.google.gson.JsonObject;
-import com.mojang.blaze3d.platform.GlStateManager;
+
+import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screen.Screen;
 
@@ -119,16 +120,16 @@ public class PageButton extends GuiButton {
             langButton = new GuiButton().setSize(12, 12).setXPosMod((guiButton, integer) -> label.maxXPos() - 14).setYPos(showVerified ? maxYPos() - 14 : yPos() + 1);
             langButton.setBorderColours(0, 0xFF004080).setFillColour(0);
             langButton.zOffset += 10;
-            String[] error = {I18n.format("pi.error.page_not_localized.info"), I18n.format("pi.error.page_not_localized_click_here.info"), TextFormatting.GRAY + I18n.format("pi.error.page_not_localized_alt_version.info")};
-            langButton.setHoverTextArray(e -> {
+            String[] error = {I18n.get("pi.error.page_not_localized.info"), I18n.get("pi.error.page_not_localized_click_here.info"), TextFormatting.GRAY + I18n.get("pi.error.page_not_localized_alt_version.info")};
+            langButton.setHoverText(e -> {
                 boolean pageLangOverriden = LanguageManager.isPageLangOverridden(page.getPageURI());
                 boolean modLangOverriden = LanguageManager.isModLangOverridden(page.getModid());
                 if (pageLangOverriden) {
                     String lang = LanguageManager.getPageLanguage(page.getPageURI());
-                    return new String[]{I18n.format("pi.button.language_override_page.info"), TextFormatting.GOLD + LanguageManager.LANG_NAME_MAP.get(lang) + " [" + lang + "]"};
+                    return new String[]{I18n.get("pi.button.language_override_page.info"), TextFormatting.GOLD + LanguageManager.LANG_NAME_MAP.get(lang) + " [" + lang + "]"};
                 } else if (modLangOverriden) {
                     String lang = LanguageManager.getModLanguage(page.getModid());
-                    return new String[]{I18n.format("pi.button.language_override_mod.info"), TextFormatting.GOLD + LanguageManager.LANG_NAME_MAP.get(lang) + " [" + lang + "]"};
+                    return new String[]{I18n.get("pi.button.language_override_mod.info"), TextFormatting.GOLD + LanguageManager.LANG_NAME_MAP.get(lang) + " [" + lang + "]"};
                 } else {
                     return error;
                 }
@@ -151,7 +152,7 @@ public class PageButton extends GuiButton {
                 GuiTexture verified = new GuiTexture(72, 16, 5, 5, PITextures.PI_PARTS);
                 verified.setYPos(yPos() + 2);
                 verified.setXPosMod(() -> maxXPos() - 8);
-                verified.setHoverText(TextFormatting.GREEN + I18n.format("pi.pagebtn.verified"), TextFormatting.BLUE + I18n.format("pi.pagebtn.verified.info"));
+                verified.setHoverText(TextFormatting.GREEN + I18n.get("pi.pagebtn.verified"), TextFormatting.BLUE + I18n.get("pi.pagebtn.verified.info"));
                 addChild(verified);
             }
 
@@ -161,17 +162,17 @@ public class PageButton extends GuiButton {
                     @Override
                     public void renderElement(Minecraft minecraft, int mouseX, int mouseY, float partialTicks) {
                         super.renderElement(minecraft, mouseX, mouseY, partialTicks);
-                        GlStateManager.pushMatrix();
-                        GlStateManager.translated(label.xPos() + 1, PageButton.this.yPos() + 1, 0);
-                        GlStateManager.scaled(0.5, 0.5, 1);
+                        RenderSystem.pushMatrix();
+                        RenderSystem.translated(label.xPos() + 1, PageButton.this.yPos() + 1, 0);
+                        RenderSystem.scaled(0.5, 0.5, 1);
                         drawString(fontRenderer, text, 0, 0, 0xFF5050, pageButtonProps.textShadow());
-                        GlStateManager.popMatrix();
+                        RenderSystem.popMatrix();
                     }
                 };
                 versOverLabel.setYPos(yPos() + 1);
                 versOverLabel.setXPosMod(() -> label.xPos() + 1);
-                versOverLabel.setSize(fontRenderer.getStringWidth(text) / 2, 4);
-                versOverLabel.setHoverText(TextFormatting.RED + I18n.format("pi.pagebtn.version_override"), TextFormatting.BLUE + I18n.format("pi.pagebtn.version_override.info"));
+                versOverLabel.setSize((int) (fontRenderer.getSplitter().stringWidth(text) / 2), 4);
+                versOverLabel.setHoverText(TextFormatting.RED + I18n.get("pi.pagebtn.version_override"), TextFormatting.BLUE + I18n.get("pi.pagebtn.version_override.info"));
                 versOverLabel.onPressed(() -> openVersionSelector());
                 addChild(versOverLabel);
             }
@@ -187,13 +188,13 @@ public class PageButton extends GuiButton {
 
         //Load Icons
         for (JsonObject iconObj : page.getIcons()) {
-            if (!JSONUtils.isString(iconObj, "type") || !JSONUtils.isString(iconObj, "icon_string")) {
+            if (!JSONUtils.isStringValue(iconObj, "type") || !JSONUtils.isStringValue(iconObj, "icon_string")) {
                 invalidIcons = true;
                 continue;
             }
 
             ContentInfo ci = ContentInfo.fromIconObj(iconObj);
-            String type = JSONUtils.getString(iconObj, "type");
+            String type = JSONUtils.getAsString(iconObj, "type");
 
             final GuiElement icon;
 
@@ -211,15 +212,15 @@ public class PageButton extends GuiButton {
                     Entity entity = null;
 
                     if (ci.entity.startsWith("player:")) {
-                        entity = GuiEntityRenderer.createRenderPlayer(mc.world, ci.entity.replaceFirst("player:", ""));
+                        entity = GuiEntityRenderer.createRenderPlayer(mc.level, ci.entity.replaceFirst("player:", ""));
                     } else {
                         EntityType eType = ForgeRegistries.ENTITIES.getValue(new ResourceLocation(ci.entity));
-                        entity = eType == null ? null : eType.create(mc.world);
+                        entity = eType == null ? null : eType.create(mc.level);
                     }
 
                     if (entity != null) {
                         for (int i = 0; i < 6; i++) {
-                            entity.setItemStackToSlot(EquipmentSlotType.values()[i], ci.entityInventory[i > 1 ? 7 - i : i]);
+                            entity.setItemSlot(EquipmentSlotType.values()[i], ci.entityInventory[i > 1 ? 7 - i : i]);
                         }
                     }
 
@@ -289,7 +290,7 @@ public class PageButton extends GuiButton {
             if (data != null && data.matchLang != null) {
                 PageLangData matches = LanguageManager.getLangData(page.getPageURI(), data.matchLang);
                 if (matches != null && matches.pageRev > data.matchRev) {
-                    versMissMatch.setHoverText(I18n.format("pi.error.page_lang_outdated", matches.lang));
+                    versMissMatch.setHoverText(I18n.get("pi.error.page_lang_outdated", matches.lang));
                 } else {
                     versMissMatch.setEnabled(false);
                 }
@@ -308,34 +309,34 @@ public class PageButton extends GuiButton {
         //Open Context Menu
         if (mouseButton == 1) {
 
-            StyledSelectDialog<ContextMenuItem> context = new StyledSelectDialog<>(langButton, "user_dialogs", I18n.format("pi.page.cm.page_options"));
+            StyledSelectDialog<ContextMenuItem> context = new StyledSelectDialog<>(langButton, "user_dialogs", I18n.get("pi.page.cm.page_options"));
             context.setSelectionListener(ContextMenuItem::onClicked);
 
-            ContextMenuItem menuItem = new ContextMenuItem(I18n.format("pi.page.cm.open_new_tab"));
+            ContextMenuItem menuItem = new ContextMenuItem(I18n.get("pi.page.cm.open_new_tab"));
             menuItem.setAction(() -> controller.openPage(page.getPageURI(), true));
             context.addItem(menuItem);
 
-            menuItem = new ContextMenuItem(I18n.format("pi.page.cm.override_lang"));
+            menuItem = new ContextMenuItem(I18n.get("pi.page.cm.override_lang"));
             menuItem.setAction(() -> openLanguageSelector(false));
             context.addItem(menuItem);
 
-            menuItem = new ContextMenuItem(I18n.format("pi.page.cm.override_mod_lang"));
+            menuItem = new ContextMenuItem(I18n.get("pi.page.cm.override_mod_lang"));
             menuItem.setAction(() -> openLanguageSelector(true));
             context.addItem(menuItem);
 
-            menuItem = new ContextMenuItem(I18n.format("pi.page.cm.set_home_page"));
+            menuItem = new ContextMenuItem(I18n.get("pi.page.cm.set_home_page"));
             menuItem.setAction(() -> {
                 PIConfig.setHomePage(page.getPageURI());
                 controller.onActivePageChange();
             });
             context.addItem(menuItem);
 
-            menuItem = new ContextMenuItem(I18n.format("pi.page.cm.override_mod_version"));
+            menuItem = new ContextMenuItem(I18n.get("pi.page.cm.override_mod_version"));
             menuItem.setAction(() -> openVersionSelector());
             context.addItem(menuItem);
 
             if (PIConfig.editMode() || BrandonsCore.inDev) {
-                menuItem = new ContextMenuItem(I18n.format("Copy page URI"));
+                menuItem = new ContextMenuItem(I18n.get("Copy page URI"));
                 menuItem.setAction(() -> Utils.setClipboardString(page.getPageURI()));
                 context.addItem(menuItem);
             }
@@ -376,11 +377,11 @@ public class PageButton extends GuiButton {
 
         if (page.isHidden() && PIConfig.editMode()) {
             drawColouredRect(xPos() + 1, yPos() + 1, xSize() - 2, ySize() - 2, 0xA0000000);
-            GlStateManager.pushMatrix();
-            GlStateManager.translated(xPos() + 1, yPos() + 1, 0);
-            GlStateManager.scaled(0.62, 0.62, 0.5);
+            RenderSystem.pushMatrix();
+            RenderSystem.translated(xPos() + 1, yPos() + 1, 0);
+            RenderSystem.scaled(0.62, 0.62, 0.5);
             drawString(fontRenderer, "Hidden button. (only visible in edit mode)", 0, 0, 0xFF5050, false);
-            GlStateManager.popMatrix();
+            RenderSystem.popMatrix();
         }
 
         super.renderElement(mc, mouseX, mouseY, partialTicks);
@@ -406,8 +407,8 @@ public class PageButton extends GuiButton {
     public void openLanguageSelector(boolean mod) {
         LogHelper.dev("Lang Selector");
 
-        StyledSelectDialog<String> langSelect = new StyledSelectDialog<>(langButton, "user_dialogs", I18n.format("pi.popup.select_language"));
-        String doTrans = I18n.format("pi.lang.disable_override");
+        StyledSelectDialog<String> langSelect = new StyledSelectDialog<>(langButton, "user_dialogs", I18n.get("pi.popup.select_language"));
+        String doTrans = I18n.get("pi.lang.disable_override");
 
         //Add Search Box
         GuiTextField filter = new GuiTextField();
@@ -456,8 +457,8 @@ public class PageButton extends GuiButton {
         try {
             LogHelper.dev("Version Selector");
 
-            StyledSelectDialog<String> versionSelect = new StyledSelectDialog<>(langButton, "user_dialogs", I18n.format("pi.popup.select_version"));
-            String doTrans = I18n.format("pi.lang.disable_override");
+            StyledSelectDialog<String> versionSelect = new StyledSelectDialog<>(langButton, "user_dialogs", I18n.get("pi.popup.select_version"));
+            String doTrans = I18n.get("pi.lang.disable_override");
 
             //Add Search Box
             GuiTextField filter = new GuiTextField();

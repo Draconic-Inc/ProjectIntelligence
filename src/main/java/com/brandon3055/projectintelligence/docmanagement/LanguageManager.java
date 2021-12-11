@@ -399,7 +399,7 @@ public class LanguageManager {
      */
     private static String mcLanguage() {
         net.minecraft.client.resources.LanguageManager langManager = Minecraft.getInstance().getLanguageManager();
-        return langManager.getCurrentLanguage().getCode();
+        return langManager.getSelected().getCode();
     }
 
     //endregion

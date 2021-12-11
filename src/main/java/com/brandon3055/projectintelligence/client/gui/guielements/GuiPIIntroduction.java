@@ -22,14 +22,13 @@ import com.brandon3055.projectintelligence.client.gui.PIConfig;
 import com.brandon3055.projectintelligence.client.gui.PIGuiContainer;
 import com.brandon3055.projectintelligence.client.gui.PIPartRenderer;
 import com.brandon3055.projectintelligence.client.keybinding.KeyInputHandler;
-import com.mojang.blaze3d.platform.GlStateManager;
+import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.client.resources.I18n;
 import org.lwjgl.opengl.GL11;
 
 import java.awt.*;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedList;
@@ -54,7 +53,7 @@ public class GuiPIIntroduction extends GuiElement<GuiPIIntroduction> {
         screens.add(new InfoScreen(this, "pi.info_screen.welcome.title", "pi.info_screen.welcome.text").setSize(250, 200));
         screens.add(new InfoScreen(this, "pi.info_screen.guide_intro.title", "pi.info_screen.guide_intro.text").setSize(250, 120));
         screens.add(new OverviewScreen(this, "pi.info_screen.basic_overview.title", "pi.info_screen.basic_overview.text").setSize(150, 90));
-        screens.add(new InfoScreen(this, "pi.info_screen.pi_interaction.title", "pi.info_screen.pi_interaction.text", KeyInputHandler.openPI.getLocalizedName(), KeyInputHandler.etGUI.getLocalizedName(), KeyInputHandler.etWorld.getLocalizedName()).setSize(250, 200));
+        screens.add(new InfoScreen(this, "pi.info_screen.pi_interaction.title", "pi.info_screen.pi_interaction.text", KeyInputHandler.openPI.getTranslatedKeyMessage().getString(), KeyInputHandler.etGUI.getTranslatedKeyMessage().getString(), KeyInputHandler.etWorld.getTranslatedKeyMessage().getString()).setSize(250, 200));
         screens.add(new StyleScreen(this, "pi.info_screen.ui_style.title", "pi.info_screen.ui_style.text").setSize(250, 100));
         screens.add(new InfoScreen(this, "pi.info_screen.contributing.title", "pi.info_screen.contributing.text").setSize(250, 100));
     }
@@ -87,7 +86,7 @@ public class GuiPIIntroduction extends GuiElement<GuiPIIntroduction> {
     private void close(boolean showLater) {
         if (showLater) {
             PIConfig.showTutorialLater = true;
-            GuiNotifications.addNotification(I18n.format("pi.notification.show_tutorial_later.txt"), 5);
+            GuiNotifications.addNotification(I18n.get("pi.notification.show_tutorial_later.txt"), 5);
         }
         else {
             PIConfig.tutorialDisplayed = true;
@@ -131,8 +130,8 @@ public class GuiPIIntroduction extends GuiElement<GuiPIIntroduction> {
 
         private InfoScreen(GuiPIIntroduction parent, String unLocalTitle, String unLocalInfo, Object... localParamaters) {
             this.parent = parent;
-            this.title = new GuiLabel(I18n.format(unLocalTitle));
-            this.info = new GuiLabel(I18n.format(unLocalInfo, localParamaters).replace("  ", "\n\n"));
+            this.title = new GuiLabel(I18n.get(unLocalTitle));
+            this.info = new GuiLabel(I18n.get(unLocalInfo, localParamaters).replace("  ", "\n\n"));
         }
 
         @Override
@@ -154,11 +153,11 @@ public class GuiPIIntroduction extends GuiElement<GuiPIIntroduction> {
             infoContainer.addElement(info);
 
             int index = parent.screens.indexOf(this);
-            addChild(nextButton = new StyledGuiButton(buttonRenderer)).setText(I18n.format(index == parent.screens.size() - 1 ? "pi.button.close" : "pi.button.next"));
-            addChild(prevButton = new StyledGuiButton(buttonRenderer)).setText(I18n.format(index == 0 ? "pi.button.skip" : "pi.button.previous"));
+            addChild(nextButton = new StyledGuiButton(buttonRenderer)).setText(I18n.get(index == parent.screens.size() - 1 ? "pi.button.close" : "pi.button.next"));
+            addChild(prevButton = new StyledGuiButton(buttonRenderer)).setText(I18n.get(index == 0 ? "pi.button.skip" : "pi.button.previous"));
 
             if (index == 0 && PIConfig.tutorialDisplayed && !PIConfig.showTutorialLater) {
-                later = new StyledGuiButton(buttonRenderer).setText(I18n.format("pi.button.show_me_later"));
+                later = new StyledGuiButton(buttonRenderer).setText(I18n.get("pi.button.show_me_later"));
                 later.onPressed(() -> parent.close(true));
                 later.setTrim(false);
                 addChild(later);
@@ -288,13 +287,13 @@ public class GuiPIIntroduction extends GuiElement<GuiPIIntroduction> {
             public void renderElement(Minecraft minecraft, int mouseX, int mouseY, float partialTicks) {
                 super.renderElement(minecraft, mouseX, mouseY, partialTicks);
 
-                GlStateManager.disableDepthTest();
+                RenderSystem.disableDepthTest();
                 bindTexture(PITextures.PI_PARTS);
                 CCRenderState ccrs = CCRenderState.instance();
                 ccrs.startDrawing(GL11.GL_QUADS, DefaultVertexFormats.POSITION_TEX);
                 activeModel.render(ccrs);
                 ccrs.draw();
-                GlStateManager.enableDepthTest();
+                RenderSystem.enableDepthTest();
             }
 
             public InfoArrow setHighlight(Rectangle highlight) {
@@ -312,7 +311,7 @@ public class GuiPIIntroduction extends GuiElement<GuiPIIntroduction> {
                     if (highlight != null) {
                         drawColouredRect(highlight.x, highlight.y, highlight.width, highlight.height, 0x4000FF00);
                     }
-                    drawHoveringText(Collections.singletonList(I18n.format(info)), mouseX, mouseY, fontRenderer, screenWidth, screenHeight);
+                    drawHoveringText(Collections.singletonList(I18n.get(info)), mouseX, mouseY, fontRenderer, screenWidth, screenHeight);
                     return true;
                 }
                 return super.renderOverlayLayer(minecraft, mouseX, mouseY, partialTicks);
@@ -350,7 +349,7 @@ public class GuiPIIntroduction extends GuiElement<GuiPIIntroduction> {
         public void addChildElements() {
             super.addChildElements();
             nextStyle = new StyledGuiButton(buttonRenderer);
-            nextStyle.setText(I18n.format("pi.button.next_style"));
+            nextStyle.setText(I18n.get("pi.button.next_style"));
             nextStyle.onPressed(this::nextStyle);
             nextStyle.setSize(80, 14);
             addChild(nextStyle);

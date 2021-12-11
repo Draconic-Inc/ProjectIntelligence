@@ -1,19 +1,18 @@
 package com.brandon3055.projectintelligence.client.gui;
 
-import com.brandon3055.brandonscore.client.gui.modulargui.guielements.GuiDraggable;
+import com.brandon3055.brandonscore.client.gui.modulargui.guielements.GuiManipulable;
 import com.brandon3055.brandonscore.client.gui.modulargui.guielements.GuiPopupDialogs;
 import com.brandon3055.projectintelligence.client.DisplayController;
 import com.brandon3055.projectintelligence.client.PIGuiHelper;
 import com.brandon3055.projectintelligence.client.gui.guielements.*;
 import com.brandon3055.projectintelligence.client.keybinding.KeyInputHandler;
 import com.brandon3055.projectintelligence.docmanagement.PIUpdateManager;
+import com.mojang.blaze3d.matrix.MatrixStack;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.resources.I18n;
 import net.minecraft.client.util.InputMappings;
 import net.minecraft.util.text.TranslationTextComponent;
-
-import java.io.IOException;
 
 /**
  * Created by brandon3055 on 7/25/2018.
@@ -56,9 +55,9 @@ public class GuiProjectIntelligence extends Screen {
         updateSizeAndPos(false);
 
         if (!PIConfig.downloadsAllowed) {
-            GuiPopupDialogs dialog = GuiPopupDialogs.createDialog(container.getPartContainer(), GuiPopupDialogs.DialogType.OK_CANCEL_OPTION, I18n.format("pi.internet_access_info.txt"));
+            GuiPopupDialogs dialog = GuiPopupDialogs.createDialog(container.getPartContainer(), GuiPopupDialogs.DialogType.OK_CANCEL_OPTION, I18n.get("pi.internet_access_info.txt"));
             dialog.setCloseOnOutsideClick(false);
-            dialog.cancelButton.setText(I18n.format("pi.button.more_information"));
+            dialog.cancelButton.setText(I18n.get("pi.button.more_information"));
             dialog.setOkListener(() -> {
                 PIConfig.downloadsAllowed = true;
                 PIConfig.save();
@@ -66,9 +65,9 @@ public class GuiProjectIntelligence extends Screen {
                 checkFirstLaunch();
             });
             dialog.setCancelListener(() -> {
-                GuiPopupDialogs dialog2 = GuiPopupDialogs.createDialog(container.getPartContainer(), GuiPopupDialogs.DialogType.OK_CANCEL_OPTION, I18n.format("pi.internet_access_more_info.txt"));
+                GuiPopupDialogs dialog2 = GuiPopupDialogs.createDialog(container.getPartContainer(), GuiPopupDialogs.DialogType.OK_CANCEL_OPTION, I18n.get("pi.internet_access_more_info.txt"));
                 dialog2.setCloseOnOutsideClick(false);
-                dialog2.cancelButton.setText(I18n.format("pi.button.deny_access"));
+                dialog2.cancelButton.setText(I18n.get("pi.button.deny_access"));
                 dialog2.setOkListener(() -> {
                     PIConfig.downloadsAllowed = true;
                     PIConfig.save();
@@ -76,7 +75,7 @@ public class GuiProjectIntelligence extends Screen {
                     checkFirstLaunch();
                 });
                 dialog2.setCancelListener(() -> {
-                    GuiPopupDialogs dialog3 = GuiPopupDialogs.createDialog(container.getPartContainer(), GuiPopupDialogs.DialogType.OK_OPTION, I18n.format("pi.internet_access_denied.txt"));
+                    GuiPopupDialogs dialog3 = GuiPopupDialogs.createDialog(container.getPartContainer(), GuiPopupDialogs.DialogType.OK_OPTION, I18n.get("pi.internet_access_denied.txt"));
                     dialog3.setCloseOnOutsideClick(false);
                     dialog3.setOkListener(() -> {
                         closeGui();
@@ -108,9 +107,9 @@ public class GuiProjectIntelligence extends Screen {
 
     private void closeGui() {
         container.dispose();
-        minecraft.displayGuiScreen(parent);
-        if (minecraft.currentScreen == null) {
-            minecraft.setGameFocused(true);
+        minecraft.setScreen(parent);
+        if (minecraft.screen == null) {
+            minecraft.popGuiLayer();
         }
     }
 
@@ -137,14 +136,14 @@ public class GuiProjectIntelligence extends Screen {
         }
     }
 
-    private void savePosition(GuiDraggable draggable) {
+    private void savePosition(GuiManipulable draggable) {
         PIConfig.screenPosOverride = true;
         PIConfig.screenPosX = draggable.xPos();
         PIConfig.screenPosY = draggable.yPos();
         PIConfig.save();
     }
 
-    private void validatePosition(GuiDraggable draggable) {
+    private void validatePosition(GuiManipulable draggable) {
         boolean invalid = false;
         if (PIConfig.screenMode == 0) {
             draggable.setPos(0, 0);
@@ -176,7 +175,7 @@ public class GuiProjectIntelligence extends Screen {
     }
 
     public static GuiPartMenu getMenuPart() {
-        Screen screen = Minecraft.getInstance().currentScreen;
+        Screen screen = Minecraft.getInstance().screen;
         if (screen instanceof GuiProjectIntelligence) {
             return ((GuiProjectIntelligence) screen).container.getMenu();
         }
@@ -236,7 +235,7 @@ public class GuiProjectIntelligence extends Screen {
     @Override
     public boolean charTyped(char charTyped, int charCode) {
         boolean captured = container.charTyped(charTyped, charCode);
-        InputMappings.Input key = InputMappings.Type.MOUSE.getOrMakeInput(charCode);
+        InputMappings.Input key = InputMappings.Type.MOUSE.getOrCreate(charCode);
         if (!captured && KeyInputHandler.openPI.isActiveAndMatches(key)) {
             closeGui();
         }
@@ -258,9 +257,9 @@ public class GuiProjectIntelligence extends Screen {
     //endregion
 
     @Override
-    public void render(int mouseX, int mouseY, float partialTicks) {
+    public void render(MatrixStack mStack, int mouseX, int mouseY, float partialTicks) {
         container.renderElements(mouseX, mouseY, partialTicks);
-        super.render(mouseX, mouseY, partialTicks);
+        super.render(mStack, mouseX, mouseY, partialTicks);
         container.renderOverlayLayer(mouseX, mouseY, partialTicks);
     }
 

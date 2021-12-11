@@ -16,6 +16,7 @@ import com.brandon3055.brandonscore.utils.Utils;
 import com.brandon3055.projectintelligence.client.PITextures;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
+import com.mojang.blaze3d.matrix.MatrixStack;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.entity.Entity;
@@ -31,7 +32,6 @@ import net.minecraft.inventory.container.Container;
 import net.minecraft.inventory.container.ContainerType;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.datafix.fixes.SpawnEggNames;
 import net.minecraft.util.text.StringTextComponent;
 import net.minecraft.util.text.TextFormatting;
 import net.minecraftforge.fluids.*;
@@ -40,7 +40,6 @@ import net.minecraftforge.registries.ForgeRegistries;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import java.io.IOException;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Consumer;
@@ -86,8 +85,8 @@ public class GuiContentSelect extends ModularGuiContainer<Container> {
         this.allowedTypes = Sets.newHashSet(selectableTypes);
         this.selectedType = contentInfo != null && ArrayUtils.contains(selectableTypes, contentInfo.type) ? contentInfo.type : selectableTypes[0];
         this.contentInfo = contentInfo == null ? new ContentInfo(selectedType) : contentInfo;
-        this.xSize = 224;
-        this.ySize = 230;
+        this.imageWidth = 224;
+        this.imageHeight = 230;
         this.selectMode = selectMode;
         if (selectMode == SelectMode.ICON && contentInfo == null) {
             this.contentInfo.drawSlot = true;
@@ -110,7 +109,7 @@ public class GuiContentSelect extends ModularGuiContainer<Container> {
 
     @Override
     public void addElements(GuiElementManager manager) {
-        GuiTexture background = GuiTexture.newBCTexture(xSize, ySize).setPos(getGuiLeft(), getGuiTop());
+        GuiTexture background = GuiTexture.newBCTexture(imageWidth, imageHeight).setPos(getGuiLeft(), getGuiTop());
         manager.addChild(background);
 
         if (allowedTypes.size() > 1) {
@@ -190,7 +189,7 @@ public class GuiContentSelect extends ModularGuiContainer<Container> {
                         textField.setText(textField.getText().replace("\\n", "\n"));
                     }
                     contentInfo.hover_text = textField.getText();
-                    entityRenderer.setHoverTextArray(element -> contentInfo.hover_text.isEmpty() ? new String[]{} : contentInfo.hover_text.split("\n"));
+                    entityRenderer.setHoverText(element -> contentInfo.hover_text.isEmpty() ? new String[]{} : contentInfo.hover_text.split("\n"));
                 };
                 container.addChild(newTextField("Hover text", change, 0, 0).setText(contentInfo.hover_text)).setHoverText("Allows you to add mouse hover text to this entity. Accepts \\n for new lines and the select character \\\u00a7 for formatting");
                 container.addChild(newButton("Entity tracks mouse movement", (guiButton) -> entityRenderer.setTrackMouse(contentInfo.trackMouse = !contentInfo.trackMouse), () -> contentInfo.trackMouse, 2));
@@ -278,7 +277,7 @@ public class GuiContentSelect extends ModularGuiContainer<Container> {
                     textField.setText(textField.getText().replace("\\n", "\n"));
                 }
                 contentInfo.hover_text = textField.getText();
-                entityRenderer.setHoverTextArray(element -> contentInfo.hover_text.isEmpty() ? new String[]{} : contentInfo.hover_text.split("\n"));
+                entityRenderer.setHoverText(element -> contentInfo.hover_text.isEmpty() ? new String[]{} : contentInfo.hover_text.split("\n"));
             };
             container.addChild(newTextField("Hover text", change, 7, 0).setText(contentInfo.hover_text)).setHoverText("Allows you to add mouse hover text to this entity. Accepts \\n for new lines and the select character \\\u00a7 for formatting");
             container.addChild(newTextField("Link pageURI or web address (optional)", textField -> contentInfo.linkTarget = textField.getText(), 9, 0).setText(contentInfo.hover_text)).setHoverText("Allows you to add a link to be opened when this image is clicked.");
@@ -437,22 +436,22 @@ public class GuiContentSelect extends ModularGuiContainer<Container> {
         entityRenderer.setEnabled(true);
         entityInvalid = false;
         if (contentInfo.entity.startsWith("player:") && !contentInfo.entity.replaceFirst("player:", "").isEmpty()) {
-            PlayerEntity player = GuiEntityRenderer.createRenderPlayer(minecraft.world, contentInfo.entity.replaceFirst("player:", ""));
+            PlayerEntity player = GuiEntityRenderer.createRenderPlayer(minecraft.level, contentInfo.entity.replaceFirst("player:", ""));
             entityRenderer.setEntity(player);
             entityRenderer.setDrawName(contentInfo.drawName);
             for (int i = 0; i < 6; i++) {
-                player.setItemStackToSlot(EquipmentSlotType.values()[i], contentInfo.entityInventory[i > 1 ? 7 - i : i]);
+                player.setItemSlot(EquipmentSlotType.values()[i], contentInfo.entityInventory[i > 1 ? 7 - i : i]);
             }
         } else {
             EntityType type = ForgeRegistries.ENTITIES.getValue(new ResourceLocation(contentInfo.entity));
-            Entity entity = type == null ? null : type.create(minecraft.world);
+            Entity entity = type == null ? null : type.create(minecraft.level);
 
             if (entity == null) {
                 entityRenderer.setEnabled(false);
                 entityInvalid = true;
             } else {
                 for (int i = 0; i < 6; i++) {
-                    entity.setItemStackToSlot(EquipmentSlotType.values()[i], contentInfo.entityInventory[i > 1 ? 7 - i : i]);
+                    entity.setItemSlot(EquipmentSlotType.values()[i], contentInfo.entityInventory[i > 1 ? 7 - i : i]);
                 }
                 entityRenderer.setEntity(entity);
                 entityRenderer.setDrawName(false);
@@ -534,7 +533,7 @@ public class GuiContentSelect extends ModularGuiContainer<Container> {
             }
 //            }
 
-            base.addChild(new GuiLabel(new FluidStack(s, 0).getDisplayName().getFormattedText()).setShadow(false).setPosAndSize(20, 0, 85, 20).setWrap(true));
+            base.addChild(new GuiLabel(new FluidStack(s, 0).getDisplayName().getString()).setShadow(false).setPosAndSize(20, 0, 85, 20).setWrap(true));
             return base;
         });
 
@@ -546,7 +545,7 @@ public class GuiContentSelect extends ModularGuiContainer<Container> {
             selector.clearItems();
             String filterText = filter.getText();
             for (Fluid fluid : ForgeRegistries.FLUIDS.getValues()) {
-                if (filterText.isEmpty() || new FluidStack(fluid, 0).getDisplayName().getFormattedText().contains(filterText)) {
+                if (filterText.isEmpty() || new FluidStack(fluid, 0).getDisplayName().getString().contains(filterText)) {
                     selector.addItem(fluid);
                 }
             }
@@ -571,7 +570,7 @@ public class GuiContentSelect extends ModularGuiContainer<Container> {
             for (int y = 0; y < 4; y++) {
                 int xPos = invX + (x * 18) + (x > 0 ? 4 : 0);
                 int yPos = invY + (y * 18) + (x > 0 && y == 3 ? 4 : 0);
-                ItemStack stack = x == 0 ? inv.armorItemInSlot(3 - y) : y == 3 ? inv.getStackInSlot((x - 1)) : inv.getStackInSlot((x - 1) + (9 * (y + 1)));
+                ItemStack stack = x == 0 ? inv.getArmor(3 - y) : y == 3 ? inv.getItem((x - 1)) : inv.getItem((x - 1) + (9 * (y + 1)));
                 slot = new GuiSlotRender().setPos(xPos, yPos);
 
                 if (!stack.isEmpty()) {
@@ -583,9 +582,9 @@ public class GuiContentSelect extends ModularGuiContainer<Container> {
             }
         }
         parent.addChild(slot = new GuiSlotRender().setPos(invX + 188, guiTop() + ySize() - 24));
-        if (!inv.offHandInventory.get(0).isEmpty()) {
-            slot.addChild(new GuiStackIcon(new StackReference(inv.offHandInventory.get(0))).setPos(slot));
-            slot.addChild(new GuiButton().setPosAndSize(slot).onPressed(() -> itemStackSelected(new StackReference(inv.offHandInventory.get(0)), true)));
+        if (!inv.offhand.get(0).isEmpty()) {
+            slot.addChild(new GuiStackIcon(new StackReference(inv.offhand.get(0))).setPos(slot));
+            slot.addChild(new GuiButton().setPosAndSize(slot).onPressed(() -> itemStackSelected(new StackReference(inv.offhand.get(0)), true)));
         }
     }
 
@@ -616,7 +615,7 @@ public class GuiContentSelect extends ModularGuiContainer<Container> {
                         updateEntity();
                     });
                     gui.contentInfo.stack = new StackReference(contentInfo.entityInventory[slotIndex]);
-                    minecraft.displayGuiScreen(gui);
+                    minecraft.setScreen(gui);
                 }
             });
         }
@@ -626,7 +625,7 @@ public class GuiContentSelect extends ModularGuiContainer<Container> {
         if (selectCallBack != null) {
             selectCallBack.accept(cancel ? null : contentInfo);
         }
-        minecraft.displayGuiScreen(parant);
+        minecraft.setScreen(parant);
     }
 
     //endregion
@@ -644,8 +643,8 @@ public class GuiContentSelect extends ModularGuiContainer<Container> {
     }
 
     @Override
-    public void render(int mouseX, int mouseY, float partialTicks) {
-        super.render(mouseX, mouseY, partialTicks);
+    public void render(MatrixStack mStack, int mouseX, int mouseY, float partialTicks) {
+        super.render(mStack, mouseX, mouseY, partialTicks);
 //        if (allowedTypes.size() > 1) {
 //            drawGradientRect(guiLeft() + 3, guiTop() + 24, guiLeft() + xSize() - 2, guiTop() + 27, 0xFF000000, 0xFF000000);
 //        }
@@ -750,17 +749,11 @@ public class GuiContentSelect extends ModularGuiContainer<Container> {
         }
 
         @Override
-        public boolean canInteractWith(PlayerEntity playerIn) {
-            return true;
-        }
-
-        @Override
-        public void putStackInSlot(int slotID, ItemStack stack) {}
-
-        @Override
         public void setAll(List<ItemStack> stacks) {}
 
         @Override
-        public void updateProgressBar(int id, int data) {}
+        public boolean stillValid(PlayerEntity p_75145_1_) {
+            return true;
+        }
     }
 }

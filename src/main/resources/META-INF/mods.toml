@@ -1,22 +1,35 @@
 modLoader="javafml"
-loaderVersion="[28,)"
+loaderVersion="[32,)"
+license="CoFH \"Don't Be a Jerk\" License"
 
 [[mods]]
 	modId="projectintelligence"
 	displayName="Project Intelligence"
-	version="3.0.0"
+	version="${version}"
 	authors="brandon3055"
 	description=''''''
 [[dependencies.projectintelligence]]
 	modId="forge"
 	mandatory=true
-	versionRange="[28,)"
+	versionRange="[35.1,)"
 	ordering="NONE"
 	side="BOTH"
 [[dependencies.projectintelligence]]
     modId="minecraft"
     mandatory=true
-    versionRange="[1.14.4]"
+    versionRange="[1.16,)"
     ordering="NONE"
     side="BOTH"
+[[dependencies.projectintelligence]]
+	modId="codechickenlib"
+	mandatory=true
+	versionRange="${ccl_version}"
+	ordering="AFTER"
+	side="BOTH"
+[[dependencies.projectintelligence]]
+	modId="brandonscore"
+	mandatory=true
+	versionRange="[${bcore_version},)"
+	ordering="AFTER"
+	side="BOTH"
 

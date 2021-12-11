@@ -4,7 +4,7 @@ import com.brandon3055.brandonscore.integration.JeiHelper;
 import com.brandon3055.projectintelligence.api.PiAPI;
 import com.brandon3055.projectintelligence.client.gui.GuiInGuiRenderer;
 import com.brandon3055.projectintelligence.client.keybinding.KeyInputHandler;
-import com.mojang.blaze3d.platform.GlStateManager;
+import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.screen.inventory.ContainerScreen;
@@ -44,18 +44,18 @@ public class GuiEventHandler {
     public void onDrawForground(GuiContainerEvent.DrawForeground event) {
         if (event.isCanceled()) return;
         ContainerScreen gui = event.getGuiContainer();
-        GlStateManager.disableLighting();
-        GlStateManager.pushMatrix();
-        GlStateManager.translated(-gui.getGuiLeft(), -gui.getGuiTop(), 0);
+        RenderSystem.disableLighting();
+        RenderSystem.pushMatrix();
+        RenderSystem.translated(-gui.getGuiLeft(), -gui.getGuiTop(), 0);
         GuiInGuiRenderer.instance.drawScreen(gui);
-        GlStateManager.popMatrix();
+        RenderSystem.popMatrix();
     }
 
     @SubscribeEvent(priority = EventPriority.LOW)
     public void onDrawScreenEventPost(GuiScreenEvent.DrawScreenEvent.Post event) {
         if (event.isCanceled()) return;
         Screen gui = event.getGui();
-        GlStateManager.disableLighting();
+        RenderSystem.disableLighting();
         if (!(gui instanceof ContainerScreen)) {
             GuiInGuiRenderer.instance.drawScreen(gui);
         }
@@ -64,7 +64,7 @@ public class GuiEventHandler {
 
     @SubscribeEvent()
     public void onToolTip(RenderTooltipEvent.Pre event) {
-        if (GuiInGuiRenderer.instance.blockToolTip(Minecraft.getInstance().currentScreen)) {
+        if (GuiInGuiRenderer.instance.blockToolTip(Minecraft.getInstance().screen)) {
             event.setCanceled(true);
         }
     }
@@ -135,14 +135,14 @@ public class GuiEventHandler {
 
     private boolean handleKeyPress(Screen gui, int keyCode) {
         if (keyCode == -1) return false;
-        InputMappings.Input key = InputMappings.Type.MOUSE.getOrMakeInput(keyCode);
+        InputMappings.Input key = InputMappings.Type.MOUSE.getOrCreate(keyCode);
         if (KeyInputHandler.etGUI.isActiveAndMatches(key)) {
             if (gui instanceof ContainerScreen) {
                 ContainerScreen container = (ContainerScreen) gui;
                 Slot slot = container.getSlotUnderMouse();
                 ItemStack stack;
                 if (slot != null) {
-                    stack = slot.getStack();
+                    stack = slot.getItem();
                 }
                 else {
                     stack = JeiHelper.getPanelItemUnderMouse();

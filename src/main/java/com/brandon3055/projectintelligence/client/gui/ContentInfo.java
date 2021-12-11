@@ -112,44 +112,44 @@ public class ContentInfo {
     }
 
     public static ContentInfo fromIconObj(JsonObject iconObj) {
-        ContentInfo ci = new ContentInfo(ContentType.getByName(JSONUtils.getString(iconObj, "type", "stack")));
+        ContentInfo ci = new ContentInfo(ContentType.getByName(JSONUtils.getAsString(iconObj, "type", "stack")));
 
-        ci.drawSlot = JSONUtils.getBoolean(iconObj, "draw_slot", ci.drawSlot);
-        ci.drawHover = JSONUtils.getBoolean(iconObj, "draw_hover", ci.drawHover);
-        ci.hover_text = JSONUtils.getString(iconObj, "hover_text", "");
+        ci.drawSlot = JSONUtils.getAsBoolean(iconObj, "draw_slot", ci.drawSlot);
+        ci.drawHover = JSONUtils.getAsBoolean(iconObj, "draw_hover", ci.drawHover);
+        ci.hover_text = JSONUtils.getAsString(iconObj, "hover_text", "");
 
         switch (ci.type) {
             case ITEM_STACK:
-                if (JSONUtils.hasField(iconObj, "icon_string")) {
-                    ci.stack = StackReference.fromString(JSONUtils.getString(iconObj, "icon_string", ""));
+                if (JSONUtils.isValidNode(iconObj, "icon_string")) {
+                    ci.stack = StackReference.fromString(JSONUtils.getAsString(iconObj, "icon_string", ""));
                 }
                 break;
             case ENTITY:
-                ci.trackMouse = JSONUtils.getBoolean(iconObj, "track_mouse", ci.trackMouse);
-                if (JSONUtils.hasField(iconObj, "equipment") && iconObj.get("equipment").isJsonObject()) {
+                ci.trackMouse = JSONUtils.getAsBoolean(iconObj, "track_mouse", ci.trackMouse);
+                if (JSONUtils.isValidNode(iconObj, "equipment") && iconObj.get("equipment").isJsonObject()) {
                     JsonObject equip = iconObj.get("equipment").getAsJsonObject();
 
-                    if (JSONUtils.hasField(equip, "main_hand"))
-                        ci.entityInventory[0] = getStack(JSONUtils.getString(equip, "main_hand", ""));
-                    if (JSONUtils.hasField(equip, "off_hand"))
-                        ci.entityInventory[1] = getStack(JSONUtils.getString(equip, "off_hand", ""));
-                    if (JSONUtils.hasField(equip, "head"))
-                        ci.entityInventory[2] = getStack(JSONUtils.getString(equip, "head", ""));
-                    if (JSONUtils.hasField(equip, "chest"))
-                        ci.entityInventory[3] = getStack(JSONUtils.getString(equip, "chest", ""));
-                    if (JSONUtils.hasField(equip, "legs"))
-                        ci.entityInventory[4] = getStack(JSONUtils.getString(equip, "legs", ""));
-                    if (JSONUtils.hasField(equip, "feet"))
-                        ci.entityInventory[5] = getStack(JSONUtils.getString(equip, "feet", ""));
+                    if (JSONUtils.isValidNode(equip, "main_hand"))
+                        ci.entityInventory[0] = getStack(JSONUtils.getAsString(equip, "main_hand", ""));
+                    if (JSONUtils.isValidNode(equip, "off_hand"))
+                        ci.entityInventory[1] = getStack(JSONUtils.getAsString(equip, "off_hand", ""));
+                    if (JSONUtils.isValidNode(equip, "head"))
+                        ci.entityInventory[2] = getStack(JSONUtils.getAsString(equip, "head", ""));
+                    if (JSONUtils.isValidNode(equip, "chest"))
+                        ci.entityInventory[3] = getStack(JSONUtils.getAsString(equip, "chest", ""));
+                    if (JSONUtils.isValidNode(equip, "legs"))
+                        ci.entityInventory[4] = getStack(JSONUtils.getAsString(equip, "legs", ""));
+                    if (JSONUtils.isValidNode(equip, "feet"))
+                        ci.entityInventory[5] = getStack(JSONUtils.getAsString(equip, "feet", ""));
                 }
 
-                if (JSONUtils.hasField(iconObj, "icon_string")) {
-                    ci.entity = JSONUtils.getString(iconObj, "icon_string", "");
+                if (JSONUtils.isValidNode(iconObj, "icon_string")) {
+                    ci.entity = JSONUtils.getAsString(iconObj, "icon_string", "");
                 }
                 break;
             case IMAGE:
-                if (JSONUtils.hasField(iconObj, "icon_string")) {
-                    ci.imageURL = JSONUtils.getString(iconObj, "icon_string", "");
+                if (JSONUtils.isValidNode(iconObj, "icon_string")) {
+                    ci.imageURL = JSONUtils.getAsString(iconObj, "icon_string", "");
                 }
                 break;
         }

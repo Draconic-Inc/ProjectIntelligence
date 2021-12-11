@@ -1,6 +1,5 @@
 package com.brandon3055.projectintelligence.docmanagement;
 
-import codechicken.lib.reflect.ObfMapping;
 import com.brandon3055.brandonscore.BrandonsCore;
 import com.brandon3055.brandonscore.handlers.FileHandler;
 import com.brandon3055.brandonscore.integration.ModHelperBC;
@@ -19,10 +18,6 @@ import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
 import net.minecraft.fluid.Fluid;
 import net.minecraft.item.ItemStack;
-import net.minecraftforge.common.crafting.CraftingHelper;
-import net.minecraftforge.fml.ModContainer;
-import net.minecraftforge.fml.ModList;
-import net.minecraftforge.fml.ResourceLocationUtils;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.output.FileWriterWithEncoding;

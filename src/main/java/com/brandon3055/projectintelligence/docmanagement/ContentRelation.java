@@ -39,7 +39,7 @@ public class ContentRelation {
     ContentRelation(JsonObject object) {
         type = Type.valueOf(object.get("type").getAsString());
         contentString = object.get("content").getAsString();
-        includeNBT = JSONUtils.getBoolean(object, "include_nbt", false);
+        includeNBT = JSONUtils.getAsBoolean(object, "include_nbt", false);
     }
 
     @Nullable
@@ -101,7 +101,7 @@ public class ContentRelation {
                 if (stack.getItem() != test.getItem()) {
                     return false;
                 }
-                else return !includeNBT || !ItemStack.areItemStackTagsEqual(stack, test);
+                else return !includeNBT || !ItemStack.matches(stack, test);
             }
         }
         return false;
@@ -135,22 +135,22 @@ public class ContentRelation {
             case STACK:
                 ItemStack stack = getStack();
                 if (stack != null) {
-                    return stack.getDisplayName().getFormattedText();
+                    return stack.getDisplayName().getString();
                 }
                 break;
             case ENTITY:
                 EntityType type = getEntity();
                 if (type != null){
-                    String name = type.getName().getFormattedText();
+                    String name = type.getDescription().getString();
                     if (name != null) {
-                        return I18n.format(name);
+                        return I18n.get(name);
                     }
                 }
                 break;
             case FLUID:
                 Fluid fluid = getFluid();
                 if (fluid != null) {
-                    return new FluidStack(fluid, 1000).getDisplayName().getFormattedText();
+                    return new FluidStack(fluid, 1000).getDisplayName().getString();
                 }
                 break;
         }

@@ -1,9 +1,10 @@
 package com.brandon3055.projectintelligence.client.gui;
 
 import codechicken.lib.math.MathHelper;
+import com.brandon3055.brandonscore.client.BCSprites;
+import com.brandon3055.brandonscore.client.gui.modulargui.GuiElement;
 import com.brandon3055.brandonscore.client.gui.modulargui.GuiElementManager;
 import com.brandon3055.brandonscore.client.gui.modulargui.IModularGui;
-import com.brandon3055.brandonscore.client.gui.modulargui.GuiElement;
 import com.brandon3055.brandonscore.client.gui.modulargui.baseelements.GuiButton;
 import com.brandon3055.brandonscore.client.gui.modulargui.baseelements.GuiPopUpDialogBase;
 import com.brandon3055.brandonscore.client.gui.modulargui.baseelements.GuiScrollElement;
@@ -14,6 +15,7 @@ import com.brandon3055.brandonscore.client.gui.modulargui.lib.GuiAlign;
 import com.brandon3055.brandonscore.client.gui.modulargui.markdown.MDElementContainer;
 import com.brandon3055.brandonscore.client.gui.modulargui.markdown.MDElementFactory;
 import com.brandon3055.brandonscore.client.gui.modulargui.markdown.reader.PiMarkdownReader;
+import com.brandon3055.brandonscore.client.render.RenderUtils;
 import com.brandon3055.projectintelligence.api.PiAPI;
 import com.brandon3055.projectintelligence.client.PIGuiHelper;
 import com.brandon3055.projectintelligence.client.PITextures;
@@ -24,15 +26,17 @@ import com.brandon3055.projectintelligence.docmanagement.DocumentationPage;
 import com.brandon3055.projectintelligence.docmanagement.RootPage;
 import com.brandon3055.projectintelligence.registry.GuiDocRegistry.GuiDocHelper;
 import com.google.common.collect.Lists;
-import com.mojang.blaze3d.platform.GlStateManager;
+import com.mojang.blaze3d.matrix.MatrixStack;
+import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.vertex.IVertexBuilder;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.renderer.RenderHelper;
+import net.minecraft.client.renderer.IRenderTypeBuffer;
+import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.client.renderer.entity.model.BookModel;
 import net.minecraft.client.resources.I18n;
 
 import java.awt.*;
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 
@@ -67,8 +71,8 @@ public class PIGuiOverlay implements IModularGui<Screen> {
 
     public void onGuiInit() {
         this.mc = Minecraft.getInstance();
-        this.screenWidth = mc.mainWindow.getScaledWidth();
-        this.screenHeight = mc.mainWindow.getScaledHeight();
+        this.screenWidth = mc.getWindow().getGuiScaledWidth();
+        this.screenHeight = mc.getWindow().getGuiScaledHeight();
         manager.onGuiInit(mc, screenWidth, screenHeight);
     }
 
@@ -115,7 +119,7 @@ public class PIGuiOverlay implements IModularGui<Screen> {
     }
 
     public void renderElements(int mouseX, int mouseY, float partialTicks) {
-        GlStateManager.enableDepthTest();
+        RenderSystem.enableDepthTest();
         manager.renderElements(mc, mouseX, mouseY, partialTicks);
     }
 
@@ -224,7 +228,7 @@ public class PIGuiOverlay implements IModularGui<Screen> {
             heading.onPressed(this::showPageList);
             addChild(heading);
 
-            prevPage = new GuiButton().setSize(10, 10).setHoverText(I18n.format("pi.button.prev_page"));
+            prevPage = new GuiButton().setSize(10, 10).setHoverText(I18n.get("pi.button.prev_page"));
             GuiTexture tex = new GuiTexture(1, 24, 6, 8, PITextures.PI_PARTS).setPos(2, 1);
             tex.setPreDrawCallback((minecraft, mouseX, mouseY, partialTicks, mouseOver) -> headerProps.glTextColour(mouseOver));
             tex.setPostDrawCallback(IDrawCallback::resetColour);
@@ -232,7 +236,7 @@ public class PIGuiOverlay implements IModularGui<Screen> {
             addChild(prevPage);
             prevPage.onPressed(() -> changePage(true));
 
-            nextPage = new GuiButton().setSize(10, 10).setHoverText(I18n.format("pi.button.next_page"));
+            nextPage = new GuiButton().setSize(10, 10).setHoverText(I18n.get("pi.button.next_page"));
             tex = new GuiTexture(9, 24, 6, 8, PITextures.PI_PARTS).setPos(2, 1);
             tex.setPreDrawCallback((minecraft, mouseX, mouseY, partialTicks, mouseOver) -> headerProps.glTextColour(mouseOver));
             tex.setPostDrawCallback(IDrawCallback::resetColour);
@@ -240,7 +244,7 @@ public class PIGuiOverlay implements IModularGui<Screen> {
             addChild(nextPage);
             nextPage.onPressed(() -> changePage(false));
 
-            openInPI = new GuiButton().setSize(10, 10).setHoverText(I18n.format("pi.button.open_in_pi_main"));
+            openInPI = new GuiButton().setSize(10, 10).setHoverText(I18n.get("pi.button.open_in_pi_main"));
             tex = new GuiTexture(32, 25, 7, 7, PITextures.PI_PARTS).setPos(2, 1);
             tex.setPreDrawCallback((minecraft, mouseX, mouseY, partialTicks, mouseOver) -> headerProps.glTextColour(mouseOver));
             tex.setPostDrawCallback(IDrawCallback::resetColour);
@@ -248,7 +252,7 @@ public class PIGuiOverlay implements IModularGui<Screen> {
             addChild(openInPI);
             openInPI.onPressed(() -> PiAPI.openGui(overlay.gui, guiDocHelper.getPages()));
 
-            settings = new GuiButton().setSize(8, 8).setHoverText(I18n.format("pi.config.open_style_settings"));
+            settings = new GuiButton().setSize(8, 8).setHoverText(I18n.get("pi.config.open_style_settings"));
             GuiTexture settingsTex = new GuiTexture(16, 0, 8, 8, PITextures.PI_PARTS);
             settingsTex.setTexSizeOverride(16, 16);
             settingsTex.setPreDrawCallback((minecraft, mouseX, mouseY, partialTicks, mouseOver) -> settingsProps.glColour(mouseOver));
@@ -257,7 +261,7 @@ public class PIGuiOverlay implements IModularGui<Screen> {
             settings.onPressed(this::showSettings);
             addChild(settings);
 
-            close = new GuiButton().setSize(8, 8).setHoverText(I18n.format("pi.button.close"));
+            close = new GuiButton().setSize(8, 8).setHoverText(I18n.get("pi.button.close"));
             GuiTexture closeTex = new GuiTexture(0, 0, 8, 8, PITextures.PI_PARTS);
             closeTex.setTexSizeOverride(16, 16);
             closeTex.setPreDrawCallback((minecraft, mouseX, mouseY, partialTicks, mouseOver) -> closeProps.glColour(mouseOver));
@@ -373,11 +377,15 @@ public class PIGuiOverlay implements IModularGui<Screen> {
             Rectangle animRect = getRect();
             double d = animState * 4D;
             if (d < 1 && guiDocHelper.enableButton()) {
-                renderBook();
-                GlStateManager.pushMatrix();
-                GlStateManager.translated(xPos() + (animRect.width / 2D) * (1D - d), yPos() + (animRect.height / 2D) * (1D - d), 0);
-                GlStateManager.scaled(d, d, 1);
-                GlStateManager.translated(-xPos(), -yPos(), 0);
+                IRenderTypeBuffer.Impl getter = IRenderTypeBuffer.immediate(Tessellator.getInstance().getBuilder());
+                IVertexBuilder buffer = getter.getBuffer(BCSprites.GUI_TYPE);
+                renderBook(new MatrixStack(), buffer);
+                RenderUtils.endBatch(getter);
+
+                RenderSystem.pushMatrix();
+                RenderSystem.translated(xPos() + (animRect.width / 2D) * (1D - d), yPos() + (animRect.height / 2D) * (1D - d), 0);
+                RenderSystem.scaled(d, d, 1);
+                RenderSystem.translated(-xPos(), -yPos(), 0);
 //                zOffset += 500;
             }
 
@@ -387,37 +395,38 @@ public class PIGuiOverlay implements IModularGui<Screen> {
 
             if (d < 1) {
 //                zOffset -= 500;
-                GlStateManager.popMatrix();
+                RenderSystem.popMatrix();
             }
 
             super.renderElement(minecraft, mouseX, mouseY, partialTicks);
 //            drawBorderedRect(xPos(), yPos(), xSize(), ySize(), 1, 0, 0x4000FFFF);
         }
 
-        private void renderBook() {
+        private void renderBook(MatrixStack mStack, IVertexBuilder builder) {
             double scale = ySize() * (1D - Math.min(hoverAnim, 0.25D));
             double xPos = xPos() + (ySize() * Math.max(0.2D, hoverAnim / 2));
             double yPos = yPos() + (ySize() / 2D);
 
             bindTexture(PITextures.BOOK);
-            GlStateManager.pushMatrix();
-            GlStateManager.translated(xPos, yPos, 100);
-            GlStateManager.scaled(scale, scale, scale);
-            GlStateManager.rotated(-(90 * hoverAnim), 0, 1, 0);
-            GlStateManager.rotated(-30 * hoverAnim, 0, 0, 1);
+            RenderSystem.pushMatrix();
+            RenderSystem.translated(xPos, yPos, 100);
+            RenderSystem.scaled(scale, scale, scale);
+            RenderSystem.rotatef(-(90 * hoverAnim), 0, 1, 0);
+            RenderSystem.rotatef(-30 * hoverAnim, 0, 0, 1);
 
-            RenderHelper.enableStandardItemLighting();
-            GlStateManager.enableRescaleNormal();
-            MODEL_BOOK.render(0, pageAnim % 1, 0, hoverAnim, 0, 0.1F);
-            GlStateManager.disableRescaleNormal();
-            RenderHelper.enableGUIStandardItemLighting();
-            GlStateManager.popMatrix();
+//            RenderHelper.enableStandardItemLighting(); TODO
+            RenderSystem.enableRescaleNormal();
+            MODEL_BOOK.setupAnim(pageAnim % 1, 0, hoverAnim, 0);
+            MODEL_BOOK.render(mStack, builder, 0, 0, 0, 0, 0, 0.1F);
+            RenderSystem.disableRescaleNormal();
+//            RenderHelper.enableGUIStandardItemLighting();
+            RenderSystem.popMatrix();
         }
 
         @Override
         public boolean renderOverlayLayer(Minecraft minecraft, int mouseX, int mouseY, float partialTicks) {
             if (animState == 0 && isMouseOver(mouseX, mouseY)) {
-                drawHoveringText(Lists.newArrayList(I18n.format("pi.gui_in_gui.display_doc.info")), mouseX, mouseY, fontRenderer, screenWidth, screenHeight);
+                drawHoveringText(Lists.newArrayList(I18n.get("pi.gui_in_gui.display_doc.info")), mouseX, mouseY, fontRenderer, screenWidth, screenHeight);
                 return true;
             }
             return super.renderOverlayLayer(minecraft, mouseX, mouseY, partialTicks);

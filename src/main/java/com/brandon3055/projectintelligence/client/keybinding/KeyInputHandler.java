@@ -24,6 +24,8 @@ import net.minecraft.util.math.BlockRayTraceResult;
 import net.minecraft.util.math.EntityRayTraceResult;
 import net.minecraft.util.math.RayTraceContext;
 import net.minecraft.util.math.RayTraceResult;
+import net.minecraft.util.text.StringTextComponent;
+import net.minecraft.util.text.TranslationTextComponent;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.client.event.InputEvent;
@@ -80,9 +82,9 @@ public class KeyInputHandler {
     }
 
     private void onPress() {
-        if (etWorld.isPressed()) {
+        if (etWorld.isDown()) {
             handleWorldInfo();
-        } else if (openPI.isPressed()) {
+        } else if (openPI.isDown()) {
             ProjectIntelligence.proxy.openMainGui(null, null, null);
         }
     }
@@ -92,7 +94,7 @@ public class KeyInputHandler {
         Minecraft mc = Minecraft.getInstance();
         ClientPlayerEntity player = mc.player;
         RayTraceResult result;
-        RayTraceResult mcResult = mc.objectMouseOver;
+        RayTraceResult mcResult = mc.hitResult;
         RayTraceResult ccResult = RayTracer.retrace(player, RayTraceContext.BlockMode.OUTLINE, PIConfig.etCheckFluid ? RayTraceContext.FluidMode.ANY : RayTraceContext.FluidMode.NONE);
 
         if (mcResult != null && mcResult.getType() == ENTITY) {
@@ -106,13 +108,13 @@ public class KeyInputHandler {
         }
 
         if (result == null || result.getType() == MISS) {
-            ChatHelper.indexedMsg(player, I18n.format("pi.msg.et_miss"));
+            ChatHelper.sendDeDupeIndexedClient(player, new TranslationTextComponent("pi.msg.et_miss"), 3131);
             return;
         }
 
         switch (result.getType()) {
             case BLOCK:
-                BlockState state = mc.world.getBlockState(((BlockRayTraceResult)result).getPos());
+                BlockState state = mc.level.getBlockState(((BlockRayTraceResult)result).getBlockPos());
                 Block block = state.getBlock();
                 List<String> pages = null;
 
@@ -121,7 +123,7 @@ public class KeyInputHandler {
                 if (fluid != null) {
                     pages = PiAPI.getRelatedPages(fluid);
                 } else {
-                    ItemStack stack = block.getPickBlock(state, result, mc.world, ((BlockRayTraceResult)result).getPos(), player);
+                    ItemStack stack = block.getPickBlock(state, result, mc.level, ((BlockRayTraceResult)result).getBlockPos(), player);
                     if (!stack.isEmpty()) {
                         pages = PiAPI.getRelatedPages(stack);
                     }
@@ -129,9 +131,9 @@ public class KeyInputHandler {
 
                 if (pages == null || pages.isEmpty()) {
                     if (fluid != null) {
-                        ChatHelper.indexedMsg(player, I18n.format("pi.msg.no_doc_found_for", I18n.format(fluid.getAttributes().getTranslationKey())));
+                        ChatHelper.sendDeDupeIndexedClient(player, new StringTextComponent(I18n.get("pi.msg.no_doc_found_for", I18n.get(fluid.getAttributes().getTranslationKey()))), 3131);
                     } else {
-                        ChatHelper.indexedMsg(player, I18n.format("pi.msg.no_doc_found_for", I18n.format(Item.getItemFromBlock(block).getTranslationKey() + ".name")));
+                        ChatHelper.sendDeDupeIndexedClient(player, new StringTextComponent(I18n.get("pi.msg.no_doc_found_for", I18n.get(block.asItem().getDescriptionId()))), 3131);
                     }
                 } else {
                     PiAPI.openGui(null, pages);
@@ -141,7 +143,7 @@ public class KeyInputHandler {
             case ENTITY:
                 pages = PiAPI.getRelatedPages(((EntityRayTraceResult)result).getEntity().getType().getRegistryName().toString());
                 if (pages.isEmpty()) {
-                    ChatHelper.indexedMsg(player, I18n.format("pi.msg.no_doc_found_for", ((EntityRayTraceResult)result).getEntity().getDisplayName().getFormattedText()));
+                    ChatHelper.sendDeDupeIndexedClient(player, new StringTextComponent(I18n.get("pi.msg.no_doc_found_for", ((EntityRayTraceResult)result).getEntity().getDisplayName().getString())), 3131);
                 } else {
                     PiAPI.openGui(null, pages);
                 }
@@ -175,7 +177,7 @@ public class KeyInputHandler {
             }
 
             KeyBinding otherBind = ((CustomContext) other).binding.get();
-            return otherBind.getKey().getKeyCode() == binding.get().getKey().getKeyCode() && otherBind.getKeyModifier() == binding.get().getKeyModifier();
+            return otherBind.getKey().getNumericKeyValue() == binding.get().getKey().getNumericKeyValue() && otherBind.getKeyModifier() == binding.get().getKeyModifier();
         }
     }
 }

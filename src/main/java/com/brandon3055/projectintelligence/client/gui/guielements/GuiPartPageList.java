@@ -24,6 +24,7 @@ import com.brandon3055.projectintelligence.docmanagement.DocumentationPage;
 import com.brandon3055.projectintelligence.docmanagement.RootPage;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.resources.I18n;
+import net.minecraft.util.text.Style;
 
 import javax.annotation.Nullable;
 import java.io.IOException;
@@ -102,7 +103,7 @@ public class GuiPartPageList extends GuiElement<GuiPartPageList> {
     public void addChildElements() {
         super.addChildElements();
 
-        toggleView = new GuiButton().setSize(10, 10).setHoverText(I18n.format("pi.button.toggle_nav_window.info"));
+        toggleView = new GuiButton().setSize(10, 10).setHoverText(I18n.get("pi.button.toggle_nav_window.info"));
         GuiTexture tex = new GuiTexture(0, 16, 6, 7, PITextures.PI_PARTS);
         tex.setPreDrawCallback((minecraft, mouseX, mouseY, partialTicks, mouseOver) -> StyleHandler.getColour("page_list.hide_button." + (toggleView.isMouseOver(mouseX, mouseY) ? "hover" : "colour")).glColour());
         tex.setPostDrawCallback(IDrawCallback::resetColour);
@@ -114,7 +115,7 @@ public class GuiPartPageList extends GuiElement<GuiPartPageList> {
         toggleView.setXPosMod(() -> maxXPos() - 11);
         addChild(toggleView);
 
-        backButton = new GuiButton().setSize(10, 12).setHoverText(I18n.format("pi.button.go_back"));
+        backButton = new GuiButton().setSize(10, 12).setHoverText(I18n.get("pi.button.go_back"));
         tex = new GuiTexture(17, 24, 6, 8, PITextures.PI_PARTS);
         tex.setPreDrawCallback((minecraft, mouseX, mouseY, partialTicks, mouseOver) -> {
             Colour c = StyleHandler.getColour("page_list.hide_button." + (backButton.isMouseOver(mouseX, mouseY) && !backButton.isDisabled() ? "hover" : "colour"));
@@ -135,7 +136,7 @@ public class GuiPartPageList extends GuiElement<GuiPartPageList> {
         });
         backButton.setEnabledCallback(() -> xSize() == extendedXSize());
 
-        forwardButton = new GuiButton().setSize(10, 12).setHoverText(I18n.format("pi.button.go_forward"));
+        forwardButton = new GuiButton().setSize(10, 12).setHoverText(I18n.get("pi.button.go_forward"));
         tex = new GuiTexture(25, 24, 6, 8, PITextures.PI_PARTS);
         tex.setPreDrawCallback((minecraft, mouseX, mouseY, partialTicks, mouseOver) -> {
             Colour c = StyleHandler.getColour("page_list.hide_button." + (forwardButton.isMouseOver(mouseX, mouseY) && !forwardButton.isDisabled() ? "hover" : "colour"));
@@ -196,7 +197,7 @@ public class GuiPartPageList extends GuiElement<GuiPartPageList> {
         });
         searchBox.setEnabledCallback(() -> xSize() == extendedXSize());
 
-        searchSettings = new GuiButton().setSize(settingsSize, settingsSize).setHoverText(I18n.format("pi.button.search_settings"));
+        searchSettings = new GuiButton().setSize(settingsSize, settingsSize).setHoverText(I18n.get("pi.button.search_settings"));
         GuiTexture settingsTex = new GuiTexture(16, 0, settingsSize, settingsSize, PITextures.PI_PARTS);
         settingsTex.setXPosMod(() -> searchBox.maxXPos() + 1);
         settingsTex.setTexSizeOverride(16, 16);
@@ -215,7 +216,7 @@ public class GuiPartPageList extends GuiElement<GuiPartPageList> {
             for (SearchMode mode : SearchMode.values()) {
                 StyledGuiButton button = new StyledGuiButton("user_dialogs.button_style");
                 button.setTrim(false);
-                button.setText(I18n.format(mode.getUnlocalizedName()));
+                button.setText(I18n.get(mode.getUnlocalizedName()));
                 button.setPos(dialog.xPos() + 3, y).setSize(dialog.xSize() - 6, 12);
                 button.setToggleMode(true).setToggleStateSupplier(() -> PIConfig.searchMode == mode);
                 button.onPressed(() -> changeSearchMode(mode));
@@ -393,8 +394,8 @@ public class GuiPartPageList extends GuiElement<GuiPartPageList> {
         }
 
         searchBox.setTextColor(searchBoxProps.textColour());
-        searchBox.fillColour = searchBoxProps.colour();
-        searchBox.borderColour = searchBoxProps.border();
+        searchBox.setFillColour(hovering -> searchBoxProps.colour());
+        searchBox.setBorderColour(hovering -> searchBoxProps.border());
 
         return super.onUpdate();
     }
@@ -415,11 +416,11 @@ public class GuiPartPageList extends GuiElement<GuiPartPageList> {
 
         while (page != null) {
             String name = page.getDisplayName().length() > 18 ? page.getDisplayName().substring(0, 16) + ".." : page.getDisplayName();
-            int height = fontRenderer.getStringWidth(name) + 6;
+            int height = (int)fontRenderer.getSplitter().stringWidth(name) + 6;
             if (currentLength + height > ySize() - NAV_BAR_SIZE - FOOTER_SIZE) {
                 if (currentLength == 0) {
-                    name = fontRenderer.trimStringToWidth(page.getDisplayName(), ySize() - NAV_BAR_SIZE - FOOTER_SIZE - 8) + "..";
-                    height = fontRenderer.getStringWidth(name) + 6;
+                    name = fontRenderer.getSplitter().plainHeadByWidth(page.getDisplayName(), ySize() - NAV_BAR_SIZE - FOOTER_SIZE - 8, Style.EMPTY) + "..";
+                    height = (int)fontRenderer.getSplitter().stringWidth(name) + 6;
                 }
                 else {
                     break;
@@ -462,9 +463,9 @@ public class GuiPartPageList extends GuiElement<GuiPartPageList> {
         bodyRender.render(this, xPos() + DIR_BAR_SIZE, yPos() + NAV_BAR_SIZE + TITLE_BAR_SIZE, xSize() - DIR_BAR_SIZE + 1, ySize() - NAV_BAR_SIZE - FOOTER_SIZE - TITLE_BAR_SIZE);
         footerRender.render(this, xPos(), yPos() + ySize() - FOOTER_SIZE, xSize() + 1, FOOTER_SIZE);
 
-        String navTitle = I18n.format("pi.gui.navigation.title");
-        int width = fontRenderer.getStringWidth(navTitle);
-        drawCustomString(fontRenderer, navTitle, xPos() + xSize() / 2F - width / 2F, yPos() + NAV_BAR_SIZE - fontRenderer.FONT_HEIGHT - 1, xSize() - 20, 0xFFFFFF, LEFT, NORMAL, false, true, false); //Todo style and stuff
+        String navTitle = I18n.get("pi.gui.navigation.title");
+        int width = (int)fontRenderer.getSplitter().stringWidth(navTitle);
+        drawCustomString(fontRenderer, navTitle, xPos() + xSize() / 2F - width / 2F, yPos() + NAV_BAR_SIZE - fontRenderer.lineHeight - 1, xSize() - 20, 0xFFFFFF, LEFT, NORMAL, false, true, false); //Todo style and stuff
         super.renderElement(minecraft, mouseX, mouseY, partialTicks);
     }
 

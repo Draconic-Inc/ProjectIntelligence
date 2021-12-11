@@ -11,7 +11,7 @@ import com.brandon3055.brandonscore.utils.DataUtils;
 import com.brandon3055.projectintelligence.client.PITextures;
 import com.brandon3055.projectintelligence.client.StyleHandler.PropertyGroup;
 import com.brandon3055.projectintelligence.client.gui.PIPartRenderer;
-import com.mojang.blaze3d.platform.GlStateManager;
+import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.resources.I18n;
 
@@ -90,7 +90,7 @@ public class GuiNotifications extends GuiElement<GuiNotifications> {
     @Override
     public void reloadElement() {
         super.reloadElement();
-        GlStateManager.color4f(1, 1, 1, 1);
+        RenderSystem.color4f(1, 1, 1, 1);
     }
 
     private static class Notification extends GuiElement<Notification> {
@@ -114,7 +114,7 @@ public class GuiNotifications extends GuiElement<GuiNotifications> {
 
         @Override
         public void addChildElements() {
-            int textWidth = Math.min(maxWidth - 14, fontRenderer.getStringWidth(text));
+            int textWidth = (int)Math.min(maxWidth - 14, fontRenderer.getSplitter().stringWidth(text));
 
             GuiLabel label = new GuiLabel(text).setTrim(false).setHeightForText(textWidth);
             label.setWrap(true).setShadow(false);
@@ -124,7 +124,7 @@ public class GuiNotifications extends GuiElement<GuiNotifications> {
             label.setTextColour(windowProps.textColour());
             addChild(label);
 
-            GuiButton close = new GuiButton().setSize(8, 8).setHoverText(I18n.format("pi.button.close"));
+            GuiButton close = new GuiButton().setSize(8, 8).setHoverText(I18n.get("pi.button.close"));
             GuiTexture closeTex = new GuiTexture(0, 0, 8, 8, PITextures.PI_PARTS);
             closeTex.setTexSizeOverride(16, 16);
             closeTex.setPreDrawCallback((minecraft, mouseX, mouseY, partialTicks, mouseOver) -> buttonProps.glColour(mouseOver));

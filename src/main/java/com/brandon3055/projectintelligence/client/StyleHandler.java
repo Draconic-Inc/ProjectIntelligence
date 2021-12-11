@@ -50,8 +50,8 @@ public class StyleHandler {
         //region //############################################################################
 
         menu.addSubProp(new BooleanProperty(VANILLA_TEXTURE, true));
-        menu.addSubProp(new BooleanProperty(SHADED_BORDERS, true).setTip(TextFormatting.DARK_GRAY + I18n.format("pi.style.shade_borders.info"))) //
-                .addSubProp(new BooleanProperty(INVERT_SHADE, false).setTip(TextFormatting.DARK_GRAY + I18n.format("pi.style.invert_shade.info")));
+        menu.addSubProp(new BooleanProperty(SHADED_BORDERS, true).setTip(TextFormatting.DARK_GRAY + I18n.get("pi.style.shade_borders.info"))) //
+                .addSubProp(new BooleanProperty(INVERT_SHADE, false).setTip(TextFormatting.DARK_GRAY + I18n.get("pi.style.invert_shade.info")));
         menu.addSubProp(new BooleanProperty(THICK_BORDERS, true));
         menu.addSubProp(new ColourProperty(COLOUR, 0xFFFFFFFF, true));
         menu.addSubProp(new ColourProperty(BORDER, 0x00000000, true));
@@ -94,8 +94,8 @@ public class StyleHandler {
 
         StyleProperty header = pageList.addSubProp(new StyleProperty(HEADER));
         header.addSubProp(new BooleanProperty(VANILLA_TEXTURE, true));
-        header.addSubProp(new BooleanProperty(SHADED_BORDERS, true).setTip(TextFormatting.DARK_GRAY + I18n.format("pi.style.shade_borders.info"))) //
-                .addSubProp(new BooleanProperty(INVERT_SHADE, false).setTip(TextFormatting.DARK_GRAY + I18n.format("pi.style.invert_shade.info")));
+        header.addSubProp(new BooleanProperty(SHADED_BORDERS, true).setTip(TextFormatting.DARK_GRAY + I18n.get("pi.style.shade_borders.info"))) //
+                .addSubProp(new BooleanProperty(INVERT_SHADE, false).setTip(TextFormatting.DARK_GRAY + I18n.get("pi.style.invert_shade.info")));
         header.addSubProp(new BooleanProperty(THICK_BORDERS, false));
         header.addSubProp(new ColourProperty(COLOUR, 0xFFa0a0a0, true));
         header.addSubProp(new ColourProperty(BORDER, 0x00000000, true));
@@ -105,23 +105,23 @@ public class StyleHandler {
         StyleProperty dirPath = pageList.addSubProp(new StyleProperty(DIR_PATH));
         dirPath.addSubProp(new ColourProperty(COLOUR, 0xFFc6c6c6, true));
         dirPath.addSubProp(new ColourProperty(BORDER, 0xFF000000, true));
-        dirPath.addSubProp(new BooleanProperty(SHADED_BORDERS, false).setTip(TextFormatting.DARK_GRAY + I18n.format("pi.style.shade_borders.info"))) //
-                .addSubProp(new BooleanProperty(INVERT_SHADE, true).setTip(TextFormatting.DARK_GRAY + I18n.format("pi.style.invert_shade.info")));
+        dirPath.addSubProp(new BooleanProperty(SHADED_BORDERS, false).setTip(TextFormatting.DARK_GRAY + I18n.get("pi.style.shade_borders.info"))) //
+                .addSubProp(new BooleanProperty(INVERT_SHADE, true).setTip(TextFormatting.DARK_GRAY + I18n.get("pi.style.invert_shade.info")));
 
         StyleProperty dirButtons = dirPath.addSubProp(new StyleProperty(DIR_BUTTONS));
         dirButtons.addSubProp(new ColourProperty(COLOUR, 0xFF7b7b7b, true));
         dirButtons.addSubProp(new ColourProperty(HOVER, 0xFF8b8bc8, true));
         dirButtons.addSubProp(new ColourProperty(BORDER, 0xFF7b7b7b, true));
         dirButtons.addSubProp(new ColourProperty(BORDER_HOVER, 0xFF8b8bc8, true));
-        dirButtons.addSubProp(new BooleanProperty(SHADED_BORDERS, true).setTip(TextFormatting.DARK_GRAY + I18n.format("pi.style.shade_borders.info"))) //
-                .addSubProp(new BooleanProperty(INVERT_SHADE, false).setTip(TextFormatting.DARK_GRAY + I18n.format("pi.style.invert_shade.info")));
+        dirButtons.addSubProp(new BooleanProperty(SHADED_BORDERS, true).setTip(TextFormatting.DARK_GRAY + I18n.get("pi.style.shade_borders.info"))) //
+                .addSubProp(new BooleanProperty(INVERT_SHADE, false).setTip(TextFormatting.DARK_GRAY + I18n.get("pi.style.invert_shade.info")));
         dirButtons.addSubProp(new ColourProperty(TEXT_COLOUR, 0x000000, false));
         dirButtons.addSubProp(new ColourProperty(TEXT_HOVER, 0x000000, false));
 
         StyleProperty body = pageList.addSubProp(new StyleProperty(BODY));
         body.addSubProp(new BooleanProperty(VANILLA_TEXTURE, true));
-        body.addSubProp(new BooleanProperty(SHADED_BORDERS, true).setTip(TextFormatting.DARK_GRAY + I18n.format("pi.style.shade_borders.info"))) //
-                .addSubProp(new BooleanProperty(INVERT_SHADE, false).setTip(TextFormatting.DARK_GRAY + I18n.format("pi.style.invert_shade.info")));
+        body.addSubProp(new BooleanProperty(SHADED_BORDERS, true).setTip(TextFormatting.DARK_GRAY + I18n.get("pi.style.shade_borders.info"))) //
+                .addSubProp(new BooleanProperty(INVERT_SHADE, false).setTip(TextFormatting.DARK_GRAY + I18n.get("pi.style.invert_shade.info")));
 //        body.addSubProp(new BooleanProperty(THICK_BORDERS, false));
         body.addSubProp(new ColourProperty(COLOUR, 0xFFFFFFFF, true));
         body.addSubProp(new ColourProperty(BORDER, 0x00000000, true));
@@ -129,8 +129,8 @@ public class StyleHandler {
 
         StyleProperty footer = pageList.addSubProp(new StyleProperty(FOOTER));
         footer.addSubProp(new BooleanProperty(VANILLA_TEXTURE, true));
-        footer.addSubProp(new BooleanProperty(SHADED_BORDERS, true).setTip(TextFormatting.DARK_GRAY + I18n.format("pi.style.shade_borders.info"))) //
-                .addSubProp(new BooleanProperty(INVERT_SHADE, false).setTip(TextFormatting.DARK_GRAY + I18n.format("pi.style.invert_shade.info")));
+        footer.addSubProp(new BooleanProperty(SHADED_BORDERS, true).setTip(TextFormatting.DARK_GRAY + I18n.get("pi.style.shade_borders.info"))) //
+                .addSubProp(new BooleanProperty(INVERT_SHADE, false).setTip(TextFormatting.DARK_GRAY + I18n.get("pi.style.invert_shade.info")));
 //        footer.addSubProp(new BooleanProperty(THICK_BORDERS, false));
         footer.addSubProp(new ColourProperty(COLOUR, 0xFFFFFFFF, true));
         footer.addSubProp(new ColourProperty(BORDER, 0x00000000, true));
@@ -145,8 +145,8 @@ public class StyleHandler {
 
         StyleProperty pageButtons = pageList.addSubProp(new StyleProperty(PAGE_BUTTONS));
         pageButtons.addSubProp(new BooleanProperty(VANILLA_TEXTURE, true));
-        pageButtons.addSubProp(new BooleanProperty(SHADED_BORDERS, true).setTip(TextFormatting.DARK_GRAY + I18n.format("pi.style.shade_borders.info"))) //
-                .addSubProp(new BooleanProperty(INVERT_SHADE, false).setTip(TextFormatting.DARK_GRAY + I18n.format("pi.style.invert_shade.info")));
+        pageButtons.addSubProp(new BooleanProperty(SHADED_BORDERS, true).setTip(TextFormatting.DARK_GRAY + I18n.get("pi.style.shade_borders.info"))) //
+                .addSubProp(new BooleanProperty(INVERT_SHADE, false).setTip(TextFormatting.DARK_GRAY + I18n.get("pi.style.invert_shade.info")));
         pageButtons.addSubProp(new BooleanProperty(THICK_BORDERS, false));
         pageButtons.addSubProp(new ColourProperty(COLOUR, 0xFFFFFFFF, true));
         pageButtons.addSubProp(new ColourProperty(HOVER, 0xFFFFFFFF, true));
@@ -158,8 +158,8 @@ public class StyleHandler {
 
         StyleProperty pageBackButton = pageButtons.addSubProp(new StyleProperty(PAGE_BACK_BUTTON));
         pageBackButton.addSubProp(new BooleanProperty(VANILLA_TEXTURE, true));
-        pageBackButton.addSubProp(new BooleanProperty(SHADED_BORDERS, true).setTip(TextFormatting.DARK_GRAY + I18n.format("pi.style.shade_borders.info"))) //
-                .addSubProp(new BooleanProperty(INVERT_SHADE, false).setTip(TextFormatting.DARK_GRAY + I18n.format("pi.style.invert_shade.info")));
+        pageBackButton.addSubProp(new BooleanProperty(SHADED_BORDERS, true).setTip(TextFormatting.DARK_GRAY + I18n.get("pi.style.shade_borders.info"))) //
+                .addSubProp(new BooleanProperty(INVERT_SHADE, false).setTip(TextFormatting.DARK_GRAY + I18n.get("pi.style.invert_shade.info")));
         pageBackButton.addSubProp(new BooleanProperty(THICK_BORDERS, false));
         pageBackButton.addSubProp(new ColourProperty(COLOUR, 0xFFFFFFFF, true));
         pageBackButton.addSubProp(new ColourProperty(HOVER, 0xFFFFFFFF, true));
@@ -182,8 +182,8 @@ public class StyleHandler {
 
         header = mdWindow.addSubProp(new StyleProperty(HEADER));
         header.addSubProp(new BooleanProperty(VANILLA_TEXTURE, true));
-        header.addSubProp(new BooleanProperty(SHADED_BORDERS, true).setTip(TextFormatting.DARK_GRAY + I18n.format("pi.style.shade_borders.info"))) //
-                .addSubProp(new BooleanProperty(INVERT_SHADE, false).setTip(TextFormatting.DARK_GRAY + I18n.format("pi.style.invert_shade.info")));
+        header.addSubProp(new BooleanProperty(SHADED_BORDERS, true).setTip(TextFormatting.DARK_GRAY + I18n.get("pi.style.shade_borders.info"))) //
+                .addSubProp(new BooleanProperty(INVERT_SHADE, false).setTip(TextFormatting.DARK_GRAY + I18n.get("pi.style.invert_shade.info")));
         header.addSubProp(new BooleanProperty(THICK_BORDERS, false));
         header.addSubProp(new ColourProperty(COLOUR, 0xFFa0a0a0, true));
         header.addSubProp(new ColourProperty(BORDER, 0x00000000, true));
@@ -191,8 +191,8 @@ public class StyleHandler {
 
         body = mdWindow.addSubProp(new StyleProperty(BODY));
         body.addSubProp(new BooleanProperty(VANILLA_TEXTURE, true));
-        body.addSubProp(new BooleanProperty(SHADED_BORDERS, true).setTip(TextFormatting.DARK_GRAY + I18n.format("pi.style.shade_borders.info"))) //
-                .addSubProp(new BooleanProperty(INVERT_SHADE, false).setTip(TextFormatting.DARK_GRAY + I18n.format("pi.style.invert_shade.info")));
+        body.addSubProp(new BooleanProperty(SHADED_BORDERS, true).setTip(TextFormatting.DARK_GRAY + I18n.get("pi.style.shade_borders.info"))) //
+                .addSubProp(new BooleanProperty(INVERT_SHADE, false).setTip(TextFormatting.DARK_GRAY + I18n.get("pi.style.invert_shade.info")));
         body.addSubProp(new BooleanProperty(THICK_BORDERS, false));
         body.addSubProp(new ColourProperty(COLOUR, 0xFFFFFFFF, true));
         body.addSubProp(new ColourProperty(BORDER, 0xFF000000, true));
@@ -226,7 +226,7 @@ public class StyleHandler {
 
         //Sub elements
         StyleProperty subElements = dialogs.addSubProp(new StyleProperty(SUB_ELEMENTS));
-        subElements.setTip(TextFormatting.DARK_GRAY + I18n.format("pi.style.sub_elements.info"));
+        subElements.setTip(TextFormatting.DARK_GRAY + I18n.get("pi.style.sub_elements.info"));
 //        StyleProperty presetWindow = styleEditor.addSubProp(new StyleProperty(PRESET_WINDOW));
         subElements.addSubProp(new ColourProperty(COLOUR, 0xFFa0a0a0, true));
         subElements.addSubProp(new ColourProperty(BORDER, 0x00000000, true));
@@ -243,14 +243,14 @@ public class StyleHandler {
 
         //endregion
 
-        StyleProperty guiDoc = addProperty(new StyleProperty(GUI_DOCS).setTip(TextFormatting.DARK_GRAY + I18n.format("pi.style.gui_docs.info")));
+        StyleProperty guiDoc = addProperty(new StyleProperty(GUI_DOCS).setTip(TextFormatting.DARK_GRAY + I18n.get("pi.style.gui_docs.info")));
         //# Gui Doc
         //region //############################################################################
 
         //Overall window style
         guiDoc.addSubProp(new BooleanProperty(VANILLA_TEXTURE, true));
-        guiDoc.addSubProp(new BooleanProperty(SHADED_BORDERS, true).setTip(TextFormatting.DARK_GRAY + I18n.format("pi.style.shade_borders.info"))) //
-                .addSubProp(new BooleanProperty(INVERT_SHADE, false).setTip(TextFormatting.DARK_GRAY + I18n.format("pi.style.invert_shade.info")));
+        guiDoc.addSubProp(new BooleanProperty(SHADED_BORDERS, true).setTip(TextFormatting.DARK_GRAY + I18n.get("pi.style.shade_borders.info"))) //
+                .addSubProp(new BooleanProperty(INVERT_SHADE, false).setTip(TextFormatting.DARK_GRAY + I18n.get("pi.style.invert_shade.info")));
         guiDoc.addSubProp(new BooleanProperty(THICK_BORDERS, false));
         guiDoc.addSubProp(new ColourProperty(COLOUR, 0xFFFFFFFF, true));
         guiDoc.addSubProp(new ColourProperty(BORDER, 0x00000000, true));
@@ -303,15 +303,15 @@ public class StyleHandler {
         scrollBar.addSubProp(new ColourProperty(HOVER, 0xFF8b8b8b, true));
         scrollBar.addSubProp(new ColourProperty(BORDER, 0xFF8b8b8b, true));
         scrollBar.addSubProp(new ColourProperty(BORDER_HOVER, 0xFF8b8b8b, true));
-        scrollBar.addSubProp(new BooleanProperty(SHADED_BORDERS, true).setTip(TextFormatting.DARK_GRAY + I18n.format("pi.style.shade_borders.info"))) //
-                .addSubProp(new BooleanProperty(INVERT_SHADE, true).setTip(TextFormatting.DARK_GRAY + I18n.format("pi.style.invert_shade.info")));
+        scrollBar.addSubProp(new BooleanProperty(SHADED_BORDERS, true).setTip(TextFormatting.DARK_GRAY + I18n.get("pi.style.shade_borders.info"))) //
+                .addSubProp(new BooleanProperty(INVERT_SHADE, true).setTip(TextFormatting.DARK_GRAY + I18n.get("pi.style.invert_shade.info")));
         StyleProperty scrollSlider = scrollBar.addSubProp(new StyleProperty(SCROLL_SLIDER));
         scrollSlider.addSubProp(new ColourProperty(COLOUR, 0xFF8b8b8b, true));
         scrollSlider.addSubProp(new ColourProperty(HOVER, 0xFF8b8bc8, true));
         scrollSlider.addSubProp(new ColourProperty(BORDER, 0xFF8b8b8b, true));
         scrollSlider.addSubProp(new ColourProperty(BORDER_HOVER, 0xFF8b8bc8, true));
-        scrollSlider.addSubProp(new BooleanProperty(SHADED_BORDERS, true).setTip(TextFormatting.DARK_GRAY + I18n.format("pi.style.shade_borders.info"))) //
-                .addSubProp(new BooleanProperty(INVERT_SHADE, false).setTip(TextFormatting.DARK_GRAY + I18n.format("pi.style.invert_shade.info")));
+        scrollSlider.addSubProp(new BooleanProperty(SHADED_BORDERS, true).setTip(TextFormatting.DARK_GRAY + I18n.get("pi.style.shade_borders.info"))) //
+                .addSubProp(new BooleanProperty(INVERT_SHADE, false).setTip(TextFormatting.DARK_GRAY + I18n.get("pi.style.invert_shade.info")));
         return scrollBar;
     }
 
@@ -466,7 +466,7 @@ public class StyleHandler {
             }
 
             JsonObject jObj = element.getAsJsonObject();
-            unsavedChanges = JSONUtils.getBoolean(jObj, "unsavedChanges", false);
+            unsavedChanges = JSONUtils.getAsBoolean(jObj, "unsavedChanges", false);
             rootPropertyMap.forEach((s, property) -> property.load(jObj));
         }
         catch (Exception e) {
@@ -657,7 +657,7 @@ public class StyleHandler {
 
         @Override
         public void load(JsonObject jObj) {
-            value = JSONUtils.getBoolean(jObj, type.getName(), value);
+            value = JSONUtils.getAsBoolean(jObj, type.getName(), value);
             super.load(jObj);
         }
 
@@ -688,7 +688,7 @@ public class StyleHandler {
 
         @Override
         public void load(JsonObject jObj) {
-            value = JSONUtils.getInt(jObj, type.getName(), value);
+            value = JSONUtils.getAsInt(jObj, type.getName(), value);
             super.load(jObj);
         }
 

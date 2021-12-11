@@ -70,7 +70,7 @@ public class RootPage extends DocumentationPage {
 
     @Override
     public String getDisplayName() {
-        return I18n.format("pi.root_page.name");
+        return I18n.get("pi.root_page.name");
     }
 
     @Override

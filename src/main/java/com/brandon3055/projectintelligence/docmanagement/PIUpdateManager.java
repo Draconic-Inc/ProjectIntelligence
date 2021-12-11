@@ -3,7 +3,7 @@ package com.brandon3055.projectintelligence.docmanagement;
 import com.brandon3055.brandonscore.handlers.FileHandler;
 import com.brandon3055.brandonscore.integration.ModHelperBC;
 import com.brandon3055.brandonscore.lib.FileDownloadManager;
-import com.brandon3055.brandonscore.lib.PairKV;
+import com.brandon3055.brandonscore.lib.Pair;
 import com.brandon3055.brandonscore.utils.Utils;
 import com.brandon3055.projectintelligence.client.PIGuiHelper;
 import com.brandon3055.projectintelligence.client.gui.PIConfig;
@@ -198,7 +198,7 @@ public class PIUpdateManager {
         downloadManager.startDownload();
     }
 
-    public static Map<File, PairKV<String, File>> tempFileToFileMap = new LinkedHashMap<>();
+    public static Map<File, Pair<String, File>> tempFileToFileMap = new LinkedHashMap<>();
 
     /**
      * The only time this is fired outside of this class should be when a page or mod language override state changes.
@@ -245,7 +245,7 @@ public class PIUpdateManager {
                     }
 
                     File tempFile = new File(updaterFolder, hash + ".temp");
-                    tempFileToFileMap.put(tempFile, new PairKV<>(hash, file));
+                    tempFileToFileMap.put(tempFile, new Pair<>(hash, file));
                     downloadManager.addFileToQue(obj.get("url").getAsString(), tempFile);
                 }
 
@@ -265,7 +265,7 @@ public class PIUpdateManager {
                     }
 
                     File tempFile = new File(updaterFolder, hash + ".temp");
-                    tempFileToFileMap.put(tempFile, new PairKV<>(hash, file));
+                    tempFileToFileMap.put(tempFile, new Pair<>(hash, file));
                     downloadManager.addFileToQue(obj.get("url").getAsString(), tempFile);
                 }
             }
@@ -278,7 +278,7 @@ public class PIUpdateManager {
         downloadManager.startDownload();
     }
 
-    private static void completeDownloads(Map<File, PairKV<String, File>> tempFileToFileMap) {
+    private static void completeDownloads(Map<File, Pair<String, File>> tempFileToFileMap) {
         updateStage = RELOAD_DOCUMENTATION;
         LogHelper.dev("### Transferring downloaded files ###");
         if (downloadManager.failedFiles.size() > 0) {
@@ -287,21 +287,21 @@ public class PIUpdateManager {
         }
 
         for (File tempFile : tempFileToFileMap.keySet()) {
-            PairKV<String, File> hashFilePair = tempFileToFileMap.get(tempFile);
+            Pair<String, File> hashFilePair = tempFileToFileMap.get(tempFile);
             try {
                 String hash = getHash(tempFile);
 
-                if (hash.equals(hashFilePair.getKey())) {
-                    hashFilePair.getValue().delete();
-                    LogHelper.dev(tempFile + " -> " + hashFilePair.getValue());
-                    FileUtils.moveFile(tempFile, hashFilePair.getValue());
+                if (hash.equals(hashFilePair.key())) {
+                    hashFilePair.value().delete();
+                    LogHelper.dev(tempFile + " -> " + hashFilePair.value());
+                    FileUtils.moveFile(tempFile, hashFilePair.value());
                 }
                 else {
                     PIGuiHelper.displayError("An error occurred while transferring downloaded file. The hash of the downloaded file does not match the expected hash. " + tempFile);
                 }
             }
             catch (Exception e) {
-                PIGuiHelper.displayError("An error occurred while transferring downloaded file to final location file: " + tempFile + " -> " + hashFilePair.getValue() + " See console for stacktrace.");
+                PIGuiHelper.displayError("An error occurred while transferring downloaded file to final location file: " + tempFile + " -> " + hashFilePair.value() + " See console for stacktrace.");
                 e.printStackTrace();
             }
         }

@@ -47,7 +47,7 @@ public class StyledScrollBar extends GuiSlideControl {
 //                StyleHandler.getColour(prop + "." + StyleHandler.StyleType.COLOUR.getName()).glColour();
 //                ResourceHelperBC.bindTexture(PITextures.VANILLA_GUI);
 //                drawTiledTextureRectWithTrim(xPos(), yPos(), xSize(), ySize(), 4, 4, 4, 4, 0, thickBorders ? 0 : 128, 256, 128);
-//                GlStateManager.color(1, 1, 1, 1);
+//                RenderSystem.color(1, 1, 1, 1);
 //                drawBorderedRect(xPos(), yPos(), xSize(), ySize(), 1, 0, border);
 //            }
 //            else {

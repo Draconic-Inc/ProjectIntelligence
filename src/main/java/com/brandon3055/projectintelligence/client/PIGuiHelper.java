@@ -93,7 +93,7 @@ public class PIGuiHelper {
         GuiElement background;
         dialog.addChild(background = new StyledGuiRect("user_dialogs"));
 
-        GuiLabel infoLabel = new GuiLabel(I18n.format("pi.md.link_confirmation.txt"));
+        GuiLabel infoLabel = new GuiLabel(I18n.get("pi.md.link_confirmation.txt"));
         infoLabel.setWrap(true).setShadow(false);
         infoLabel.setTextColour(StyleHandler.getInt("user_dialogs." + StyleHandler.StyleType.TEXT_COLOUR.getName()));
         infoLabel.setXSize(dialog.xSize() - 30);
@@ -110,21 +110,21 @@ public class PIGuiHelper {
         dialog.addChild(urlLabel);
 
         GuiButton yesButton = new StyledGuiButton("user_dialogs." + StyleHandler.StyleType.BUTTON_STYLE.getName());
-        yesButton.setText(I18n.format("pi.button.yes"));
+        yesButton.setText(I18n.get("pi.button.yes"));
         yesButton.setSize(80, 15);
         yesButton.setPos(dialog.xPos() + 15, urlLabel.maxYPos() + 10);
         yesButton.onPressed(() -> Utils.openWebLink(uri));
         dialog.addChild(yesButton);
 
         GuiButton copyButton = new StyledGuiButton("user_dialogs." + StyleHandler.StyleType.BUTTON_STYLE.getName());
-        copyButton.setText(I18n.format("pi.button.copy_to_clipboard"));
+        copyButton.setText(I18n.get("pi.button.copy_to_clipboard"));
         copyButton.setSize(108, 15);
         copyButton.setRelPos(yesButton, 81, 0);
         copyButton.onPressed(() -> Utils.setClipboardString(link));
         dialog.addChild(copyButton);
 
         GuiButton cancelButton = new StyledGuiButton("user_dialogs." + StyleHandler.StyleType.BUTTON_STYLE.getName());
-        cancelButton.setText(I18n.format("pi.button.cancel"));
+        cancelButton.setText(I18n.get("pi.button.cancel"));
         cancelButton.setSize(80, 15);
         cancelButton.setRelPos(copyButton, 109, 0);
         dialog.addChild(cancelButton);
@@ -174,10 +174,10 @@ public class PIGuiHelper {
 
     //TODO Test This
     public static void centerWindowOnMC(Component window) {
-        Monitor monitor = Minecraft.getInstance().mainWindow.func_224796_s();
+        Monitor monitor = Minecraft.getInstance().getWindow().findBestMonitor();
         if (monitor == null) return;
-        int centerX = monitor.getVirtualPosX() + (monitor.getDefaultVideoMode().getWidth() / 2);
-        int centerY = monitor.getVirtualPosY() + (monitor.getDefaultVideoMode().getHeight() / 2);
+        int centerX = monitor.getX() + (monitor.getCurrentMode().getWidth() / 2);
+        int centerY = monitor.getY() + (monitor.getCurrentMode().getHeight() / 2);
         window.setLocation(centerX - (window.getWidth() / 2), Math.max(0, centerY - (window.getHeight() / 2)));
     }
 
@@ -198,7 +198,7 @@ public class PIGuiHelper {
 
     public static synchronized LinkedList<String> getEntitySelectionList() {
         if (entitySelectionList.isEmpty()) {
-            for (EntityType type : SpawnEggItem.EGGS.keySet()) {
+            for (EntityType type : SpawnEggItem.BY_ID.keySet()) {
                 entitySelectionList.add(type.getRegistryName().toString());
             }
             Collections.sort(entitySelectionList);
@@ -211,21 +211,21 @@ public class PIGuiHelper {
         return playerInventory;
     }
 
-    public static void updatePlayerInventory(PlayerEntity player) {
-        playerInventory.clear();
-        player.inventory.mainInventory.stream().filter(stack -> !stack.isEmpty()).forEach(stack -> playerInventory.add(new StackReference(stack).toString()));
-        player.inventory.armorInventory.stream().filter(stack -> !stack.isEmpty()).forEach(stack -> playerInventory.add(new StackReference(stack).toString()));
-        player.inventory.offHandInventory.stream().filter(stack -> !stack.isEmpty()).forEach(stack -> playerInventory.add(new StackReference(stack).toString()));
-    }
+//    public static void updatePlayerInventory(PlayerEntity player) {
+//        playerInventory.clear();
+//        player.inventory.mainInventory.stream().filter(stack -> !stack.isEmpty()).forEach(stack -> playerInventory.add(new StackReference(stack).toString()));
+//        player.inventory.armorInventory.stream().filter(stack -> !stack.isEmpty()).forEach(stack -> playerInventory.add(new StackReference(stack).toString()));
+//        player.inventory.offHandInventory.stream().filter(stack -> !stack.isEmpty()).forEach(stack -> playerInventory.add(new StackReference(stack).toString()));
+//    }
 
     public static void openContentChooser(@Nullable ContentInfo contentInfo, SelectMode mode, Consumer<ContentInfo> action, ContentType... types) {
         ProcessHandlerClient.syncTask(() -> {
-            if (Minecraft.getInstance().currentScreen instanceof GuiContentSelect) {
+            if (Minecraft.getInstance().screen instanceof GuiContentSelect) {
                 return;
             }
-            GuiContentSelect gui = new GuiContentSelect(Minecraft.getInstance().currentScreen, mode, contentInfo, types);
+            GuiContentSelect gui = new GuiContentSelect(Minecraft.getInstance().screen, mode, contentInfo, types);
             gui.setSelectCallBack(action);
-            Minecraft.getInstance().displayGuiScreen(gui);
+            Minecraft.getInstance().setScreen(gui);
         });
     }
 

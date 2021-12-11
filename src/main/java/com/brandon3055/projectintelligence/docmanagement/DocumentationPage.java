@@ -284,15 +284,15 @@ public class DocumentationPage {
     //region //############################################################################
 
     public void loadFromJson(JsonObject jObj) {
-        pageId = JSONUtils.getString(jObj, "id", "<invalid-id>");
-        markdownFile = JSONUtils.getString(jObj, "file", "");
-        sortingWeight = JSONUtils.getInt(jObj, "sorting_weight", 0);
-        cycle_icons = JSONUtils.getBoolean(jObj, "cycle_icons", false);
-        hidden = JSONUtils.getBoolean(jObj, "hidden", false);
+        pageId = JSONUtils.getAsString(jObj, "id", "<invalid-id>");
+        markdownFile = JSONUtils.getAsString(jObj, "file", "");
+        sortingWeight = JSONUtils.getAsInt(jObj, "sorting_weight", 0);
+        cycle_icons = JSONUtils.getAsBoolean(jObj, "cycle_icons", false);
+        hidden = JSONUtils.getAsBoolean(jObj, "hidden", false);
 
-        if (JSONUtils.isJsonArray(jObj, "relations")) {
+        if (JSONUtils.isArrayNode(jObj, "relations")) {
             relations.clear();
-            for (JsonElement element : JSONUtils.getJsonArray(jObj, "relations")) {
+            for (JsonElement element : JSONUtils.getAsJsonArray(jObj, "relations")) {
                 if (element.isJsonObject()) {
                     ContentRelation relation = ContentRelation.fromJson(element.getAsJsonObject());
                     if (relation != null) {
@@ -302,17 +302,17 @@ public class DocumentationPage {
             }
         }
 
-        if (JSONUtils.isJsonArray(jObj, "icons")) {
+        if (JSONUtils.isArrayNode(jObj, "icons")) {
             icons.clear();
-            for (JsonElement element : JSONUtils.getJsonArray(jObj, "icons")) {
+            for (JsonElement element : JSONUtils.getAsJsonArray(jObj, "icons")) {
                 if (element.isJsonObject()) {
                     icons.add(element.getAsJsonObject());
                 }
             }
         }
 
-        if (JSONUtils.isJsonArray(jObj, "pages")) {
-            loadSubPages(JSONUtils.getJsonArray(jObj, "pages"));
+        if (JSONUtils.isArrayNode(jObj, "pages")) {
+            loadSubPages(JSONUtils.getAsJsonArray(jObj, "pages"));
         }
     }
 

@@ -22,7 +22,7 @@ import com.brandon3055.projectintelligence.docmanagement.ModStructurePage;
 import com.brandon3055.projectintelligence.docmanagement.RootPage;
 import com.brandon3055.projectintelligence.utils.LogHelper;
 import com.google.common.collect.Lists;
-import com.mojang.blaze3d.platform.GlStateManager;
+import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.resources.I18n;
 import net.minecraft.util.text.TextFormatting;
@@ -184,7 +184,7 @@ public class GuiPartMDWindow extends GuiElement<GuiPartMDWindow> {
 
             closeButton = new GuiButton().setXPosMod((guiButton, integer) -> maxXPos() - 11).setYPos(yPos() + 2).setSize(9, 9);
             closeButton.onPressed(() -> controller.closeTab(tabData));
-            closeButton.setHoverText(I18n.format("pi.button.close"));
+            closeButton.setHoverText(I18n.get("pi.button.close"));
             closeButton.addChild(new GuiTexture(64, 16, 5, 5, PITextures.PI_PARTS).setRelPos(0, 2).setXPosMod((guiButton, integer) -> maxXPos() - 9));
             addChild(closeButton);
 
@@ -339,7 +339,7 @@ public class GuiPartMDWindow extends GuiElement<GuiPartMDWindow> {
             mdWindow.tabRenderer.setTabRender(selected ? 2 : 0).render(this, renderX, yPos(), xSize(), ySize());
 
             drawCustomString(fontRenderer, name, renderX + 3, yPos() + 3, xSize() - (closeButton.isEnabled() ? 10 : 3), bodyProps.textColour(), GuiAlign.LEFT, GuiAlign.TextRotation.NORMAL, false, true, false);
-            GlStateManager.color4f(1, 1, 1, 1);
+            RenderSystem.color4f(1, 1, 1, 1);
 
             if (isDragging) {
                 zOffset -= 10;

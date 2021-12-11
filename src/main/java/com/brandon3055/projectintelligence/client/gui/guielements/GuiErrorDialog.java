@@ -36,7 +36,7 @@ public class GuiErrorDialog extends GuiPopUpDialogBase<GuiErrorDialog> {
         addChild(new GuiBorderedRect().setFillColour(0xFF909090).setPos(this).setSize(xSize(), 14));
 
         // Window Title
-        addChild(new GuiLabel(I18n.format("pi.config.pi_errors.title")).setRelPos(this, 4, 0).setSize(xSize(), 14).setTextColour(0).setAlignment(LEFT).setShadow(false));
+        addChild(new GuiLabel(I18n.get("pi.config.pi_errors.title")).setRelPos(this, 4, 0).setSize(xSize(), 14).setTextColour(0).setAlignment(LEFT).setShadow(false));
 
         GuiButton close = new GuiButton("Close").setSize(50, 12).setFillColours(0xFF900000, 0xFFFF0000).setRelPos(xSize() - 51, 1);
         close.onPressed(() -> {

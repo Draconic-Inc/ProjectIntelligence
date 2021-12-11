@@ -3,8 +3,8 @@ package com.brandon3055.projectintelligence.client.gui;
 import com.brandon3055.brandonscore.client.gui.modulargui.GuiElementManager;
 import com.brandon3055.brandonscore.client.gui.modulargui.IModularGui;
 import com.brandon3055.brandonscore.client.gui.modulargui.GuiElement;
-import com.brandon3055.brandonscore.client.gui.modulargui.guielements.GuiDraggable;
-import com.brandon3055.brandonscore.client.gui.modulargui.guielements.GuiDraggable.PositionRestraint;
+import com.brandon3055.brandonscore.client.gui.modulargui.guielements.GuiManipulable;
+import com.brandon3055.brandonscore.client.gui.modulargui.guielements.GuiManipulable.PositionRestraint;
 import com.brandon3055.projectintelligence.client.DisplayController;
 import com.brandon3055.projectintelligence.client.gui.guielements.GuiPartMDWindow;
 import com.brandon3055.projectintelligence.client.gui.guielements.GuiPartMenu;
@@ -37,14 +37,14 @@ public class PIGuiContainer implements IModularGui<Screen> {
     private Supplier<Integer> listMaxWidth = () -> 150;
     private boolean enablePageList = true;
     private boolean enableContentWindow = true;
-    private GuiDraggable partContainer = null;
+    private GuiManipulable partContainer = null;
     private GuiPartMenu menu = null;
     private GuiPartMDWindow mdWindow = null;
     private GuiPartPageList pageList = null;
     private Runnable sizeChangeHandler = null;
     private Runnable closeHandler = null;
     private Supplier<Boolean> canDrag = () -> false;
-    private Consumer<GuiDraggable> onMoved = null;
+    private Consumer<GuiManipulable> onMoved = null;
     private PositionRestraint positionRestraint = GuiElement::normalizePosition;
 
     public PIGuiContainer(Screen gui, DisplayController controller) {
@@ -63,8 +63,8 @@ public class PIGuiContainer implements IModularGui<Screen> {
 
     public void onGuiInit() {
         this.mc = Minecraft.getInstance();
-        this.screenWidth = mc.mainWindow.getScaledWidth();
-        this.screenHeight = mc.mainWindow.getScaledHeight();
+        this.screenWidth = mc.getWindow().getScreenWidth();
+        this.screenHeight = mc.getWindow().getGuiScaledHeight();
         manager.setWorldAndResolution(mc, screenWidth, screenHeight);
     }
 
@@ -102,7 +102,7 @@ public class PIGuiContainer implements IModularGui<Screen> {
 
     @Override
     public void addElements(GuiElementManager manager) {
-        partContainer = new GuiDraggable();
+        partContainer = new GuiManipulable();
         partContainer.setCanDrag(canDrag);
         partContainer.setPositionRestraint(positionRestraint);
         partContainer.setOnMovedCallback(onMoved == null ? null : () -> onMoved.accept(partContainer));
@@ -214,7 +214,7 @@ public class PIGuiContainer implements IModularGui<Screen> {
         }
     }
 
-    public void setOnMoved(Consumer<GuiDraggable> onMoved) {
+    public void setOnMoved(Consumer<GuiManipulable> onMoved) {
         this.onMoved = onMoved;
         if (partContainer != null) {
             partContainer.setOnMovedCallback(onMoved == null ? null : () -> onMoved.accept(partContainer));
@@ -249,7 +249,7 @@ public class PIGuiContainer implements IModularGui<Screen> {
         return mdWindow;
     }
 
-    public GuiDraggable getPartContainer() {
+    public GuiManipulable getPartContainer() {
         return partContainer;
     }
 
@@ -285,8 +285,8 @@ public class PIGuiContainer implements IModularGui<Screen> {
 
     public boolean charTyped(char typedChar, int keyCode) {
         boolean ret = manager.charTyped(typedChar, keyCode);
-        InputMappings.Input key = InputMappings.Type.MOUSE.getOrMakeInput(keyCode);
-        if (!ret && (keyCode == 1 || mc.gameSettings.keyBindInventory.isActiveAndMatches(key)) && closeHandler != null) {
+        InputMappings.Input key = InputMappings.Type.MOUSE.getOrCreate(keyCode);
+        if (!ret && (keyCode == 1 || mc.options.keyInventory.isActiveAndMatches(key)) && closeHandler != null) {
             closeHandler.run();
             return true;
         }

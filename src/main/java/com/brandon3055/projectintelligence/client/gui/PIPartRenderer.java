@@ -4,7 +4,7 @@ import com.brandon3055.brandonscore.client.ResourceHelperBC;
 import com.brandon3055.brandonscore.client.gui.modulargui.GuiElement;
 import com.brandon3055.projectintelligence.client.PITextures;
 import com.brandon3055.projectintelligence.client.StyleHandler.PropertyGroup;
-import com.mojang.blaze3d.platform.GlStateManager;
+import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.Tessellator;
@@ -68,8 +68,7 @@ public class PIPartRenderer {
         if (vanillaTex) {
             if (props.hasPropColourHover() && mouseOver) {
                 props.glColourHover();
-            }
-            else {
+            } else {
                 props.glColour();
             }
 
@@ -77,10 +76,9 @@ public class PIPartRenderer {
                 int texV = 48 + ((mouseOver ? 2 : 1) * 20);
                 ResourceHelperBC.bindTexture(PITextures.PI_PARTS);
                 parent.drawTiledTextureRectWithTrim(x, y, width, height, 2, 2, 2, 2, 0, texV, 200, 20);
-                GlStateManager.color4f(1, 1, 1, 1);
+                RenderSystem.color4f(1, 1, 1, 1);
                 parent.drawBorderedRect(x, y, width, height, 1, 0, border);
-            }
-            else {
+            } else {
                 ResourceHelperBC.bindTexture(squareTex ? PITextures.VANILLA_GUI_SQ : PITextures.VANILLA_GUI);
 
                 int texU = left() ? 0 : 4;
@@ -90,7 +88,7 @@ public class PIPartRenderer {
 
                 drawTiledTextureRectWithTrim(parent, x, y, width, height, top() ? 4 : 0, left() ? 4 : 0, bottom() ? 4 : 0, right() ? 4 : 0, texU, texV, texW, texH);
 
-                GlStateManager.color4f(1, 1, 1, 1);
+                RenderSystem.color4f(1, 1, 1, 1);
                 if (squareTex) {
                     drawShadedRect(parent, x, y, width, height, 1, 0, border, border, border);
                 }
@@ -99,8 +97,7 @@ public class PIPartRenderer {
                     parent.drawTiledTextureRectWithTrim(x + 1, y + height - 1, width - 2, tabRender + 1, 0, 4, 0, 4, texU + 1, texV + 4, texW - 2, texH - 8);
                 }
             }
-        }
-        else {
+        } else {
             boolean shadedBorders = props.hasPropShadeBorders() && props.shadeBorders();
             boolean invertShade = props.hasPropInvertShade() && props.invertShade();
             int bw = thickBorders ? 2 : 1;
@@ -113,8 +110,7 @@ public class PIPartRenderer {
                     parent.drawColouredRect(x + bw, y + height, width - (bw * 2), tabRender, colour);
                     parent.drawColouredRect(x + width - bw, y + height, bw, bw, invertShade ? light : dark);
                 }
-            }
-            else {
+            } else {
                 drawShadedRect(parent, x, y, width, height, bw, colour, border, border, border);
                 if (tabRender > 0) {
                     parent.drawColouredRect(x + bw, y + height, width - (bw * 2), tabRender, colour);
@@ -159,7 +155,7 @@ public class PIPartRenderer {
         if (xSize <= 0 || ySize <= 0 || trimWidth <= 0 || trimHeight <= 0) return;
 
         Tessellator tessellator = Tessellator.getInstance();
-        BufferBuilder buffer = tessellator.getBuffer();
+        BufferBuilder buffer = tessellator.getBuilder();
         buffer.begin(0x07, DefaultVertexFormats.POSITION_TEX);
 
         for (int x = 0; x < xSize; ) {
@@ -167,11 +163,9 @@ public class PIPartRenderer {
             int trimU;
             if (x == 0) {
                 trimU = texU;
-            }
-            else if (x + trimWidth <= xSize) {
+            } else if (x + trimWidth <= xSize) {
                 trimU = texU + leftTrim;
-            }
-            else {
+            } else {
                 trimU = texU + (texWidth - (xSize - x));
             }
 
@@ -186,8 +180,7 @@ public class PIPartRenderer {
                 int trimV;
                 if (y + texHeight <= ySize) {
                     trimV = texV + topTrim;
-                }
-                else {
+                } else {
                     trimV = texV + (texHeight - (ySize - y));
                 }
 
@@ -204,15 +197,15 @@ public class PIPartRenderer {
             x += trimWidth;
         }
 
-        tessellator.draw();
+        tessellator.end();
     }
 
     private void bufferTexturedModalRect(GuiElement element, BufferBuilder buffer, int x, int y, int textureX, int textureY, int width, int height) {
         double zLevel = element.getRenderZLevel();
-        buffer.pos((double) (x), (double) (y + height), zLevel).tex((double) ((float) (textureX) * 0.00390625F), (double) ((float) (textureY + height) * 0.00390625F)).endVertex();
-        buffer.pos((double) (x + width), (double) (y + height), zLevel).tex((double) ((float) (textureX + width) * 0.00390625F), (double) ((float) (textureY + height) * 0.00390625F)).endVertex();
-        buffer.pos((double) (x + width), (double) (y), zLevel).tex((double) ((float) (textureX + width) * 0.00390625F), (double) ((float) (textureY) * 0.00390625F)).endVertex();
-        buffer.pos((double) (x), (double) (y), zLevel).tex((double) ((float) (textureX) * 0.00390625F), (double) ((float) (textureY) * 0.00390625F)).endVertex();
+        buffer.vertex(x, y + height, zLevel).uv(((float) (textureX) * 0.00390625F), ((float) (textureY + height) * 0.00390625F)).endVertex();
+        buffer.vertex(x + width, y + height, zLevel).uv(((float) (textureX + width) * 0.00390625F), ((float) (textureY + height) * 0.00390625F)).endVertex();
+        buffer.vertex(x + width, y, zLevel).uv(((float) (textureX + width) * 0.00390625F), ((float) (textureY) * 0.00390625F)).endVertex();
+        buffer.vertex(x, y, zLevel).uv(((float) (textureX) * 0.00390625F), ((float) (textureY) * 0.00390625F)).endVertex();
     }
 
 

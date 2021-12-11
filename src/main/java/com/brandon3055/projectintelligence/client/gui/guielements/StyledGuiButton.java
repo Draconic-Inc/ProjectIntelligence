@@ -5,7 +5,7 @@ import com.brandon3055.brandonscore.client.gui.modulargui.baseelements.GuiButton
 import com.brandon3055.projectintelligence.client.PITextures;
 import com.brandon3055.projectintelligence.client.StyleHandler;
 import com.brandon3055.projectintelligence.client.gui.PIPartRenderer;
-import com.mojang.blaze3d.platform.GlStateManager;
+import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.Minecraft;
 
 import static com.brandon3055.projectintelligence.client.StyleHandler.StyleType.*;
@@ -66,17 +66,15 @@ public class StyledGuiButton extends GuiButton {
 
             if (mouseOver) {
                 StyleHandler.getColour(prop + "." + HOVER.getName()).glColour();
-            }
-            else {
+            } else {
                 StyleHandler.getColour(prop + "." + COLOUR.getName()).glColour();
             }
 
             ResourceHelperBC.bindTexture(PITextures.PI_PARTS);
             drawTiledTextureRectWithTrim(xPos(), yPos(), xSize(), ySize(), 2, 2, 2, 2, 0, texV, 200, 20);
-            GlStateManager.color4f(1, 1, 1, 1);
+            RenderSystem.color4f(1, 1, 1, 1);
             drawBorderedRect(xPos(), yPos(), xSize(), ySize(), 1, 0, mouseOver ? borderHover : border);
-        }
-        else {
+        } else {
             int fill = StyleHandler.getInt(prop + "." + COLOUR.getName());
             int fillHover = StyleHandler.getInt(prop + "." + HOVER.getName());
             drawBorderedRect(xPos(), yPos(), xSize(), ySize(), 1, mouseOver ? fillHover : fill, mouseOver ? borderHover : border);

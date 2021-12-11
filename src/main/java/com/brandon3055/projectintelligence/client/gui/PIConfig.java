@@ -153,27 +153,27 @@ public class PIConfig {
         }
         //endregion
 
-        downloadsAllowed = JSONUtils.getBoolean(jObj, "downloadsAllowed", false);
-        tutorialDisplayed = JSONUtils.getBoolean(jObj, "tutorialDisplayed", false);
-        editMode = JSONUtils.getBoolean(jObj, "editMode", false);
-        etCheckFluid = JSONUtils.getBoolean(jObj, "etCheckFluid", true);
-        editingRepoLoc = JSONUtils.getString(jObj, "editingRepoLoc", "");
-        editorAlwaysOnTop = JSONUtils.getBoolean(jObj, "editorAlwaysOnTop", false);
-        editorLineWrap = JSONUtils.getBoolean(jObj, "editorLineWrap", true);
-        maxTabs = JSONUtils.getInt(jObj, "maxTabs", 16);
-        editorLAF = JSONUtils.getString(jObj, "editorLAF", "");
+        downloadsAllowed = JSONUtils.getAsBoolean(jObj, "downloadsAllowed", false);
+        tutorialDisplayed = JSONUtils.getAsBoolean(jObj, "tutorialDisplayed", false);
+        editMode = JSONUtils.getAsBoolean(jObj, "editMode", false);
+        etCheckFluid = JSONUtils.getAsBoolean(jObj, "etCheckFluid", true);
+        editingRepoLoc = JSONUtils.getAsString(jObj, "editingRepoLoc", "");
+        editorAlwaysOnTop = JSONUtils.getAsBoolean(jObj, "editorAlwaysOnTop", false);
+        editorLineWrap = JSONUtils.getAsBoolean(jObj, "editorLineWrap", true);
+        maxTabs = JSONUtils.getAsInt(jObj, "maxTabs", 16);
+        editorLAF = JSONUtils.getAsString(jObj, "editorLAF", "");
 
-        screenMode = JSONUtils.getInt(jObj, "screenMode", screenMode);
-        screenPosOverride = JSONUtils.getBoolean(jObj, "screenPosOverride", false);
-        screenPosX = JSONUtils.getInt(jObj, "screenPosX", 0);
-        screenPosY = JSONUtils.getInt(jObj, "screenPosY", 0);
+        screenMode = JSONUtils.getAsInt(jObj, "screenMode", screenMode);
+        screenPosOverride = JSONUtils.getAsBoolean(jObj, "screenPosOverride", false);
+        screenPosX = JSONUtils.getAsInt(jObj, "screenPosX", 0);
+        screenPosY = JSONUtils.getAsInt(jObj, "screenPosY", 0);
 
-        userLanguage = JSONUtils.getString(jObj, "userLanguage", "[MINECRAFT-LANG]");
+        userLanguage = JSONUtils.getAsString(jObj, "userLanguage", "[MINECRAFT-LANG]");
 
-        homePage = JSONUtils.getString(jObj, "homePage", "projectintelligence:");
+        homePage = JSONUtils.getAsString(jObj, "homePage", "projectintelligence:");
 
         try {
-            searchMode = SearchMode.valueOf(JSONUtils.getString(jObj, "searchMode", SearchMode.EVERYWHERE.name()));
+            searchMode = SearchMode.valueOf(JSONUtils.getAsString(jObj, "searchMode", SearchMode.EVERYWHERE.name()));
         }
         catch (Exception e) {
             LogHelper.error("Detected invalid search mode in PI Config! Default mode will be used.");
@@ -182,19 +182,19 @@ public class PIConfig {
 
         pageLangOverrides.clear();
         if (jObj.has("pageLangOverrides") && jObj.get("pageLangOverrides").isJsonObject()) {
-            JsonObject langOverrides = JSONUtils.getJsonObject(jObj, "pageLangOverrides");
+            JsonObject langOverrides = JSONUtils.getAsJsonObject(jObj, "pageLangOverrides");
             langOverrides.entrySet().forEach(entry -> pageLangOverrides.put(entry.getKey(), entry.getValue().getAsJsonPrimitive().getAsString()));
         }
 
         modLangOverrides.clear();
         if (jObj.has("modLangOverrides") && jObj.get("modLangOverrides").isJsonObject()) {
-            JsonObject langOverrides = JSONUtils.getJsonObject(jObj, "modLangOverrides");
+            JsonObject langOverrides = JSONUtils.getAsJsonObject(jObj, "modLangOverrides");
             langOverrides.entrySet().forEach(entry -> modLangOverrides.put(entry.getKey(), entry.getValue().getAsJsonPrimitive().getAsString()));
         }
 
         modVersionOverrides.clear();
         if (jObj.has("modVersionOverrides") && jObj.get("modVersionOverrides").isJsonObject()) {
-            JsonObject versionOverrides = JSONUtils.getJsonObject(jObj, "modVersionOverrides");
+            JsonObject versionOverrides = JSONUtils.getAsJsonObject(jObj, "modVersionOverrides");
             versionOverrides.entrySet().forEach(entry -> modVersionOverrides.put(entry.getKey(), entry.getValue().getAsJsonPrimitive().getAsString()));
         }
     }
@@ -257,7 +257,7 @@ public class PIConfig {
 
     //endregion
 
-    public enum SearchMode {
+    public static enum SearchMode {
         EVERYWHERE,
         SELECTED_MOD,
         PAGE_SUB_PAGES,

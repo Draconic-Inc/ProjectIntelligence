@@ -50,7 +50,7 @@ public class ClientProxy extends CommonProxy {
     @Override
     public void openMainGui(Screen parentScreen, @Nullable String modid, @Nullable String page) {
         if (!(parentScreen instanceof GuiProjectIntelligence)) {
-            Minecraft.getInstance().displayGuiScreen(new GuiProjectIntelligence(parentScreen));
+            Minecraft.getInstance().setScreen(new GuiProjectIntelligence(parentScreen));
         }
 
         //This is first launch and no documentation has been downloaded yet so return to avoid displaying errors
@@ -86,7 +86,7 @@ public class ClientProxy extends CommonProxy {
             gui = (GuiProjectIntelligence) parentScreen;
         }
         else {
-            Minecraft.getInstance().displayGuiScreen(gui);
+            Minecraft.getInstance().setScreen(gui);
         }
 
         List<String> validPages = new ArrayList<>();

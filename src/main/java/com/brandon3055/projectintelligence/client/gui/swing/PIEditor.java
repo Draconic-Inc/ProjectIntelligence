@@ -2065,7 +2065,7 @@ public class PIEditor extends javax.swing.JFrame {
         menuItems.add(formatMenu);
 
         for (TextFormatting format : TextFormatting.values()) {
-            item = new JMenuItem(format.getFriendlyName());
+            item = new JMenuItem(format.getName());
             item.addActionListener(e -> insertFormat(format));
             item.setFont(item.getFont().deriveFont(4));
             if (format.isColor()) {
@@ -2074,16 +2074,16 @@ public class PIEditor extends javax.swing.JFrame {
             else {
                 switch (format) {
                     case BOLD:
-                        item.setText("<html><b>" + format.getFriendlyName() + "</html>");
+                        item.setText("<html><b>" + format.getName() + "</html>");
                         break;
                     case STRIKETHROUGH:
-                        item.setText("<html><s>" + format.getFriendlyName() + "</html>");
+                        item.setText("<html><s>" + format.getName() + "</html>");
                         break;
                     case UNDERLINE:
-                        item.setText("<html><u>" + format.getFriendlyName() + "</u></html>");
+                        item.setText("<html><u>" + format.getName() + "</u></html>");
                         break;
                     case ITALIC:
-                        item.setText("<html><i>" + format.getFriendlyName() + "</html>");
+                        item.setText("<html><i>" + format.getName() + "</html>");
                         break;
                 }
             }

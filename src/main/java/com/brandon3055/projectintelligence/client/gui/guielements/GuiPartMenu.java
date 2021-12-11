@@ -47,7 +47,7 @@ public class GuiPartMenu extends GuiElement<GuiPartMenu> {
         styleEditor = new GuiStyleEditor(this);
         configUI = new GuiPIConfig(this, styleEditor);
 
-        title = new GuiLabel(I18n.format("pi.gui.project_intelligence.title")) {
+        title = new GuiLabel(I18n.get("pi.gui.project_intelligence.title")) {
             @Override
             public boolean hasShadow() {
                 return menuProps.textShadow();
@@ -58,7 +58,7 @@ public class GuiPartMenu extends GuiElement<GuiPartMenu> {
         title.setWidthFromText().setTrim(false);
         addChild(title);
 
-        GuiButton closeButton = new GuiButton().setSize(16, 16).setHoverText(I18n.format("pi.button.close.info"));
+        GuiButton closeButton = new GuiButton().setSize(16, 16).setHoverText(I18n.get("pi.button.close.info"));
         GuiTexture closeTex = new GuiTexture(0, 0, 16, 16, PITextures.PI_PARTS);
         closeTex.setPreDrawCallback((minecraft, mouseX, mouseY, partialTicks, mouseOver) -> closeBtnProps.glColour(mouseOver));
         closeTex.setPostDrawCallback(IDrawCallback::resetColour);
@@ -70,7 +70,7 @@ public class GuiPartMenu extends GuiElement<GuiPartMenu> {
         addChild(closeButton);
 
 
-        settingsButton = new GuiButton().setSize(16, 16).setHoverText(I18n.format("pi.button.settings.info"));
+        settingsButton = new GuiButton().setSize(16, 16).setHoverText(I18n.get("pi.button.settings.info"));
         GuiTexture settingsTex = new GuiTexture(16, 0, 16, 16, PITextures.PI_PARTS);
         settingsTex.setPreDrawCallback((minecraft, mouseX, mouseY, partialTicks, mouseOver) -> settingsBtnProps.glColour(mouseOver));
         settingsTex.setPostDrawCallback(IDrawCallback::resetColour);
@@ -83,7 +83,7 @@ public class GuiPartMenu extends GuiElement<GuiPartMenu> {
         settingsButton.onPressed(() -> configUI.toggleShown());
         addChild(settingsButton);
 
-        GuiButton maximizeButton = new GuiButton().setSize(16, 16).setHoverText(I18n.format("pi.button.maximize.info"));
+        GuiButton maximizeButton = new GuiButton().setSize(16, 16).setHoverText(I18n.get("pi.button.maximize.info"));
         GuiTexture maximizeTex = new GuiTexture(32, 0, 16, 16, PITextures.PI_PARTS);
         maximizeTex.setPreDrawCallback((minecraft, mouseX, mouseY, partialTicks, mouseOver) -> sizeBtnProps.glColour(mouseOver));
         maximizeTex.setPostDrawCallback(IDrawCallback::resetColour);
@@ -94,7 +94,7 @@ public class GuiPartMenu extends GuiElement<GuiPartMenu> {
         maximizeButton.setEnabledCallback(() -> PIConfig.screenMode > 0);
         maximizeButton.onPressed(() -> setGuiSize(true));
 
-        minimizeButton = new GuiButton().setSize(16, 16).setHoverText(I18n.format("pi.button.minimize.info"));
+        minimizeButton = new GuiButton().setSize(16, 16).setHoverText(I18n.get("pi.button.minimize.info"));
         GuiTexture minimizeTex = new GuiTexture(48, 0, 16, 16, PITextures.PI_PARTS);
         minimizeTex.setPreDrawCallback((minecraft, mouseX, mouseY, partialTicks, mouseOver) -> sizeBtnProps.glColour(mouseOver));
         minimizeTex.setPostDrawCallback(IDrawCallback::resetColour);
@@ -109,7 +109,7 @@ public class GuiPartMenu extends GuiElement<GuiPartMenu> {
             addChild(minimizeButton);
         }
 
-        GuiButton editorButton = new GuiButton(TextFormatting.UNDERLINE + ""+ TextFormatting.RED + I18n.format("pi.config.open_editor")).setSize(100, 14);
+        GuiButton editorButton = new GuiButton(TextFormatting.UNDERLINE + ""+ TextFormatting.RED + I18n.get("pi.config.open_editor")).setSize(100, 14);
         editorButton.addAndFireReloadCallback(guiButton -> guiButton.setPos(xPos() + (xSize() / 2) - 50, yPos() + (ySize() / 2) - 7));
         editorButton.setFillColour(0);
         editorButton.setBorderColours(0xFF707070, 0xFFA0A0A0);
@@ -123,7 +123,7 @@ public class GuiPartMenu extends GuiElement<GuiPartMenu> {
     @Override
     public void reloadElement() {
         super.reloadElement();
-        title.setLabelText(I18n.format("pi.gui.project_intelligence.title") + (PIConfig.editMode() ? TextFormatting.RED + " (Edit Mode)" : ""));
+        title.setLabelText(I18n.get("pi.gui.project_intelligence.title") + (PIConfig.editMode() ? TextFormatting.RED + " (Edit Mode)" : ""));
     }
 
     private void setGuiSize(boolean maximize) {
