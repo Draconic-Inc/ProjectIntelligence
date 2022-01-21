@@ -1,10 +1,13 @@
 package com.brandon3055.projectintelligence.client;
 
+import com.brandon3055.brandonscore.BrandonsCore;
 import com.brandon3055.brandonscore.client.ProcessHandlerClient;
 import com.brandon3055.brandonscore.client.gui.modulargui.GuiElement;
 import com.brandon3055.brandonscore.client.gui.modulargui.baseelements.GuiButton;
 import com.brandon3055.brandonscore.client.gui.modulargui.baseelements.GuiPopUpDialogBase;
 import com.brandon3055.brandonscore.client.gui.modulargui.guielements.GuiLabel;
+import com.brandon3055.brandonscore.lib.DelayedExecutor;
+import com.brandon3055.brandonscore.lib.DelayedTask;
 import com.brandon3055.brandonscore.lib.StackReference;
 import com.brandon3055.brandonscore.utils.LogHelperBC;
 import com.brandon3055.brandonscore.utils.Utils;
@@ -144,26 +147,17 @@ public class PIGuiHelper {
     //region Editor Helpers
     public static void displayEditor() {
         new Thread(() -> {
-//            System.setProperty("java.awt.headless", "false");
-            editor = new PIEditor();
+            if (editor == null) {
+                editor = new PIEditor();
+            } else {
+                editor.dispose();
+            }
             editor.reload();
-
-            editor.setVisible(true);
             editor.setExtendedState(JFrame.NORMAL);
+            editor.setVisible(true);
             editor.toFront();
-//            centerWindowOnMC(editor);
+            centerWindowOnMC(editor);
         }).start();
-
-//        if (editor == null) {
-////            System.setProperty("java.awt.headless", "false");
-//            editor = new PIEditor();
-//            editor.reload();
-//        }
-//
-//        editor.setVisible(true);
-//        editor.setExtendedState(JFrame.NORMAL);
-//        editor.toFront();
-//        centerWindowOnMC(editor);
     }
 
     public static void closeEditor() {
@@ -198,8 +192,8 @@ public class PIGuiHelper {
 
     public static synchronized LinkedList<String> getEntitySelectionList() {
         if (entitySelectionList.isEmpty()) {
-            for (EntityType type : SpawnEggItem.BY_ID.keySet()) {
-                entitySelectionList.add(type.getRegistryName().toString());
+            for (SpawnEggItem type : SpawnEggItem.eggs()) {
+                entitySelectionList.add(type.getType(null).getRegistryName().toString());
             }
             Collections.sort(entitySelectionList);
         }

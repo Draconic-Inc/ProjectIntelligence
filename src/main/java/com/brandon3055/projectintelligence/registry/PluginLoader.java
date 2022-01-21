@@ -3,7 +3,7 @@ package com.brandon3055.projectintelligence.registry;
 import com.brandon3055.projectintelligence.api.IModPlugin;
 import com.brandon3055.projectintelligence.api.ModPlugin;
 import com.brandon3055.projectintelligence.utils.LogHelper;
-import jdk.internal.org.objectweb.asm.Type;
+import org.objectweb.asm.Type;
 import net.minecraftforge.fml.ModList;
 import net.minecraftforge.forgespi.language.ModFileScanData;
 

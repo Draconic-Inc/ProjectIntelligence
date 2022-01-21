@@ -27,10 +27,9 @@ public class ProjectIntelligence {
             System.setProperty("java.awt.headless", "false");
             LogHelper.info("Disabled AWT Headless Mode so that PI editor can function");
         }
-
         SSLFix.fixSSL();
-
         proxy = DistExecutor.safeRunForDist(() -> ClientProxy::new, () -> CommonProxy::new);
+        proxy.construct();
         FMLJavaModLoadingContext.get().getModEventBus().register(this);
         MinecraftForge.EVENT_BUS.register(this);
     }

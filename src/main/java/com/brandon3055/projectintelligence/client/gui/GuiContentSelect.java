@@ -2,6 +2,7 @@ package com.brandon3055.projectintelligence.client.gui;
 
 import codechicken.lib.math.MathHelper;
 import codechicken.lib.util.ArrayUtils;
+import com.brandon3055.brandonscore.client.BCSprites;
 import com.brandon3055.brandonscore.client.gui.modulargui.GuiElement;
 import com.brandon3055.brandonscore.client.gui.modulargui.GuiElementManager;
 import com.brandon3055.brandonscore.client.gui.modulargui.ModularGuiContainer;
@@ -109,9 +110,8 @@ public class GuiContentSelect extends ModularGuiContainer<Container> {
 
     @Override
     public void addElements(GuiElementManager manager) {
-        GuiTexture background = GuiTexture.newBCTexture(imageWidth, imageHeight).setPos(getGuiLeft(), getGuiTop());
+        GuiTexture background = GuiTexture.newDynamicTexture(BCSprites.themedGetter("background_dynamic")).setSize(imageWidth, imageHeight).setPos(getGuiLeft(), getGuiTop());
         manager.addChild(background);
-
         if (allowedTypes.size() > 1) {
             int nextButtonPos = guiLeft() + 5;
             GuiButton button;
@@ -180,7 +180,7 @@ public class GuiContentSelect extends ModularGuiContainer<Container> {
         }
 
         { //Entity
-            GuiElement container = new GuiElement().addToGroup(ENTITY.name());
+            GuiElement<?> container = new GuiElement<>().addToGroup(ENTITY.name());
             manager.addChild(container);
 
             if (selectMode != SelectMode.RELATION) {

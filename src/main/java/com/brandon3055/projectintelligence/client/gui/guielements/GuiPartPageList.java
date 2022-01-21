@@ -27,7 +27,6 @@ import net.minecraft.client.resources.I18n;
 import net.minecraft.util.text.Style;
 
 import javax.annotation.Nullable;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.LinkedList;
@@ -285,7 +284,7 @@ public class GuiPartPageList extends GuiElement<GuiPartPageList> {
                     pages.add(docPage);
                 }
             }
-            searchBox.setText("[Custom Filter]");
+            searchBox.setTextAndNotify("[Custom Filter]");
         }
         else if (!search.isEmpty() && !updateNav) {
             pages = searchPages(search, PIConfig.searchMode);
@@ -498,7 +497,7 @@ public class GuiPartPageList extends GuiElement<GuiPartPageList> {
 
     private void resetCustomFilter() {
         if (searchBox.getText().equals("[Custom Filter]")) {
-            searchBox.setText("");
+            searchBox.setTextAndNotify("");
         }
     }
 }

@@ -63,7 +63,7 @@ public class PIGuiContainer implements IModularGui<Screen> {
 
     public void onGuiInit() {
         this.mc = Minecraft.getInstance();
-        this.screenWidth = mc.getWindow().getScreenWidth();
+        this.screenWidth = mc.getWindow().getGuiScaledWidth();
         this.screenHeight = mc.getWindow().getGuiScaledHeight();
         manager.setWorldAndResolution(mc, screenWidth, screenHeight);
     }

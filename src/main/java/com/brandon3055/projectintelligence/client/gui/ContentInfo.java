@@ -215,7 +215,7 @@ public class ContentInfo {
                 ops = addIf(ops, "size:" + size + (sizePercent ? "%" : ""), () -> true);
                 ops = addIf(ops, "x_offset:" + xOffset, () -> xOffset > 0);
                 ops = addIf(ops, "y_offset:" + yOffset, () -> yOffset > 0);
-                ops = addIf(ops, "rotate_speed:" + rotationSpeed, () -> rotationSpeed != 1);
+                ops = addIf(ops, "rotate_speed:" + rotationSpeed, () -> rotationSpeed != 0);
                 ops = addIf(ops, "rotation:" + rotation, () -> rotation != 0);
                 ops = addIf(ops, "scale:" + scale, () -> scale != 1);
 

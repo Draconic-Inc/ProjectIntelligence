@@ -10,6 +10,10 @@ import java.util.List;
 
 public class CommonProxy {
 
+    public void construct() {
+
+    }
+
     public void preInit(FMLCommonSetupEvent event) {
     }
 

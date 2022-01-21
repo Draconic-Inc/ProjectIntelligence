@@ -18,12 +18,19 @@ import net.minecraftforge.fml.ModList;
 import net.minecraftforge.fml.common.ObfuscationReflectionHelper;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.minecraftforge.fml.event.lifecycle.FMLLoadCompleteEvent;
+import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
 public class ClientProxy extends CommonProxy {
+
+    @Override
+    public void construct() {
+        super.construct();
+        FMLJavaModLoadingContext.get().getModEventBus().addListener(PISprites::initialize);
+    }
 
     @Override
     public void preInit(FMLCommonSetupEvent event) {

@@ -108,9 +108,7 @@ public class GuiProjectIntelligence extends Screen {
     private void closeGui() {
         container.dispose();
         minecraft.setScreen(parent);
-        if (minecraft.screen == null) {
-            minecraft.popGuiLayer();
-        }
+        onClose();
     }
 
     private void updateSizeAndPos(boolean userChangedSize) {
