@@ -145,6 +145,13 @@ task srcJar(type: Jar) {
     from file("LICENSE")
 }
 
+task deobfJar(type: Jar) {
+    build.dependsOn it
+    from sourceSets.main.output
+    classifier = 'deobf'
+    from file("LICENSE")
+}
+
 publishing {
     repositories {
         if (System.getenv('MAVEN_PASS')) {

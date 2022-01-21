@@ -7,6 +7,7 @@ import com.brandon3055.projectintelligence.client.DisplayController;
 import com.brandon3055.projectintelligence.client.PIGuiHelper;
 import com.brandon3055.projectintelligence.client.gui.guielements.GuiPartMenu;
 import com.brandon3055.projectintelligence.docmanagement.DocumentationManager;
+import com.brandon3055.projectintelligence.docmanagement.PIUpdateManager;
 import com.brandon3055.projectintelligence.utils.LogHelper;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -206,6 +207,10 @@ public class PIConfig {
 
     public static void setEditMode(boolean editMode) {
         PIConfig.editMode = editMode;
+
+        if (editMode && PIUpdateManager.updateStage != PIUpdateManager.UpdateStage.INACTIVE) {
+            PIUpdateManager.updateStage = PIUpdateManager.UpdateStage.INACTIVE; //Prevents update ui getting stuck on the screen.
+        }
 
         GuiPartMenu menu = GuiProjectIntelligence.getMenuPart();
         if (menu != null && menu.configUI != null) {

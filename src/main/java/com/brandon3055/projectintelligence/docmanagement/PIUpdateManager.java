@@ -1,5 +1,6 @@
 package com.brandon3055.projectintelligence.docmanagement;
 
+import com.brandon3055.brandonscore.BrandonsCore;
 import com.brandon3055.brandonscore.handlers.FileHandler;
 import com.brandon3055.brandonscore.integration.ModHelperBC;
 import com.brandon3055.brandonscore.lib.FileDownloadManager;
@@ -154,6 +155,10 @@ public class PIUpdateManager {
                 }
 
                 String installedVersion = ModHelperBC.getModVersion(mod);
+                if (installedVersion.equals("version") && BrandonsCore.inDev) {
+                    installedVersion = "999.999.999"; //Because versions are broken in dev
+                }
+
                 String latestMatch = "";
                 String latestMatchURL = "";
                 int latestBuild = -1;

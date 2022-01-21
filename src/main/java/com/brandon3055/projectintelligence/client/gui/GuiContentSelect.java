@@ -656,42 +656,17 @@ public class GuiContentSelect extends ModularGuiContainer<Container> {
 
     //region User Input Handling
 
+    @Override
+    public boolean mouseClicked(double mouseX, double mouseY, int button) {
+        ItemStack clicked = JeiHelper.getPanelItemUnderMouse();
 
-    //TODO figure out a replacement for this
-//    @Override
-//    public void handleInput() throws IOException {
-//        if (Mouse.isCreated()) {
-//            while (Mouse.next()) {
-//                this.mouseHandled = false;
-//                Object itemUnderMouse = JeiHelper.getPanelItemUnderMouse();
-//                boolean jeiItemClicked = itemUnderMouse != null && Mouse.getEventButtonState();
-//                if (!jeiItemClicked && net.minecraftforge.common.MinecraftForge.EVENT_BUS.post(new net.minecraftforge.client.event.GuiScreenEvent.MouseInputEvent.Pre(this))) {
-//                    continue;
-//                }
-//                this.handleMouseInput();
-//                if (this.equals(this.mc.currentScreen) && !this.mouseHandled) {
-//                    net.minecraftforge.common.MinecraftForge.EVENT_BUS.post(new net.minecraftforge.client.event.GuiScreenEvent.MouseInputEvent.Post(this));
-//                }
-//
-//                if (!mouseHandled && jeiItemClicked) {
-//                    itemStackSelected(new StackReference((ItemStack) itemUnderMouse), true);
-//                }
-//            }
-//        }
-//
-//        if (Keyboard.isCreated()) {
-//            while (Keyboard.next()) {
-//                this.keyHandled = false;
-//                if (net.minecraftforge.common.MinecraftForge.EVENT_BUS.post(new net.minecraftforge.client.event.GuiScreenEvent.KeyboardInputEvent.Pre(this))) {
-//                    continue;
-//                }
-//                this.handleKeyboardInput();
-//                if (this.equals(this.mc.currentScreen) && !this.keyHandled) {
-//                    net.minecraftforge.common.MinecraftForge.EVENT_BUS.post(new net.minecraftforge.client.event.GuiScreenEvent.KeyboardInputEvent.Post(this));
-//                }
-//            }
-//        }
-//    }
+        if (clicked != null && !clicked.isEmpty()) {
+            itemStackSelected(new StackReference((ItemStack) clicked), true);
+            return true;
+        }
+
+        return super.mouseClicked(mouseX, mouseY, button);
+    }
 
     public void itemStackSelected(StackReference itemStack, boolean updateStackField) {
         if (selectedType == ITEM_STACK) {

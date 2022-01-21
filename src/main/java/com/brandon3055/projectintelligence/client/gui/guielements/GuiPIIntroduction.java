@@ -3,16 +3,21 @@ package com.brandon3055.projectintelligence.client.gui.guielements;
 import codechicken.lib.math.MathHelper;
 import codechicken.lib.render.CCModel;
 import codechicken.lib.render.CCRenderState;
+import codechicken.lib.render.buffer.TransformingVertexBuilder;
+import codechicken.lib.util.SneakyUtils;
 import codechicken.lib.vec.Rotation;
 import codechicken.lib.vec.Translation;
 import codechicken.lib.vec.Vector3;
 import codechicken.lib.vec.Vertex5;
+import codechicken.lib.vec.uv.IconTransformation;
 import codechicken.lib.vec.uv.UV;
 import com.brandon3055.brandonscore.client.gui.modulargui.GuiElement;
 import com.brandon3055.brandonscore.client.gui.modulargui.baseelements.GuiButton;
 import com.brandon3055.brandonscore.client.gui.modulargui.baseelements.GuiScrollElement;
 import com.brandon3055.brandonscore.client.gui.modulargui.guielements.GuiLabel;
 import com.brandon3055.brandonscore.client.gui.modulargui.lib.GuiAlign;
+import com.brandon3055.brandonscore.client.render.RenderUtils;
+import com.brandon3055.brandonscore.client.utils.GuiHelperOld;
 import com.brandon3055.brandonscore.lib.DelayedTask;
 import com.brandon3055.brandonscore.utils.Utils;
 import com.brandon3055.projectintelligence.client.PITextures;
@@ -22,8 +27,14 @@ import com.brandon3055.projectintelligence.client.gui.PIConfig;
 import com.brandon3055.projectintelligence.client.gui.PIGuiContainer;
 import com.brandon3055.projectintelligence.client.gui.PIPartRenderer;
 import com.brandon3055.projectintelligence.client.keybinding.KeyInputHandler;
+import com.mojang.blaze3d.matrix.MatrixStack;
 import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.vertex.IVertexBuilder;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.IRenderTypeBuffer;
+import net.minecraft.client.renderer.RenderState;
+import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.client.resources.I18n;
 import org.lwjgl.opengl.GL11;
@@ -283,17 +294,26 @@ public class GuiPIIntroduction extends GuiElement<GuiPIIntroduction> {
                 this.info = info;
             }
 
+            public static RenderType PARTS_TYPE = RenderType.create("pi_parts_tex", DefaultVertexFormats.POSITION_TEX, GL11.GL_QUADS, 256, RenderType.State.builder()
+                    .setTextureState(new RenderState.TextureState(PITextures.PI_PARTS, false, false))
+                    .setTransparencyState(RenderState.TRANSLUCENT_TRANSPARENCY)
+                    .setCullState(RenderState.NO_CULL)
+                    .setAlphaState(RenderState.DEFAULT_ALPHA)
+                    .setTexturingState(new RenderState.TexturingState("lighting", RenderSystem::disableLighting, SneakyUtils.none()))
+                    .createCompositeState(false)
+            );
+
             @Override
             public void renderElement(Minecraft minecraft, int mouseX, int mouseY, float partialTicks) {
                 super.renderElement(minecraft, mouseX, mouseY, partialTicks);
 
-                RenderSystem.disableDepthTest();
-                bindTexture(PITextures.PI_PARTS);
+                IRenderTypeBuffer getter = RenderUtils.getTypeBuffer();
                 CCRenderState ccrs = CCRenderState.instance();
-                ccrs.startDrawing(GL11.GL_QUADS, DefaultVertexFormats.POSITION_TEX);
+                ccrs.reset();
+                ccrs.bind(PARTS_TYPE, getter);
+                ccrs.baseColour = 0xFFFFFFFF;
                 activeModel.render(ccrs);
-                ccrs.draw();
-                RenderSystem.enableDepthTest();
+                RenderUtils.endBatch(getter);
             }
 
             public InfoArrow setHighlight(Rectangle highlight) {
