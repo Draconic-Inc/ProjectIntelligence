@@ -171,6 +171,7 @@ publishing {
             version project.version
             artifact jar
             artifact srcJar
+            artifact deobfJar
 
             pom {
                 name = archivesBaseName
