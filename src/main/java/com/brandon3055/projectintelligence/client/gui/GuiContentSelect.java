@@ -12,7 +12,7 @@ import com.brandon3055.brandonscore.client.gui.modulargui.lib.GuiAlign;
 import com.brandon3055.brandonscore.integration.JeiHelper;
 import com.brandon3055.brandonscore.lib.DLRSCache;
 import com.brandon3055.brandonscore.lib.DLResourceLocation;
-import com.brandon3055.brandonscore.lib.StackReference;
+import com.brandon3055.brandonscore.lib.StringyStacks;
 import com.brandon3055.brandonscore.utils.Utils;
 import com.brandon3055.projectintelligence.client.PITextures;
 import com.google.common.collect.Lists;
@@ -155,8 +155,8 @@ public class GuiContentSelect extends ModularGuiContainer<Container> {
             };
             container.addChild(newTextField("Override Vanilla Tool Tip", change, 0.75, 0).setText(contentInfo.hover_text)).setEnabled(!selectMode.isBasic()).setHoverText("Allows you to specify a custom tool tip for the item. Accepts \\n for new lines and the select character \\\u00a7 for formatting");
             container.addChild(newButton("Draw Slot", guiButton -> contentInfo.drawSlot = !contentInfo.drawSlot, () -> contentInfo.drawSlot, 2.75).setEnabled(!selectMode.isBasic()));
-            change = textField -> itemStackSelected(StackReference.fromString(textField.getText()), false);
-            container.addChild(stackString = newTextField("Stack String", change, 4, 0).setText(contentInfo.stack.toString())).setHoverText("Format is: " + TextFormatting.GOLD + "registry:name,stackSize,damage,{nbt}");
+            change = textField -> itemStackSelected(StringyStacks.fromString(textField.getText()), false);
+            container.addChild(stackString = newTextField("Stack String", change, 4, 0).setText(StringyStacks.toStringNoCaps(contentInfo.stack))).setHoverText("Format is: " + TextFormatting.GOLD + "registry:name{nbt},stackSize");
             container.addChild(itemSizeField = newSizeField("Size:", guiTextField -> {}, 6, 0).setLinkedValue(() -> "" + contentInfo.size, s -> contentInfo.size = Math.max(4, Utils.parseInt(s))).setEnabled(selectMode.hasSizePos()));//TODO Test
             addInventorySelection(container, guiLeft() + ((xSize() - 206) / 2), guiTop() + ySize() - 82);
             container.addChild(new GuiLabel("Select item from your inventory" + (JeiHelper.jeiAvailable() ? " or JEI" : "")).setTextColour(0).setShadow(false).setAlignment(GuiAlign.LEFT).setWrap(true).setPos(guiLeft() + 105, guiTop() + 93).setSize(xSize() - 110, 14));
@@ -307,7 +307,7 @@ public class GuiContentSelect extends ModularGuiContainer<Container> {
             container.addChild(new GuiButton("OK").setSize(40, 14).setVanillaButtonRender(true).setPos(guiLeft() + xSize() - 108, guiTop() + ySize() - 20).onPressed(() -> finished(false)));
             container.addChild(new GuiButton("Cancel").setSize(60, 14).setVanillaButtonRender(true).setPos(guiLeft() + xSize() - 65, guiTop() + ySize() - 20).onPressed(() -> finished(true)));
 
-            GuiStackIcon icon = new GuiStackIcon(new StackReference(ItemStack.EMPTY)).setSize(32, 32);
+            GuiStackIcon icon = new GuiStackIcon(ItemStack.EMPTY).setSize(32, 32);
             container.addChild(icon);
             icon.setToolTip(false);
 
@@ -318,7 +318,7 @@ public class GuiContentSelect extends ModularGuiContainer<Container> {
                 if (fluid != null) {
                     ItemStack bucket = FluidUtil.getFilledBucket(new FluidStack(fluid, 1000));
                     if (!bucket.isEmpty()) {
-                        icon.setStack(new StackReference(bucket));
+                        icon.setStack(bucket);
                     }
                 }
             };
@@ -529,7 +529,7 @@ public class GuiContentSelect extends ModularGuiContainer<Container> {
 //            if (fluid != null) {
             ItemStack bucket = FluidUtil.getFilledBucket(new FluidStack(s, 1000));
             if (!bucket.isEmpty()) {
-                base.addChild(new GuiStackIcon(new StackReference(bucket)).setPosAndSize(2, 1, 18, 18));
+                base.addChild(new GuiStackIcon(bucket).setPosAndSize(2, 1, 18, 18));
             }
 //            }
 
@@ -574,8 +574,8 @@ public class GuiContentSelect extends ModularGuiContainer<Container> {
                 slot = new GuiSlotRender().setPos(xPos, yPos);
 
                 if (!stack.isEmpty()) {
-                    slot.addChild(new GuiStackIcon(new StackReference(stack)).setPos(slot));
-                    slot.addChild(new GuiButton().setPosAndSize(slot).onPressed(() -> itemStackSelected(new StackReference(stack), true)));
+                    slot.addChild(new GuiStackIcon(stack).setPos(slot));
+                    slot.addChild(new GuiButton().setPosAndSize(slot).onPressed(() -> itemStackSelected(stack, true)));
                 }
 
                 parent.addChild(slot);
@@ -583,8 +583,8 @@ public class GuiContentSelect extends ModularGuiContainer<Container> {
         }
         parent.addChild(slot = new GuiSlotRender().setPos(invX + 188, guiTop() + ySize() - 24));
         if (!inv.offhand.get(0).isEmpty()) {
-            slot.addChild(new GuiStackIcon(new StackReference(inv.offhand.get(0))).setPos(slot));
-            slot.addChild(new GuiButton().setPosAndSize(slot).onPressed(() -> itemStackSelected(new StackReference(inv.offhand.get(0)), true)));
+            slot.addChild(new GuiStackIcon(inv.offhand.get(0)).setPos(slot));
+            slot.addChild(new GuiButton().setPosAndSize(slot).onPressed(() -> itemStackSelected(inv.offhand.get(0), true)));
         }
     }
 
@@ -596,7 +596,7 @@ public class GuiContentSelect extends ModularGuiContainer<Container> {
             container.addChild(slot);
             slot.addChild(new GuiTexture(96 + i * 16, 0, 16, 16, PITextures.PI_PARTS).setRelPos(slot, 1, 1).setEnabledCallback(() -> contentInfo.entityInventory[slotIndex].isEmpty()));
             ItemStack stack = contentInfo.entityInventory[i];
-            GuiStackIcon stackIcon = new GuiStackIcon(new StackReference(stack)).setPos(slot);
+            GuiStackIcon stackIcon = new GuiStackIcon(stack).setPos(slot);
             stackIcon.setEnabledCallback(() -> !contentInfo.entityInventory[slotIndex].isEmpty());
             slot.addChild(stackIcon);
             GuiButton button = new GuiButton().setPosAndSize(slot);
@@ -604,17 +604,17 @@ public class GuiContentSelect extends ModularGuiContainer<Container> {
             button.onButtonPressed((pressed) -> {
                 if (pressed == 1) {
                     contentInfo.entityInventory[slotIndex] = ItemStack.EMPTY;
-                    stackIcon.setStack(new StackReference(ItemStack.EMPTY));
+                    stackIcon.setStack(ItemStack.EMPTY);
                     updateEntity();
                 } else {
                     GuiContentSelect gui = new GuiContentSelect(this, SelectMode.PICK_STACK, ITEM_STACK);
                     gui.setSelectCallBack(content -> {
                         if (content == null) return;
-                        contentInfo.entityInventory[slotIndex] = content.stack.createStack();
+                        contentInfo.entityInventory[slotIndex] = content.stack;
                         stackIcon.setStack(content.stack);
                         updateEntity();
                     });
-                    gui.contentInfo.stack = new StackReference(contentInfo.entityInventory[slotIndex]);
+                    gui.contentInfo.stack = contentInfo.entityInventory[slotIndex];
                     minecraft.setScreen(gui);
                 }
             });
@@ -661,23 +661,20 @@ public class GuiContentSelect extends ModularGuiContainer<Container> {
         ItemStack clicked = JeiHelper.getPanelItemUnderMouse();
 
         if (clicked != null && !clicked.isEmpty()) {
-            itemStackSelected(new StackReference((ItemStack) clicked), true);
+            itemStackSelected(clicked, true);
             return true;
         }
 
         return super.mouseClicked(mouseX, mouseY, button);
     }
 
-    public void itemStackSelected(StackReference itemStack, boolean updateStackField) {
+    public void itemStackSelected(ItemStack itemStack, boolean updateStackField) {
         if (selectedType == ITEM_STACK) {
-            if (itemStack == null) {
-                itemStack = new StackReference(ItemStack.EMPTY);
-            }
             contentInfo.stack = itemStack;
             stackRenderer.setToolTipOverride(contentInfo.hover_text.isEmpty() ? null : Lists.newArrayList(contentInfo.hover_text.split("\n")));
             stackRenderer.setStack(contentInfo.stack);
             if (updateStackField) {
-                stackString.setText(itemStack.toString());
+                stackString.setText(StringyStacks.toStringNoCaps(itemStack));
                 stackString.setCursorPositionZero();
             }
         }

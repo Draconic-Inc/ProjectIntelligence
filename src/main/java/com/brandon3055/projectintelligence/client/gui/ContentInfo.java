@@ -2,7 +2,7 @@ package com.brandon3055.projectintelligence.client.gui;
 
 import codechicken.lib.colour.Colour;
 import codechicken.lib.util.ArrayUtils;
-import com.brandon3055.brandonscore.lib.StackReference;
+import com.brandon3055.brandonscore.lib.StringyStacks;
 import com.brandon3055.projectintelligence.docmanagement.ContentRelation;
 import com.brandon3055.projectintelligence.utils.LogHelper;
 import com.google.gson.JsonObject;
@@ -18,7 +18,7 @@ public class ContentInfo {
     public ContentType type;
 
     //Stack
-    public StackReference stack = new StackReference(ItemStack.EMPTY);
+    public ItemStack stack = ItemStack.EMPTY;
     public boolean drawHover = true;//draw_hover (Mainly for stacks, Draws normal stack tooltip) //Default True
 
     //Fluid
@@ -74,7 +74,7 @@ public class ContentInfo {
 
         switch (type) {
             case ITEM_STACK:
-                object.addProperty("icon_string", stack.toString());
+                object.addProperty("icon_string", StringyStacks.toStringNoCaps(stack));
                 break;
             case ENTITY:
                 object.addProperty("icon_string", entity);
@@ -86,17 +86,17 @@ public class ContentInfo {
 
                 JsonObject equip = new JsonObject();
                 if (!entityInventory[0].isEmpty())
-                    equip.addProperty("main_hand", StackReference.stackString(entityInventory[0]));
+                    equip.addProperty("main_hand", StringyStacks.toStringNoCaps(entityInventory[0]));
                 if (!entityInventory[1].isEmpty())
-                    equip.addProperty("off_hand", StackReference.stackString(entityInventory[1]));
+                    equip.addProperty("off_hand", StringyStacks.toStringNoCaps(entityInventory[1]));
                 if (!entityInventory[2].isEmpty())
-                    equip.addProperty("head", StackReference.stackString(entityInventory[2]));
+                    equip.addProperty("head", StringyStacks.toStringNoCaps(entityInventory[2]));
                 if (!entityInventory[3].isEmpty())
-                    equip.addProperty("chest", StackReference.stackString(entityInventory[3]));
+                    equip.addProperty("chest", StringyStacks.toStringNoCaps(entityInventory[3]));
                 if (!entityInventory[4].isEmpty())
-                    equip.addProperty("legs", StackReference.stackString(entityInventory[4]));
+                    equip.addProperty("legs", StringyStacks.toStringNoCaps(entityInventory[4]));
                 if (!entityInventory[5].isEmpty())
-                    equip.addProperty("feet", StackReference.stackString(entityInventory[5]));
+                    equip.addProperty("feet", StringyStacks.toStringNoCaps(entityInventory[5]));
 
                 if (!equip.entrySet().isEmpty()) {
                     object.add("equipment", equip);
@@ -121,7 +121,7 @@ public class ContentInfo {
         switch (ci.type) {
             case ITEM_STACK:
                 if (JSONUtils.isValidNode(iconObj, "icon_string")) {
-                    ci.stack = StackReference.fromString(JSONUtils.getAsString(iconObj, "icon_string", ""));
+                    ci.stack = StringyStacks.fromString(JSONUtils.getAsString(iconObj, "icon_string", ""));
                 }
                 break;
             case ENTITY:
@@ -162,9 +162,10 @@ public class ContentInfo {
         switch (type) {
             case ITEM_STACK:
                 if (!includeNBT) {
-                    stack.setNbt(null);
+                    stack = stack.copy();
+                    stack.setTag(null);
                 }
-                contentString = stack.toString();
+                contentString = StringyStacks.toStringNoCaps(stack);
                 break;
             case ENTITY:
                 contentString = entity;
@@ -183,10 +184,7 @@ public class ContentInfo {
         ContentInfo info = new ContentInfo(ContentType.fromRelationType(relation.type));
         switch (relation.type) {
             case STACK:
-                info.stack = StackReference.fromString(relation.contentString);
-                if (info.stack == null) {
-                    info.stack = new StackReference(ItemStack.EMPTY);
-                }
+                info.stack = StringyStacks.fromString(relation.contentString);
                 info.includeNBT = relation.includeNBT;
                 break;
             case ENTITY:
@@ -204,7 +202,7 @@ public class ContentInfo {
         String ops = "";
         switch (type) {
             case ITEM_STACK:
-                tag += "[" + stack.toString() + "]";
+                tag += "[" + StringyStacks.toStringNoCaps(stack) + "]";
                 ops = addIf(ops, "size:" + size + (sizePercent ? "%" : ""), () -> true);
                 ops = addIf(ops, "draw_slot:true", () -> drawSlot);
                 ops = addIf(ops, "enable_tooltip:false", () -> !drawHover);
@@ -258,7 +256,7 @@ public class ContentInfo {
 
     private String getEquipString(int index) {
         if (!entityInventory[index].isEmpty()) {
-            return StackReference.stackString(entityInventory[index]);
+            return StringyStacks.toStringNoCaps(entityInventory[index]);
         }
         return "";
     }
@@ -280,16 +278,12 @@ public class ContentInfo {
                 return imageURL;
             case ITEM_STACK:
             default:
-                return stack.toString();
+                return StringyStacks.toStringNoCaps(stack);
         }
     }
 
     private static ItemStack getStack(String stackString) {
-        StackReference ref = StackReference.fromString(stackString);
-        if (ref == null) {
-            return ItemStack.EMPTY;
-        }
-        return ref.createStack();
+        return StringyStacks.fromString(stackString);
     }
 
     private String addIf(String ops, Object add, Supplier<Boolean> check) {

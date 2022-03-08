@@ -9,6 +9,7 @@ import codechicken.lib.math.MathHelper;
 import com.brandon3055.brandonscore.client.ProcessHandlerClient;
 import com.brandon3055.brandonscore.handlers.FileHandler;
 import com.brandon3055.brandonscore.integration.ModHelperBC;
+import com.brandon3055.brandonscore.lib.StringyStacks;
 import com.brandon3055.brandonscore.utils.DataUtils;
 import com.brandon3055.brandonscore.utils.Utils;
 import com.brandon3055.projectintelligence.client.DisplayController;
@@ -1955,7 +1956,7 @@ public class PIEditor extends javax.swing.JFrame {
                     toFront();
                     if (contentInfo == null) return;
                     MDTagDialog tagD = new MDTagDialog(this, MDTagDialog.TagType.RECIPE);
-                    tagD.setStack(contentInfo.stack.toString());
+                    tagD.setStack(StringyStacks.toStringNoCaps(contentInfo.stack));
                     tagD.setVisible(true);
                     markdownWindow.insert(tagD.getTag(), markdownWindow.getCaretPosition());
                     mdTextChange(null);

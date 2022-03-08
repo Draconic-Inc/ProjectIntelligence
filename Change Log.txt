@@ -1,22 +1,2 @@
-######## 1.0.6.x ########
--Fixed broken language selection list. (filter was broken)
--Added ability to override mod documentation version.
--Fixed error when loading a default style preset with unsaved changes to current preset.
--Fixed minor issue with invalid page list scroll bar under certain circumstances.
-
-######## 1.0.5.20 ########
--Fixed broken "Override Mod Language" option.
--Fixed broken file encoding causing issues with certain characters in other languages.
--Added JEI plugin to move bookmarks out of the way of the PI doc window.
--Theoretically fixed not being able to close the docs window when the close button conflicts with a button from another mod.
-
-######## 1.0.4.17 ########
--Fixed some bugs in the editor related top creating new documentation and deleting and re-adding pages.
-p.s. This change log is too short... Why aren't there more bugs in this brand new mod?
-
-######## 1.0.3.16 ########
--Fixed some minor issues with the editor.
--Fixed SSL certificate issue. VanillaFix is no longer required.
-
-######## 1.0.2.13 ########
--Initial Public beta Release
+######## 1.1.0.x ########
+- Initial 1.16.5 alpha release.

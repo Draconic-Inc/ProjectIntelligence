@@ -1,6 +1,6 @@
 package com.brandon3055.projectintelligence.docmanagement;
 
-import com.brandon3055.brandonscore.lib.StackReference;
+import com.brandon3055.brandonscore.lib.StringyStacks;
 import com.brandon3055.projectintelligence.client.PIGuiHelper;
 import com.google.gson.JsonObject;
 import net.minecraft.client.resources.I18n;
@@ -82,9 +82,9 @@ public class ContentRelation {
     }
 
     private void loadStack() {
-        StackReference reference = StackReference.fromString(contentString);
-        if (reference != null) {
-            content = reference.createStack();
+        ItemStack stack = StringyStacks.fromString(contentString, null);
+        if (stack != null) {
+            content = stack;
             if (((ItemStack)content).isEmpty()) {
                 unavalible = true;
             }

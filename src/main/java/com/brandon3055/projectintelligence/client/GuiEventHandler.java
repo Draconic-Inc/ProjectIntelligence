@@ -135,7 +135,7 @@ public class GuiEventHandler {
 
     private boolean handleKeyPress(Screen gui, int keyCode) {
         if (keyCode == -1) return false;
-        InputMappings.Input key = InputMappings.Type.MOUSE.getOrCreate(keyCode);
+        InputMappings.Input key = InputMappings.Type.KEYSYM.getOrCreate(keyCode);
         if (KeyInputHandler.etGUI.isActiveAndMatches(key)) {
             if (gui instanceof ContainerScreen) {
                 ContainerScreen container = (ContainerScreen) gui;

@@ -1,14 +1,10 @@
 package com.brandon3055.projectintelligence.client;
 
-import com.brandon3055.brandonscore.BrandonsCore;
 import com.brandon3055.brandonscore.client.ProcessHandlerClient;
 import com.brandon3055.brandonscore.client.gui.modulargui.GuiElement;
 import com.brandon3055.brandonscore.client.gui.modulargui.baseelements.GuiButton;
 import com.brandon3055.brandonscore.client.gui.modulargui.baseelements.GuiPopUpDialogBase;
 import com.brandon3055.brandonscore.client.gui.modulargui.guielements.GuiLabel;
-import com.brandon3055.brandonscore.lib.DelayedExecutor;
-import com.brandon3055.brandonscore.lib.DelayedTask;
-import com.brandon3055.brandonscore.lib.StackReference;
 import com.brandon3055.brandonscore.utils.LogHelperBC;
 import com.brandon3055.brandonscore.utils.Utils;
 import com.brandon3055.projectintelligence.client.gui.ContentInfo;
@@ -24,10 +20,7 @@ import com.google.common.collect.ImmutableList;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.Monitor;
 import net.minecraft.client.resources.I18n;
-import net.minecraft.entity.EntityType;
-import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.SpawnEggItem;
-import net.minecraft.util.datafix.fixes.SpawnEggNames;
 
 
 import javax.annotation.Nullable;

@@ -7,7 +7,6 @@ import com.brandon3055.brandonscore.client.gui.modulargui.baseelements.GuiButton
 import com.brandon3055.brandonscore.client.gui.modulargui.guielements.*;
 import com.brandon3055.brandonscore.client.gui.modulargui.lib.GuiAlign;
 import com.brandon3055.brandonscore.lib.DLRSCache;
-import com.brandon3055.brandonscore.lib.StackReference;
 import com.brandon3055.brandonscore.utils.Utils;
 import com.brandon3055.projectintelligence.client.DisplayController;
 import com.brandon3055.projectintelligence.client.PITextures;
@@ -24,6 +23,7 @@ import com.brandon3055.projectintelligence.utils.LogHelper;
 import com.google.gson.JsonObject;
 
 import com.mojang.blaze3d.systems.RenderSystem;
+import net.minecraft.block.Blocks;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screen.Screen;
 
@@ -33,6 +33,7 @@ import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
 import net.minecraft.inventory.EquipmentSlotType;
 
+import net.minecraft.item.ItemStack;
 import net.minecraft.util.JSONUtils;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.text.TextFormatting;
@@ -200,8 +201,8 @@ public class PageButton extends GuiButton {
 
             switch (type) {
                 case "stack":
-                    StackReference stack = ci.stack;
-                    if (stack != null && !stack.createStack().isEmpty()) {
+                    ItemStack stack = ci.stack;
+                    if (!stack.isEmpty()) {
                         icon = new GuiStackIcon(stack);
                         ((GuiStackIcon) icon).setToolTip(ci.drawHover);
                     } else {
@@ -261,7 +262,7 @@ public class PageButton extends GuiButton {
 
         //Apply Icon(s)
         if (icons.isEmpty() && invalidIcons) {
-            icons.add(new GuiStackIcon(new StackReference("error")).setToolTipOverride(Collections.singletonList("Invalid or missing icon.")));
+            icons.add(new GuiStackIcon(new ItemStack(Blocks.BARRIER)).setToolTipOverride(Collections.singletonList("Invalid or missing icon.")));
         }
 
         if (!icons.isEmpty()) {
@@ -396,6 +397,9 @@ public class PageButton extends GuiButton {
     }
 
     private void updateIcons() {
+        if (icons.isEmpty()) {
+            return;
+        }
         int i = (iconIndex / 20) % icons.size();
         icons.forEach(elementBase -> elementBase.setEnabled(false));
         icons.get(i).setEnabled(true);
