@@ -32,7 +32,7 @@ public class ProjectIntelligence {
                 LOGGER.info("Disabled AWT Headless Mode so that PI editor can function");
             }
         }catch (Throwable e) {
-            LOGGER.warn("An error occurred while trying top disable awt headless mode. As a result the ProjectIntelligence editor may not work.");
+            LOGGER.warn("An error occurred while trying to disable awt headless mode. As a result the ProjectIntelligence editor may not work.");
             e.printStackTrace();
         }
         SSLFix.fixSSL();
