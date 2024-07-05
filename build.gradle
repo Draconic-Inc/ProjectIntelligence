@@ -2,11 +2,10 @@ buildscript {
     repositories {
         mavenLocal()
         mavenCentral()
-        maven { url = "https://maven.minecraftforge.net/" }
-        maven { url = "https://repo.spongepowered.org/maven" }
+        maven { url "https://maven.minecraftforge.net/" }
     }
     dependencies {
-        classpath 'net.minecraftforge.gradle:ForgeGradle:4.1.+'
+        classpath 'net.minecraftforge.gradle:ForgeGradle:5.1.+'
     }
 }
 
@@ -18,14 +17,12 @@ plugins {
 
 apply plugin: 'net.minecraftforge.gradle'
 
-
 group = "com.brandon3055.projectintelligence"
 archivesBaseName = "ProjectIntelligence"
 
-java.toolchain.languageVersion = JavaLanguageVersion.of(8)
+java.toolchain.languageVersion = JavaLanguageVersion.of(17)
 
-//Add generated resources to main resources.
-sourceSets.main.resources.srcDirs += "src/generated/resources"
+sourceSets.main.resources.srcDirs += "src/main/generated"
 
 file('build.properties').withReader {
     def prop = new Properties()
@@ -71,12 +68,11 @@ minecraft {
         }
         data {
             workingDirectory file('run')
-            args '--mod', 'projectintelligence', '--all', '--output', file("src/generated/resources"), '--existing', file("src/main/resources")
+            args '--mod', 'projectintelligence', '--all', '--output', file("src/main/generated"), '--existing', file("src/main/resources")
             mods { projectintelligence { source sourceSets.main } }
         }
     }
 }
-
 
 repositories {
     mavenLocal()
@@ -87,11 +83,10 @@ repositories {
 
 dependencies {
     minecraft "net.minecraftforge:forge:${config.mc_version}-${config.forge_version}"
-    compile "com.brandon3055.brandonscore:BrandonsCore:${config.mc_version}-${config.bcore_version}:deobf"
-    compile "codechicken:CodeChickenLib:${config.mc_version}-${config.ccl_version}:deobf"
-    compile fg.deobf("mezz.jei:jei-${config.mc_version}:${config.jei_version}")
+    implementation fg.deobf("com.brandon3055.brandonscore:BrandonsCore:${config.mc_version}-${config.bcore_version}:universal")
+    implementation fg.deobf("codechicken:CodeChickenLib:${config.mc_version}-${config.ccl_version}:universal")
+    implementation fg.deobf("mezz.jei:jei-${config.mc_version}:${config.jei_version}")
 }
-
 
 signing {
     if (!signProps.isEmpty()) {
@@ -123,10 +118,24 @@ processResources { task ->
     }
 }
 
+//processResources {
+//    inputs.property 'mod_version', config.mod_version
+//    inputs.property 'mc_version', config.mc_version
+//    inputs.property 'ccl_version', config.ccl_version
+//
+//    filesMatching('META-INF/mods.toml') {
+//        expand 'file': ['jarVersion': config.mod_version],
+//                'mc_version': config.mc_version,
+//                'forge_version': config.forge_version,
+//                'lang_version': config.forge_version.split('\\.')[0],
+//                'ccl_version_range': "[${config.ccl_version.replace(".+", "")},${config.ccl_version_max})"
+//    }
+//}
+
+
 jar {
     finalizedBy 'reobfJar'
     classifier = 'universal'
-    from file("LICENSE")
     manifest {
         attributes 'Specification-Title': archivesBaseName
         attributes 'Specification-Vendor': 'brandon3055'
@@ -136,6 +145,7 @@ jar {
         attributes 'Implementation-Version': version
         attributes 'Implementation-Timestamp': new Date().format("yyyy-MM-dd'T'HH:mm:ssZ")
     }
+    from file("LICENSE")
 }
 
 task srcJar(type: Jar) {
